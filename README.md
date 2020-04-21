@@ -9,6 +9,15 @@ Use cases:
   - Each site holding a DB? The data is replicated?
 - smooth addition of new sites.
 
+## Development
+
+```bash
+make setup
+cd src && source bin/activate
+python3 -m pip install -r requirements.txt
+
+```
+
 ## APIs
 
 - addNewSite POST/PUT
