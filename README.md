@@ -7,6 +7,12 @@ Use cases:
 - design choices
   - Central DB with replication?
   - Each site holding a DB? The data is replicated?
+  - Reduduant 
+  - Master and slave, voting when master dies 
+  - Partitition 
+  - Database and files 
+  - hierarchy data or/ and tablular data 
+  - scale the performance 
 - smooth addition of new sites.
 
 ## Development
