@@ -4,12 +4,7 @@ import nodes
 from time import sleep
 from threading import Thread
 from multiprocessing import Process
-from collections import namedtuple
 from nodes import Cluster, BaseNode
-
-
-# Process Specification - port
-ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
 
 class NodeProcess(object):
@@ -77,11 +72,15 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = SubscribeThread()
         self.publisher = PublishThread()
 
+        self.start()
+
     def start(self):
+        print("Starting process..", self.node)
         self.subscriber.daemon = True
         self.subscriber.start()
         self.publisher.daemon = True
         self.publisher.start()
+        print("Finished starting process..", self.node)
 
     def sendMessage(self, message):
         self.messageQueue.append(message)
@@ -89,3 +88,30 @@ class SocketBasedNodeProcess(NodeProcess):
     def onMessage(self, message):
         print("Recv:", message)
 
+
+import unittest
+import basecases
+
+
+class BootstrapCluster(unittest.TestCase):
+
+    def setUp(self):
+        self.blueprint = basecases.dummyBlueprintCase0()
+        self.cluster = nodes.Cluster(self.blueprint)
+        self.TIMEOUT = 3.0
+
+    def spawn_cluster_process(self):
+        for node in self.cluster.nodes:
+            Process(target=SocketBasedNodeProcess, args=(node, self.cluster)).start()
+
+
+class TestBootstrapCluster(BootstrapCluster):
+
+    def test_bootstrap_cluster(self):
+        print(self.cluster)
+        self.spawn_cluster_process()
+        sleep(self.TIMEOUT)
+
+
+if __name__ == '__main__':
+    unittest.main()

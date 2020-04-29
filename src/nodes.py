@@ -15,6 +15,7 @@
 """
 
 from typing import List
+from utils import ProcessSpec
 from collections import namedtuple
 
 
@@ -34,11 +35,17 @@ class ItemDependency(object):
         self.result_item_req = result_item_req
         self.input_item_reqs = input_item_reqs
 
+    def __repr__(self):
+        return "{}->{}".format(self.input_item_reqs, self.result_item_req)
+
 
 class BaseNode(object):
 
     def __init__(self, args):
         self.node_id = args["node_id"]
+
+    def __repr__(self):
+        return str(self.node_id)
 
 
 class SingleItemNode(BaseNode):
@@ -51,6 +58,9 @@ class SingleItemNode(BaseNode):
     def __init__(self, args):
         super(SingleItemNode, self).__init__(args)
         self.dependency = args["dependency"]
+
+    def __repr__(self):
+        return "{}::{}".format(self.node_id, self.dependency)
 
 
 class ClusterBlueprint(object):
@@ -75,5 +85,13 @@ class Cluster(object):
     """
 
     def __init__(self, blueprint):
-        self.nodes = blueprint.nodes()
-        self.process_specs = {}
+        self.blueprint = blueprint
+        self.nodes = self.blueprint.nodes
+        self.process_specs = None
+        self.init_process_specs()
+
+    def init_process_specs(self):
+        self.process_specs = [ProcessSpec('node{}'.format(i), 5000 + i) for i in range(len(self.nodes))]
+
+    def __repr__(self):
+        return 'Nodes: {}; ProcessSpecs: {}'.format(self.nodes, self.process_specs)
