@@ -14,8 +14,8 @@
         - Provide templates for common base cases
 """
 
-from collections import namedtuple
 from typing import List
+from collections import namedtuple
 
 
 # Structure for item: Each item has a name and id
@@ -76,3 +76,4 @@ class Cluster(object):
 
     def __init__(self, blueprint):
         self.nodes = blueprint.nodes()
+        self.process_specs = {}
