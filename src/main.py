@@ -20,8 +20,8 @@ def server(port="5556"):
         print("Received request #%s: %s" % (reqnum, message))
 
         # Send Object!!!
-        socket.send_string("World from %s" % port) 
-         
+        socket.send_string("World from %s" % port)
+
 def client(ports=["5556"]):
     context = zmq.Context()
     print("Connecting to server with ports %s" % ports)
@@ -33,7 +33,7 @@ def client(ports=["5556"]):
         socket.send_string("Hello")
         message = socket.recv()
         print("Received reply ", request, "[", message, "]")
-        time.sleep (0.01) 
+        time.sleep (0.01)
 
 
 
@@ -50,13 +50,13 @@ def start_process(process_id, init_inventory):
 
 
 def main():
-    server_ports = range(5550,5558,2)
+    server_ports = range(5550, 5558, 2)
     for server_port in server_ports:
         Process(target=server, args=(server_port,)).start()
-        
+
     # Now we can connect a client to all these servers
     Process(target=client, args=(server_ports,)).start()
-    
+
 
     # # set of raw inventory items. i.e. part IDs
     # all_raw_inventory = [randint(0, 5) for _ in range(50000)]
@@ -81,4 +81,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
