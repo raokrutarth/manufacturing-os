@@ -50,7 +50,7 @@ def start_process(process_id, init_inventory):
 
 
 def main():
-    server_ports = range(5550,5558,2)
+    server_ports = range(5550, 5558, 2)
     for server_port in server_ports:
         Process(target=server, args=(server_port,)).start()
 
