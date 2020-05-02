@@ -8,7 +8,7 @@ def dummyNodes(n):
 
 
 def dummyOperationsAllocateCase(nodes):
-    return {n: [testUtils.Op.Allocate] for n in nodes}
+    return {n.node_id: [testUtils.Op.Allocate] for n in nodes}
 
 
 def dummyBlueprintCase0():
@@ -24,6 +24,7 @@ def dummyBlueprintCase1():
     Base case containing 3 nodes with basic production details
     """
     nodes = dummyNodes(3)
-    return ClusterBlueprint(nodes)
+    ops = dummyOperationsAllocateCase(nodes)
+    return ClusterBlueprint(nodes, ops)
 
 

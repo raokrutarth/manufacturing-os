@@ -1,6 +1,8 @@
 import enum
 import messages
 
+from nodes import BaseNode
+
 
 class Op(enum.Enum):
 
@@ -25,8 +27,8 @@ class Op(enum.Enum):
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(op: Op):
+    def getMsgForOp(source: BaseNode, op: Op):
         if op == Op.Allocate:
-            return messages.AllocateReq()
+            return messages.AllocateReq(source)
         else:
             assert False, "Invalid op: {}".format(op.name)

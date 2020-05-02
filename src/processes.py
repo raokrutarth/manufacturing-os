@@ -51,6 +51,8 @@ class SocketBasedNodeProcess(NodeProcess):
         # Inspired from https://github.com/streed/simpleRaft
         class SubscribeThread(Thread):
             def run(thread):
+                print('Subscribe thread: {}'.format(self.node))
+
                 context = zmq.Context()
                 socket = context.socket(zmq.SUB)
                 for p_spec in self.cluster.process_specs:
@@ -62,24 +64,30 @@ class SocketBasedNodeProcess(NodeProcess):
 
         class PublishThread(Thread):
             def run(thread):
+                print('Publish thread: {}'.format(self.node))
+
                 context = zmq.Context()
                 socket = context.socket(zmq.PUB)
                 socket.bind("tcp://*:%d" % self.port)
 
                 while True:
-                    message = self.messageQueue.pop()
-                    if not message:
-                        sleep(self.DELAY)
-                    else:
-                        socket.send(message)
+                    if len(self.messageQueue):
+                        message = self.messageQueue.pop(0)
+                        if not message:
+                            sleep(self.DELAY)
+                        else:
+                            socket.send(message)
 
         class OpsRunnerThread(Thread):
-            def getMsgForOp(self, op):
-                print(op)
-                return testUtils.OpHandler.getMsgForOp(op)
+            @staticmethod
+            def getMsgForOp(op):
+                print('Constructing messsage for {} on {}'.format(op, self.node))
+                return testUtils.OpHandler.getMsgForOp(self.node, op)
 
             def run(thread):
+                print('Op runner thread: {}'.format(self.node))
                 OPS_DELAY = 1.0
+                print('Ops:', self.ops_to_run)
                 for op in self.ops_to_run:
                     msg = thread.getMsgForOp(op)
                     self.sendMessage(msg)
@@ -88,7 +96,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = SubscribeThread()
         self.publisher = PublishThread()
 
-        if self.flags['test']:
+        if self.flags['runOps']:
             self.opRunner = OpsRunnerThread()
 
         self.start()
@@ -101,7 +109,7 @@ class SocketBasedNodeProcess(NodeProcess):
         print("Starting process..", self.node)
         self.startThread(self.subscriber)
         self.startThread(self.publisher)
-        if self.flags['test']:
+        if self.flags['runOps']:
             self.startThread(self.opRunner)
         print("Finished starting process..", self.node)
 
@@ -109,7 +117,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.messageQueue.append(message)
 
     def onMessage(self, message):
-        print("Recv:", message)
+        print("Recv: {} from {}".format(message, message.source))
 
 
 import unittest
@@ -123,18 +131,25 @@ class BootstrapCluster(unittest.TestCase):
         self.cluster = nodes.Cluster(self.blueprint)
         self.TIMEOUT = 3.0
 
-    def spawn_cluster_process(self):
+    def spawn_cluster_process(self, runOps):
+        flags = {'runOps': runOps}
         for node in self.cluster.nodes:
-            Process(target=SocketBasedNodeProcess, args=(node, self.cluster)).start()
+            Process(target=SocketBasedNodeProcess, args=(node, self.cluster, flags)).start()
 
 
 class TestBootstrapCluster(BootstrapCluster):
 
     def test_bootstrap_cluster(self):
         print(self.cluster)
-        self.spawn_cluster_process()
+        self.spawn_cluster_process(runOps=False)
         sleep(self.TIMEOUT)
 
+    def test_bootstrap_cluster_with_ops(self):
+        self.blueprint = basecases.dummyBlueprintCase1()
+        self.cluster = nodes.Cluster(self.blueprint)
+        print(self.cluster)
+        self.spawn_cluster_process(runOps=True)
+        sleep(self.TIMEOUT)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,6 @@
 import enum
 
-from nodes import ItemDependency
+from nodes import BaseNode, ItemDependency
 
 
 class MsgType(enum.Enum):
@@ -33,15 +33,17 @@ class Message(object):
     Base class for all messages
     """
 
-    def __init__(self, action: Action, type: MsgType):
+    def __init__(self, source: BaseNode, action: Action, type: MsgType, dest=None):
         self.type = type
+        self.source = source
+        self.dest = dest
         self.action = action
 
 
 class Ack(Message):
 
-    def __init__(self, msgId):
-        super(Ack, self).__init__(Action.Allocate, MsgType.Response)
+    def __init__(self, source: BaseNode, dest: BaseNode, msgId):
+        super(Ack, self).__init__(source, Action.Allocate, MsgType.Response, dest)
         self.msgId = msgId
 
 
@@ -58,8 +60,8 @@ class AllocateReq(Message):
     Signal to every node to communicate their supply requirements
     """
 
-    def __init__(self):
-        super(AllocateReq, self).__init__(Action.Allocate, MsgType.Request)
+    def __init__(self, source: BaseNode):
+        super(AllocateReq, self).__init__(source, Action.Allocate, MsgType.Request)
 
 
 class AllocateResp(Message):
@@ -67,8 +69,8 @@ class AllocateResp(Message):
     Nodes replying their requirements, capacity, supply, etc
     """
 
-    def __init__(self, dependency: ItemDependency):
-        super(AllocateResp, self).__init__(Action.Allocate, MsgType.Response)
+    def __init__(self, source: BaseNode, dest: BaseNode, dependency: ItemDependency):
+        super(AllocateResp, self).__init__(source, Action.Allocate, MsgType.Response, dest)
         self.dependency = dependency
 
 
@@ -77,6 +79,6 @@ class AllocateCommit(Message):
     Leader sending message to commit for the specified flow; Contains the allocated dependency for the node
     """
 
-    def __init__(self, dependency: ItemDependency):
-        super(AllocateCommit, self).__init__(Action.Allocate, MsgType.Request)
+    def __init__(self, source: BaseNode, dependency: ItemDependency):
+        super(AllocateCommit, self).__init__(source, Action.Allocate, MsgType.Request)
         self.dependency = dependency
