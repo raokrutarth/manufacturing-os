@@ -57,26 +57,6 @@ def main():
     # Now we can connect a client to all these servers
     Process(target=client, args=(server_ports,)).start()
 
-
-    # # set of raw inventory items. i.e. part IDs
-    # all_raw_inventory = [randint(0, 5) for _ in range(50000)]
-
-    # num_nodes = 5
-    # crash_codes = []
-
-    # with Pool(processes=num_nodes) as pool:
-    #     raw_inventory = np.array_split(all_raw_inventory, num_nodes)
-
-    #     for i, i_subset in enumerate(raw_inventory):
-    #         r = pool.apply_async(
-    #             start_process,
-    #             (i, i_subset)
-    #         )
-    #         crash_codes.append(r)
-
-    #     for r in crash_codes:
-    #         print(r.get())
-
     return None
 
 if __name__ == "__main__":
