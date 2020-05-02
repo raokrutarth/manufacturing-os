@@ -16,7 +16,7 @@
 
 from typing import List
 from utils import ProcessSpec
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 
 # Structure for item: Each item has a name and id
@@ -69,12 +69,12 @@ class ClusterBlueprint(object):
     Useful for unit tests and designing test cases we want to operate on.
     """
 
-    def __init__(self, nodes: List[BaseNode]):
+    def __init__(self, nodes: List[BaseNode], ops=defaultdict(lambda: [])):
         # Set of nodes to be used by this cluster
         self.nodes = nodes
         # Stores any node specific operations we want to perform during execution e.g.
         # injecting node specific random failures, delays, etc
-        self.node_specific_ops = {}
+        self.node_specific_ops = ops
         # Stores the flags and options we'd be using finally in our setup
         self.flags = {}
 

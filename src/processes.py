@@ -1,6 +1,8 @@
 import zmq
 import nodes
+import testUtils
 
+from collections import defaultdict
 from time import sleep
 from threading import Thread
 from multiprocessing import Process
@@ -30,18 +32,21 @@ class NodeProcess(object):
 
 class SocketBasedNodeProcess(NodeProcess):
 
-    def __init__(self, node: BaseNode, cluster: Cluster):
+    def __init__(self, node: BaseNode, cluster: Cluster, flags=defaultdict(lambda: False)):
         """
         Takes node info as input
         cluster provides the state of the whole cluster, process_specs for other nodes
         """
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
-        self.cluster = cluster
-        self.process_spec = self.cluster.process_specs[node.node_id]
+        self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
+        self.flags = flags
 
         self.DELAY = 0.1
+
+        # For testing, dummy runs
+        self.ops_to_run = self.cluster.blueprint.node_specific_ops[self.node.node_id]
 
         # Inspired from https://github.com/streed/simpleRaft
         class SubscribeThread(Thread):
@@ -55,7 +60,6 @@ class SocketBasedNodeProcess(NodeProcess):
                     message = socket.recv()
                     self.onMessage(message)
 
-        # TODO: Need to allow talking to multiple clients
         class PublishThread(Thread):
             def run(thread):
                 context = zmq.Context()
@@ -69,17 +73,36 @@ class SocketBasedNodeProcess(NodeProcess):
                     else:
                         socket.send(message)
 
+        class OpsRunnerThread(Thread):
+            def getMsgForOp(self, op):
+                print(op)
+                return testUtils.OpHandler.getMsgForOp(op)
+
+            def run(thread):
+                OPS_DELAY = 1.0
+                for op in self.ops_to_run:
+                    msg = thread.getMsgForOp(op)
+                    self.sendMessage(msg)
+                    sleep(OPS_DELAY)
+
         self.subscriber = SubscribeThread()
         self.publisher = PublishThread()
 
+        if self.flags['test']:
+            self.opRunner = OpsRunnerThread()
+
         self.start()
+
+    def startThread(self, thread):
+        thread.daemon = True
+        thread.start()
 
     def start(self):
         print("Starting process..", self.node)
-        self.subscriber.daemon = True
-        self.subscriber.start()
-        self.publisher.daemon = True
-        self.publisher.start()
+        self.startThread(self.subscriber)
+        self.startThread(self.publisher)
+        if self.flags['test']:
+            self.startThread(self.opRunner)
         print("Finished starting process..", self.node)
 
     def sendMessage(self, message):
