@@ -1,14 +1,21 @@
-import testUtils
+import operations
 
-from nodes import BaseNode, ClusterBlueprint
+from nodes import BaseNode
+from cluster import ClusterBlueprint
 
+'''
+    TODO
+    the purpose of base cases is to return a cluster object that is ready for
+    specific instance of testing/development/etc. instead of having the developer
+    specify the note types, operations, etc.
+'''
 
 def dummyNodes(n):
     return [BaseNode({'node_id': i}) for i in range(n)]
 
 
 def dummyOperationsAllocateCase(nodes):
-    return {n.node_id: [testUtils.Op.Allocate] for n in nodes}
+    return {n.node_id: [operations.Op.Allocate] for n in nodes}
 
 
 def dummyBlueprintCase0():
@@ -26,5 +33,3 @@ def dummyBlueprintCase1():
     nodes = dummyNodes(3)
     ops = dummyOperationsAllocateCase(nodes)
     return ClusterBlueprint(nodes, ops)
-
-

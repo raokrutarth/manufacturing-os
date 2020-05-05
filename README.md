@@ -1,42 +1,20 @@
 
 # Distributed Manufacturing operation system
 
-Use cases:
-
-- Convert the single SQL DB to shared data across sites.
-- design choices
-  - Central DB with replication?
-  - Each site holding a DB? The data is replicated?
-  - Reduduant 
-  - Master and slave, voting when master dies 
-  - Partitition 
-  - Database and files 
-  - hierarchy data or/ and tablular data 
-  - scale the performance 
-- smooth addition of new sites.
+[Design Doc](https://docs.google.com/document/d/14D9z-c7i1_GU2eFmPw7M6nCwIaInTCtb14OPEwDR4mo/edit#)
 
 ## Development
 
+### Setup
+
 ```bash
-make setup
+python3 -m venv ./src
 cd src && source bin/activate
 python3 -m pip install -r requirements.txt
-
 ```
 
-## APIs
+### Running Project
 
-- addNewSite POST/PUT
-- transferInventory(id) PUT/POST
-- getInventory(id) GET
-
-## User Stories
-
-1. A
-2. B
-
-## Skill sets
-
-- Data science (python, TF, etc.)
-- Golang (cloud application/concurrency performance)
-- Systems programming (C, gRPC, protobuf, sockets, etc)??
+```bash
+python src/main.py
+```
