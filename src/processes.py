@@ -141,37 +141,3 @@ class SocketBasedNodeProcess(NodeProcess):
     def onMessage(self, message):
         log.debug("Received: %s from %s", message, message.source)
 
-
-import unittest
-import basecases
-
-
-class BootstrapCluster(unittest.TestCase):
-
-    def setUp(self):
-        self.blueprint = basecases.dummyBlueprintCase0()
-        self.cluster = Cluster(self.blueprint)
-        self.TIMEOUT = 3.0
-
-    def spawn_cluster_process(self, runOps):
-        flags = {'runOps': runOps}
-        for node in self.cluster.nodes:
-            Process(target=SocketBasedNodeProcess, args=(node, self.cluster, flags)).start()
-
-
-class TestBootstrapCluster(BootstrapCluster):
-
-    def test_bootstrap_cluster(self):
-        log.info(self.cluster)
-        self.spawn_cluster_process(runOps=False)
-        sleep(self.TIMEOUT)
-
-    def test_bootstrap_cluster_with_ops(self):
-        self.blueprint = basecases.dummyBlueprintCase1()
-        self.cluster = Cluster(self.blueprint)
-        log.info(self.cluster)
-        self.spawn_cluster_process(runOps=True)
-        sleep(self.TIMEOUT)
-
-if __name__ == '__main__':
-    unittest.main()
