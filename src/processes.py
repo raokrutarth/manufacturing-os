@@ -59,9 +59,9 @@ class SocketBasedNodeProcess(NodeProcess):
         class SubscribeThread(Thread):
             def run(thread):
                 log.debug('%s starting subscriber thread', self.node.get_name())
-
                 context = zmq.Context()
                 socket = context.socket(zmq.SUB)
+                
                 for p_spec in self.cluster.process_specs:
                     # Node shouldn't connect to itself, right?
                     if p_spec.name != "process-" + str(self.node.get_name()):
@@ -102,7 +102,7 @@ class SocketBasedNodeProcess(NodeProcess):
             '''
             @staticmethod
             def getMsgForOp(op):
-                log.info('%s constructing messsage for operation %s', self.node.get_name(), op)
+                log.info('%s constructing message for operation %s', self.node.get_name(), op)
                 return operations.OpHandler.getMsgForOp(self.node, op)
 
             def run(thread):
@@ -115,6 +115,7 @@ class SocketBasedNodeProcess(NodeProcess):
 
         self.subscriber = SubscribeThread()
         self.publisher = PublishThread()
+        
         self.raft_helper = RaftHelper(self, self.cluster) # shared dictionary
 
         if self.flags['runOps']:

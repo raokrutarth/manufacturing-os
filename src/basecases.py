@@ -39,7 +39,6 @@ def dummyBlueprintCase1():
     ops = dummyOperationsAllocateCase(nodes)
     return ClusterBlueprint(nodes, ops)
 
-
 def fiveDummyItemNodes():
     """
     Creating 5 itemnodes that have the following dependencies
