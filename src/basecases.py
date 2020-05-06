@@ -33,3 +33,8 @@ def dummyBlueprintCase1():
     nodes = dummyNodes(3)
     ops = dummyOperationsAllocateCase(nodes)
     return ClusterBlueprint(nodes, ops)
+
+## Basecase returns differen blueprints.
+## Have all requirements that makes sense! -> A req b, C req b
+## 1. Create a cluster usign nodes.SingleItemNodes
+## 2. Create a function that creates the edges in the shared dictionary
