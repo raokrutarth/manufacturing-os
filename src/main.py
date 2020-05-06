@@ -26,7 +26,7 @@ async def main():
         nodes.SingleItemNode({
             'node_id': i,
 
-            # TODO determine bootstrap dependency per node
+            # TODO determine bootstrap dependency per node -- 
             'dependency': items.ItemDependency([], ""),
             }) for i in range(NUM_NODES)
     ]
