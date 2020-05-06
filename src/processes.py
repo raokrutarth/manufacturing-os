@@ -58,11 +58,8 @@ class SocketBasedNodeProcess(NodeProcess):
         # Inspired from https://github.com/streed/simpleRaft
         class SubscribeThread(Thread):
             def run(thread):
-                print("FIrst" + thread.name)
                 log.debug('%s starting subscriber thread', self.node.get_name())
-                print("Second " + thread.name)
                 context = zmq.Context()
-                print("Third " + thread.name)
                 socket = context.socket(zmq.SUB)
                 
                 for p_spec in self.cluster.process_specs:
