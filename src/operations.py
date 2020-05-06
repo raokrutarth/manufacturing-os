@@ -1,18 +1,24 @@
 import enum
-import messages
+import logging
 
+import messages
 from nodes import BaseNode
 
+log = logging.getLogger()
 
 class Op(enum.Enum):
 
     # Inits a heartbeat from a node
     Heartbeat = 1
+
     # Signals to initiate leader election
     ElectLeader = 2
+
     # Notifies everyone of death
     Death = 3
-    # Signals to perform re-allocation; different from allocate in case we use a different optimized algorithm for
+
+    # Signals to perform re-allocation; different from allocate in
+    # case we use a different optimized algorithm for
     # re-allocation - which we should ideally do
     ReAllocate = 4
 

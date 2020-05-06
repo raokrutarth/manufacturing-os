@@ -1,63 +1,61 @@
-from random import randint
-import numpy as np
+import asyncio
+import logging
+import os
+from multiprocessing import Process
 
-import time
-import zmq
-import sys
-from  multiprocessing import Process
-import threading
+import nodes
+import processes
+import operations
+import cluster
+import items
 
-## Initial CODE with zmq
-def server(port="5556"):
-    context = zmq.Context()
-    socket = context.socket(zmq.REP)
-    socket.bind("tcp://*:%s" % port)
-    print("Running server on port: ", port)
-    # serves only 5 request and dies
-    for reqnum in range(5):
-        # Wait for next request from client
-        message = socket.recv()
-        print("Received request #%s: %s" % (reqnum, message))
+# configure logging with filename, function name and line numbers
+logging.basicConfig(
+    level=os.environ.get("LOGLEVEL", "DEBUG"),
+    datefmt='%H:%M:%S',
+    # add %(process)s to the formatter to see PIDs
+    format='%(levelname)s [%(asctime)s - %(filename)s:%(lineno)d - %(funcName)s] %(message)s',
+)
+log = logging.getLogger()
 
-        # Send Object!!!
-        socket.send_string("World from %s" % port)
+NUM_NODES = 5
 
-def client(ports=["5556"]):
-    context = zmq.Context()
-    print("Connecting to server with ports %s" % ports)
-    socket = context.socket(zmq.REQ)
-    for port in ports:
-        socket.connect("tcp://localhost:%s" % port)
-    for request in range (20):
-        print("Sending request ", request,"...")
-        socket.send_string("Hello")
-        message = socket.recv()
-        print("Received reply ", request, "[", message, "]")
-        time.sleep (0.01)
+async def main():
+    # determine nodes (of type single item node) and operations for the demo cluster
+    demo_nodes = [
+        nodes.SingleItemNode({
+            'node_id': i,
 
+            # TODO determine bootstrap dependency per node
+            'dependency': items.ItemDependency([], ""),
+            }) for i in range(NUM_NODES)
+    ]
+    demo_ops = {n.node_id: [operations.Op.Allocate] for n in demo_nodes}
 
+    # build the cluster object
+    demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
+    demo_cluster = cluster.Cluster(demo_blueprint)
 
-def start_process(process_id, init_inventory):
-    print(process_id, " process started with inventory ", init_inventory)
-    '''
-        TODO
-        Add new process start logic here
-    '''
+    log.info("Starting %s", demo_cluster)
 
-    while True:
+    # start the nodes with operations enabled
+    flags = {'runOps': True}
+    running_nodes = []
+    for node in demo_cluster.nodes:
+        rn = asyncio.ensure_future(
+            processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
+        )
+        running_nodes.append(rn)
+    log.info("All nodes started")
 
-        sleep(30)
+    # log exits as nodes crash, if they crash/exit
+    for rn in running_nodes:
+        await rn
+        log.critical("a node exited")
 
+    log.critical("All nodes exited")
 
-def main():
-    server_ports = range(5550, 5558, 2)
-    for server_port in server_ports:
-        Process(target=server, args=(server_port,)).start()
-
-    # Now we can connect a client to all these servers
-    Process(target=client, args=(server_ports,)).start()
-
-    return None
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

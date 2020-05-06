@@ -1,7 +1,10 @@
 import enum
+import logging
 
-from nodes import BaseNode, ItemDependency
+from nodes import BaseNode
+from items import ItemDependency
 
+log = logging.getLogger()
 
 class MsgType(enum.Enum):
     Request = 1
@@ -15,15 +18,21 @@ class Action(enum.Enum):
 
     # Inits a heartbeat from a node
     Heartbeat = 1
+
     # Signals to initiate leader election
     ElectLeader = 2
+
     # Notifies everyone of death
     Death = 3
-    # Signals to perform re-allocation; different from allocate in case we use a different optimized algorithm for
+
+    # Signals to perform re-allocation; different from allocate in case we use a
+    # different optimized algorithm for
     # re-allocation - which we should ideally do
     ReAllocate = 4
+
     # Signals to initiate initial flow allocation consensus
     Allocate = 5
+
     # Signals an generic Ack
     Ack = 6
 
@@ -76,7 +85,8 @@ class AllocateResp(Message):
 
 class AllocateCommit(Message):
     """
-    Leader sending message to commit for the specified flow; Contains the allocated dependency for the node
+    Leader sending message to commit for the specified flow;
+    Contains the allocated dependency for the node
     """
 
     def __init__(self, source: BaseNode, dependency: ItemDependency):

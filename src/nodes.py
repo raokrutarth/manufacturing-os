@@ -14,30 +14,10 @@
         - Provide templates for common base cases
 """
 
-from typing import List
-from utils import ProcessSpec
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
-
-# Structure for item: Each item has a name and id
-Item = namedtuple('Item', ['name', 'id'])
-# Item requirement - Item, Quantity
-ItemReq = namedtuple('ItemReq', ['item', 'quantity'])
-
-
-class ItemDependency(object):
-
-    def __init__(self, input_item_reqs: List[ItemReq], result_item_req: ItemReq):
-        """
-            input_item_reqs: List of input items required (Can be empty for source node)
-            result_item_req: End item produced
-        """
-        self.result_item_req = result_item_req
-        self.input_item_reqs = input_item_reqs
-
-    def __repr__(self):
-        return "{}->{}".format(self.input_item_reqs, self.result_item_req)
-
+# Process Specification - port
+ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
 class BaseNode(object):
 
@@ -59,39 +39,8 @@ class SingleItemNode(BaseNode):
         super(SingleItemNode, self).__init__(args)
         self.dependency = args["dependency"]
 
+    def get_name(self):
+        return self.node_id
+
     def __repr__(self):
         return "{}::{}".format(self.node_id, self.dependency)
-
-
-class ClusterBlueprint(object):
-    """
-    Represents the cluster blueprint to create Clusters from
-    Useful for unit tests and designing test cases we want to operate on.
-    """
-
-    def __init__(self, nodes: List[BaseNode], ops=defaultdict(lambda: [])):
-        # Set of nodes to be used by this cluster
-        self.nodes = nodes
-        # Stores any node specific operations we want to perform during execution e.g.
-        # injecting node specific random failures, delays, etc
-        self.node_specific_ops = ops
-        # Stores the flags and options we'd be using finally in our setup
-        self.flags = {}
-
-
-class Cluster(object):
-    """
-    Represents the set of nodes interacting
-    """
-
-    def __init__(self, blueprint):
-        self.blueprint = blueprint
-        self.nodes = self.blueprint.nodes
-        self.process_specs = None
-        self.init_process_specs()
-
-    def init_process_specs(self):
-        self.process_specs = [ProcessSpec('node{}'.format(i), 5000 + i) for i in range(len(self.nodes))]
-
-    def __repr__(self):
-        return 'Nodes: {}; ProcessSpecs: {}'.format(self.nodes, self.process_specs)
