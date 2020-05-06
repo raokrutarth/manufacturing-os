@@ -21,7 +21,7 @@ class NodeProcess(object):
     def __init__(self, node, cluster):
         self.node = node
         self.cluster = cluster
-        self.messageQueue = []
+        self.messageQueue = [""] # zmq cannot send "None" messages out of the box -- only strings and bytes!
 
     def sendMessage(self, message):
         pass
@@ -63,10 +63,12 @@ class SocketBasedNodeProcess(NodeProcess):
                 context = zmq.Context()
                 socket = context.socket(zmq.SUB)
                 for p_spec in self.cluster.process_specs:
-                    # FIXME: does a node try to connect to itself too?
-                    socket.connect("tcp://%s:%d" % (p_spec.name, p_spec.port))
+                    # Node shouldn't connect to itself, right?
+                    if p_spec.name != "process-" + str(self.node.get_name()):
+                        socket.connect("tcp://%s:%d" % (p_spec.name, p_spec.port))
 
                 while True:
+                    sleep(2)
                     message = socket.recv()
                     self.onMessage(message)
 
@@ -113,7 +115,7 @@ class SocketBasedNodeProcess(NodeProcess):
 
         self.subscriber = SubscribeThread()
         self.publisher = PublishThread()
-        self.raft_helper = RaftHelper(self, self.cluster)
+        self.raft_helper = RaftHelper(self, self.cluster) # shared dictionary
 
         if self.flags['runOps']:
             self.opRunner = OpsRunnerThread()

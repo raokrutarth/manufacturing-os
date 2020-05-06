@@ -5,12 +5,9 @@ from multiprocessing import Process
 import logging
 log = logging.getLogger()
 
-
 import basecases
 from cluster import Cluster
 import processes
-
-log = logging.getLogger()
 
 class BootstrapCluster(unittest.TestCase):
 
