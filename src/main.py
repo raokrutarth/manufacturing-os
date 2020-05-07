@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 from multiprocessing import Process
+from time import sleep
 
 import nodes
 import processes
@@ -47,6 +48,8 @@ async def main():
         log.debug("Node %d started", node.node_id)
 
     log.info("All nodes started")
+    while 1:
+        sleep(60)
 
 
 if __name__ == "__main__":
