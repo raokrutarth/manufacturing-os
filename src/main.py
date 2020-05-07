@@ -26,7 +26,7 @@ async def main():
         nodes.SingleItemNode({
             'node_id': i,
 
-            # TODO determine bootstrap dependency per node -- 
+            # TODO determine bootstrap dependency per node --
             'dependency': items.ItemDependency([], ""),
             }) for i in range(NUM_NODES)
     ]
@@ -40,22 +40,16 @@ async def main():
 
     # start the nodes with operations enabled
     flags = {'runOps': True}
-    running_nodes = []
     for node in demo_cluster.nodes:
-        rn = asyncio.ensure_future(
-            processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        )
-        running_nodes.append(rn)
+        # since start() for the node is an async, non-blocking method, use await
+        # to make sure the node is started successfully.
+        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
+        log.debug("Node %d started", node.node_id)
+
     log.info("All nodes started")
-
-    # log exits as nodes crash, if they crash/exit
-    for rn in running_nodes:
-        await rn
-        log.critical("a node exited")
-
-    log.critical("All nodes exited")
 
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
+    log.critical("All nodes exited")
