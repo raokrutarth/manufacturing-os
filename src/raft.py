@@ -40,39 +40,25 @@ class RaftHelper():
         # Dict-like object: data.update(), data['key'] etc
         self.graph = raftos.ReplicatedDict(name=GRAPH_NAME)
 
-    async def add_outgoing_edge(self, receiver):
+    async def request_leader_based_restructure(self, updated_edges):
         '''
-            Adds an edge in the distributed graph from the
-            caller node to the receiver. receiver is a string
-            with ip address and port.
-            e.g. 127.0.0.1:433
-        '''
-        log.debug("adding edge from %s to %s", self.node_address, receiver)
-        existing_edges = self.graph.get()[self.node_address]
-        if not existing_edges:
-            edges = {
-                self.node_address: set(receiver)
-            }
-        else:
-            edges = {
-                self.node_address: existing_edges.add(receiver)
-            }
+            Each node can make a call to request_leader_based_restructure to make the
+            leader peform updates on the system state and modify the edges connected
+            to the calling node.
 
-        await self.graph.update(edges)
-
-    async def remove_outgoing_edge(self, receiver):
+            The function returns true when the calling node is the leader.
         '''
-            Adds an edge in the distributed graph from the
-            caller node to the receiver
-        '''
-        log.debug("removing edge from %s to %s", self.node_address, receiver)
-        existing_edges = self.graph.get()[self.node_address]
-        if not existing_edges:
-            return
-        else:
-            edges = {
-                self.node_address: existing_edges.remove(receiver)
-            }
+        if raftos.get_leader() == self.node_address:
+            current_graph = await self.graph.get()
+            # TODO
+            # logic to look at current graph and check if it can be modified,
+            # adding edges to the graph, removing edges should be done/called from here.
 
-        await self.graph.update(edges)
+            new_edges = {} # REMOVE once TODO above is complete
+
+            await self.graph.update(new_edges)
+
+            return True
+
+        return False
 
