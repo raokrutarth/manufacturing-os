@@ -42,5 +42,8 @@ class SingleItemNode(BaseNode):
     def get_name(self):
         return self.node_id
 
+    def get_dependency(self):
+        return self.dependency
+
     def __repr__(self):
         return "{}::{}".format(self.node_id, self.dependency)
