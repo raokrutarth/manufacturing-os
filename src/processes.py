@@ -1,6 +1,8 @@
 import zmq
 import operations
 import logging
+import pickle 
+
 from collections import defaultdict
 from time import sleep
 from threading import Thread
@@ -86,8 +88,9 @@ class SocketBasedNodeProcess(NodeProcess):
                         if not message:
                             sleep(self.DELAY)
                         else:
-                            socket.send(message)
-
+                            socket.send(pickle.dumps(message))
+                            
+                            
         class OpsRunnerThread(Thread):
             '''
                 Operation runner allows the node instinatiator to declare
