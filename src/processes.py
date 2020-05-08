@@ -62,7 +62,7 @@ class SocketBasedNodeProcess(NodeProcess):
             def run(thread):
                 log.debug('%s starting subscriber thread', self.node.get_name())
                 context = zmq.Context()
-                socket = context.socket(zmq.SUB)
+                socket = context.socket(zmq.PULL)
 
                 # log.debug("connecting to sockets %s in subscriber thread for node %d",
                 #     self.cluster.process_specs,  self.node.node_id)
@@ -81,13 +81,14 @@ class SocketBasedNodeProcess(NodeProcess):
                 log.debug('%s starting publisher thread', self.node.get_name())
 
                 context = zmq.Context()
-                socket = context.socket(zmq.PUB)
+                socket = context.socket(zmq.PUSH)
                 socket.bind("tcp://127.0.0.1:%d" % (self.port))
 
                 while True:
                     if not self.messageQueue.empty():
                         message = self.messageQueue.get()
-                        log.debug("publisher in %s sending message %s...", self.node.node_id, message[:10])
+                        sleep(2)
+                        #log.debug("publisher in %s sending message %s...", self.node.node_id, message[:10])
                         socket.send(message)
                     else:
                         sleep(self.DELAY)
@@ -144,7 +145,7 @@ class SocketBasedNodeProcess(NodeProcess):
         log.info("Started node %s", self.node.get_name())
 
     def sendMessage(self, message):
-        log.debug("sending message %s from %s", message, self.node.node_id)
+        #log.debug("sending message %s from %s", message, self.node.node_id)
         self.messageQueue.put_nowait(pickle.dumps(message))
 
     def onMessage(self, message):
