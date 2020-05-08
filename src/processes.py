@@ -1,12 +1,12 @@
 import zmq
 import operations
 import logging
-import pickle 
+import pickle
 
 from collections import defaultdict
 from time import sleep
 from threading import Thread
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 from nodes import BaseNode
 from cluster import Cluster
@@ -23,7 +23,7 @@ class NodeProcess(object):
     def __init__(self, node, cluster):
         self.node = node
         self.cluster = cluster
-        self.messageQueue = [""] # zmq cannot send "None" messages out of the box -- only strings and bytes!
+        self.messageQueue = Queue()
 
     def sendMessage(self, message):
         pass
@@ -63,15 +63,17 @@ class SocketBasedNodeProcess(NodeProcess):
                 log.debug('%s starting subscriber thread', self.node.get_name())
                 context = zmq.Context()
                 socket = context.socket(zmq.SUB)
-                
+
+                # log.debug("connecting to sockets %s in subscriber thread for node %d",
+                #     self.cluster.process_specs,  self.node.node_id)
                 for p_spec in self.cluster.process_specs:
-                    # Node shouldn't connect to itself, right?
-                    if p_spec.name != "process-" + str(self.node.get_name()):
-                        socket.connect("tcp://%s:%d" % (p_spec.name, p_spec.port))
+                    # Node shouldn't connect to itself
+                    if p_spec.port != self.port:
+                        socket.connect("tcp://127.0.0.1:%d" %  (p_spec.port))
 
                 while True:
-                    sleep(2)
                     message = socket.recv()
+                    log.debug("subscriber in %s got message %s...", self.node.node_id, message[:10])
                     self.onMessage(message)
 
         class PublishThread(Thread):
@@ -80,17 +82,17 @@ class SocketBasedNodeProcess(NodeProcess):
 
                 context = zmq.Context()
                 socket = context.socket(zmq.PUB)
-                socket.bind("tcp://*:%d" % self.port)
+                socket.bind("tcp://127.0.0.1:%d" % (self.port))
 
                 while True:
-                    if self.messageQueue:
-                        message = self.messageQueue.pop(0)
-                        if not message:
-                            sleep(self.DELAY)
-                        else:
-                            socket.send(pickle.dumps(message))
-                            
-                            
+                    if not self.messageQueue.empty():
+                        message = self.messageQueue.get()
+                        log.debug("publisher in %s sending message %s...", self.node.node_id, message[:10])
+                        socket.send(message)
+                    else:
+                        sleep(self.DELAY)
+
+
         class OpsRunnerThread(Thread):
             '''
                 Operation runner allows the node instinatiator to declare
@@ -118,7 +120,7 @@ class SocketBasedNodeProcess(NodeProcess):
 
         self.subscriber = SubscribeThread()
         self.publisher = PublishThread()
-        
+
         self.raft_helper = RaftHelper(self, self.cluster) # shared dictionary
 
         if self.flags['runOps']:
@@ -142,8 +144,11 @@ class SocketBasedNodeProcess(NodeProcess):
         log.info("Started node %s", self.node.get_name())
 
     def sendMessage(self, message):
-        self.messageQueue.append(message)
+        log.debug("sending message %s from %s", message, self.node.node_id)
+        self.messageQueue.put_nowait(pickle.dumps(message))
 
     def onMessage(self, message):
+        # de-serialize message
+        message = pickle.loads(message)
         log.debug("Received: %s from %s", message, message.source)
 
