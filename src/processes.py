@@ -1,16 +1,13 @@
-import zmq
-import operations
+
 import logging
-import pickle 
-
 from collections import defaultdict
-from time import sleep
-from threading import Thread
-from multiprocessing import Process
+from queue import Queue
 
+import operations
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
+from pub_sub import SubscribeThread, PublishThread
 
 log = logging.getLogger()
 
@@ -23,7 +20,10 @@ class NodeProcess(object):
     def __init__(self, node, cluster):
         self.node = node
         self.cluster = cluster
-        self.messageQueue = [""] # zmq cannot send "None" messages out of the box -- only strings and bytes!
+
+        # use a thread-safe queue as message queue to
+        # transfer messages from thread __ to the publisher thread
+        self.message_queue = Queue()
 
     def sendMessage(self, message):
         pass
@@ -45,84 +45,24 @@ class SocketBasedNodeProcess(NodeProcess):
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
         # FIXME:
-        # self.cluster.process_specs is a list not a map, if node_id
+        # self.cluster.process_specs is a list, not a map, if node_id
         # becomes a non-int or too large, this crashes. I.e. node_id has to be an integer
         # in the range [0, len(cluster.process_specs))
         self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
         self.flags = flags
 
-        self.DELAY = 0.1
-
-        # For testing, dummy runs
-        self.ops_to_run = self.cluster.blueprint.node_specific_ops[self.node.node_id]
-
-        # Inspired from https://github.com/streed/simpleRaft
-        class SubscribeThread(Thread):
-            def run(thread):
-                log.debug('%s starting subscriber thread', self.node.get_name())
-                context = zmq.Context()
-                socket = context.socket(zmq.SUB)
-                
-                for p_spec in self.cluster.process_specs:
-                    # Node shouldn't connect to itself, right?
-                    if p_spec.name != "process-" + str(self.node.get_name()):
-                        socket.connect("tcp://%s:%d" % (p_spec.name, p_spec.port))
-
-                while True:
-                    sleep(2)
-                    message = socket.recv()
-                    self.onMessage(message)
-
-        class PublishThread(Thread):
-            def run(thread):
-                log.debug('%s starting publisher thread', self.node.get_name())
-
-                context = zmq.Context()
-                socket = context.socket(zmq.PUB)
-                socket.bind("tcp://*:%d" % self.port)
-
-                while True:
-                    if self.messageQueue:
-                        message = self.messageQueue.pop(0)
-                        if not message:
-                            sleep(self.DELAY)
-                        else:
-                            socket.send(pickle.dumps(message))
-                            
-                            
-        class OpsRunnerThread(Thread):
-            '''
-                Operation runner allows the node instinatiator to declare
-                the operations the node should take without having any influence
-                from any other node.
-
-                E.g. during a test, we want a specific node to run reallocate.
-
-                NOTE:
-                    Not to be used during actual demo unless an operation needs to
-                    be simulated.
-            '''
-            @staticmethod
-            def getMsgForOp(op):
-                log.info('%s constructing message for operation %s', self.node.get_name(), op)
-                return operations.OpHandler.getMsgForOp(self.node, op)
-
-            def run(thread):
-                log.debug('%s starting operation thread with operations %s', self.node.get_name(), self.ops_to_run)
-                OPS_DELAY = 1.0
-                for op in self.ops_to_run:
-                    msg = thread.getMsgForOp(op)
-                    self.sendMessage(msg)
-                    sleep(OPS_DELAY)
-
-        self.subscriber = SubscribeThread()
-        self.publisher = PublishThread()
-        
-        self.raft_helper = RaftHelper(self, self.cluster) # shared dictionary
+        self.subscriber = SubscribeThread(self, self.cluster, self.onMessage)
+        self.publisher = PublishThread(self, self.message_queue)
+        self.raft_helper = RaftHelper(self, self.cluster)
 
         if self.flags['runOps']:
-            self.opRunner = OpsRunnerThread()
+            # run the ops runner, a testing utility. See doc for OpsRunnerThread class
+            self.opRunner = operations.OpsRunnerThread(
+                self,
+                self.cluster.blueprint.node_specific_ops[self.node.node_id],
+                self.sendMessage,
+            )
 
         self.start()
 
@@ -139,11 +79,19 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.publisher)
         if self.flags['runOps']:
             self.startThread(self.opRunner)
-        log.info("Started node %s", self.node.get_name())
+        log.info("Successfully started node %s", self.node.get_name())
 
     def sendMessage(self, message):
-        self.messageQueue.append(message)
+        log.debug("sending message %s from node %s", message, self.node.node_id)
+        self.message_queue.put_nowait(message)
 
-    def onMessage(self, message):
+    def onMessage(self, message: 'Message'):
+        # de-serialize message
         log.debug("Received: %s from %s", message, message.source)
-
+        '''
+            TODO
+            add logic to take an action based on the message object that
+            is expected to be one of the sub-classes of the Message class
+            in messages.py
+        '''
+        return
