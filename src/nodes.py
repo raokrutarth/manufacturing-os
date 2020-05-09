@@ -14,6 +14,7 @@
         - Provide templates for common base cases
 """
 
+from items import ItemDependency
 from collections import namedtuple
 
 # Process Specification - port
@@ -22,11 +23,14 @@ ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
 class BaseNode(object):
 
-    def __init__(self, args):
-        self.node_id = args["node_id"]
+    def __init__(self, node_id):
+        self.node_id = node_id
 
     def __repr__(self):
         return str(self.node_id)
+
+    def get_name(self):
+        return self.node_id
 
 
 class SingleItemNode(BaseNode):
@@ -36,12 +40,22 @@ class SingleItemNode(BaseNode):
         - Contains the input items required to produce that quantity
     """
 
-    def __init__(self, args):
-        super(SingleItemNode, self).__init__(args)
-        self.dependency = args["dependency"]
+    def __init__(self, node_id, dependency: ItemDependency):
+        super(SingleItemNode, self).__init__(node_id)
+        self.dependency = dependency
 
-    def get_name(self):
-        return self.node_id
+    def get_dependency(self):
+        return self.dependency
+
+    def __repr__(self):
+        return "{}::{}".format(self.node_id, self.dependency)
+
+
+class DependencyNode(BaseNode):
+
+    def __init__(self, node_id, dependency):
+        super(DependencyNode, self).__init__(node_id)
+        self.dependency = dependency
 
     def get_dependency(self):
         return self.dependency
