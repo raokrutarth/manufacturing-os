@@ -24,15 +24,11 @@ NUM_NODES = 5
 
 async def main():
     # determine nodes (of type single item node) and operations for the demo cluster
+    # TODO determine bootstrap dependency per node --
     demo_nodes = [
-        nodes.SingleItemNode({
-            'node_id': i,
-
-            # TODO determine bootstrap dependency per node --
-            'dependency': items.ItemDependency([], ""),
-            }) for i in range(NUM_NODES)
+        nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(NUM_NODES)
     ]
-    demo_ops = {n.node_id: [operations.Op.Allocate] for n in demo_nodes}
+    demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
 
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)

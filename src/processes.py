@@ -1,4 +1,3 @@
-
 import logging
 from collections import defaultdict
 from queue import Queue
@@ -10,6 +9,7 @@ from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
 
 log = logging.getLogger()
+
 
 class NodeProcess(object):
     """

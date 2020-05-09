@@ -10,7 +10,15 @@ Item = namedtuple('Item', ['name', 'id'])
 # Item requirement - Item, Quantity
 ItemReq = namedtuple('ItemReq', ['item', 'quantity'])
 
+
 class ItemDependency(object):
+
+    @classmethod
+    def newNullDependency(cls):
+        """
+        returns a null item dependency i.e. [] -> []
+        """
+        return cls([], ItemReq(Item('null', -1), 0))
 
     def __init__(self, input_item_reqs: List[ItemReq], result_item_req: ItemReq):
         """
