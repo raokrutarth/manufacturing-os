@@ -34,11 +34,10 @@ class Cluster(object):
         self.init_process_specs(port_range_start)
 
     def init_process_specs(self, port_range_start):
-        self.process_specs = [
-            # assign a process name and port to process
-            ProcessSpec('process-{}'.format(i), port_range_start + i) \
-                for i in range(len(self.nodes))
-        ]
+        # assign a process name and port to process
+        self.process_specs = {
+            node.node_id: ProcessSpec('process-{}'.format(i), port_range_start + i) for i, node in enumerate(self.nodes)
+        }
 
     def __repr__(self):
-        return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs)
+        return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())

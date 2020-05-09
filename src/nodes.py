@@ -19,6 +19,7 @@ from collections import namedtuple
 # Process Specification - port
 ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
+
 class BaseNode(object):
 
     def __init__(self, args):

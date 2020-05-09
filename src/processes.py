@@ -44,10 +44,6 @@ class SocketBasedNodeProcess(NodeProcess):
         """
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
-        # FIXME:
-        # self.cluster.process_specs is a list, not a map, if node_id
-        # becomes a non-int or too large, this crashes. I.e. node_id has to be an integer
-        # in the range [0, len(cluster.process_specs))
         self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
         self.flags = flags

@@ -8,15 +8,15 @@ log = logging.getLogger()
 LEADER_WAL_DIR = abspath("./tmp")
 GRAPH_NAME = 'sc_graph'
 
+
 class RaftHelper():
     def __init__(self, node, cluster):
         self.graph = None
 
         # extract addresses of other nodes in the cluster
         self.cluster = [
-            "127.0.0.1:%d" % (port_spec.port) \
-                for port_spec in cluster.process_specs \
-                    if port_spec.port != node.port
+            "127.0.0.1:%d" % port_spec.port \
+                for port_spec in cluster.process_specs.values() if port_spec.port != node.port
         ]
         self.node_address = "127.0.0.1:%d" % node.port
 
@@ -24,8 +24,6 @@ class RaftHelper():
         '''
             Adds the node with node ID = node_id to the raftos
             based cluster.
-            FIXME:
-                node_id has to be an integer in the range [0, len(cluster.process_specs))
         '''
         log.debug("registering node with port %s in cluster %s with raft helper",
             self.node_address, self.cluster)

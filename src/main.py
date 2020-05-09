@@ -21,6 +21,7 @@ log = logging.getLogger()
 
 NUM_NODES = 5
 
+
 async def main():
     # determine nodes (of type single item node) and operations for the demo cluster
     demo_nodes = [
