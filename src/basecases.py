@@ -2,10 +2,11 @@ import operations
 from collections import defaultdict 
 
 import graph_funcs
-from nodes import BaseNode, SingleItemNode
+from nodes import BaseNode, SingleItemNode, DependencyNode
 from cluster import ClusterBlueprint
 
 import logging
+
 log = logging.getLogger()
 
 '''
@@ -15,8 +16,9 @@ log = logging.getLogger()
     specify the note types, operations, etc.
 '''
 
+
 def dummyNodes(n):
-    return [BaseNode({'node_id': i}) for i in range(n)]
+    return [BaseNode(node_id=i) for i in range(n)]
 
 
 def dummyOperationsAllocateCase(nodes):
@@ -39,6 +41,7 @@ def dummyBlueprintCase1():
     ops = dummyOperationsAllocateCase(nodes)
     return ClusterBlueprint(nodes, ops)
 
+
 def fiveDummyItemNodes():
     """
     Creating 5 itemnodes that have the following dependencies
@@ -48,13 +51,14 @@ def fiveDummyItemNodes():
 
     """
     itemnodes = []
-    itemnodes.append(SingleItemNode({'node_id': 0, 'dependency': []}))
-    itemnodes.append(SingleItemNode({'node_id': 1, 'dependency': [0]}))
-    itemnodes.append(SingleItemNode({'node_id': 2, 'dependency': [0]}))
-    itemnodes.append(SingleItemNode({'node_id': 3, 'dependency': [0]}))
-    itemnodes.append(SingleItemNode({'node_id': 4, 'dependency': [1,2]}))
-    itemnodes.append(SingleItemNode({'node_id': 5, 'dependency': [3,4]}))
+    itemnodes.append(DependencyNode(node_id=0, dependency=[]))
+    itemnodes.append(DependencyNode(node_id=1, dependency=[0]))
+    itemnodes.append(DependencyNode(node_id=2, dependency=[0]))
+    itemnodes.append(DependencyNode(node_id=3, dependency=[0]))
+    itemnodes.append(DependencyNode(node_id=4, dependency=[1, 2]))
+    itemnodes.append(DependencyNode(node_id=5, dependency=[3, 4]))
     return itemnodes
+
 
 def dummyBlueprintCase2():
     """
@@ -63,6 +67,7 @@ def dummyBlueprintCase2():
     itemnodes = fiveDummyItemNodes()
     ops = dummyOperationsAllocateCase(itemnodes)
     return ClusterBlueprint(itemnodes, ops)
+
 
 def createDependencyGraph_BlueprintCase2():
     """
@@ -75,13 +80,18 @@ def createDependencyGraph_BlueprintCase2():
             graph_funcs.addEdge(graph, dep, node.node_id)
     return graph, blueprint
 
+
 def createFlowGraphAllPaths_BlueprintCase2():
     graph, blueprint = createDependencyGraph_BlueprintCase2()
-    return graph_funcs.find_all_paths(graph, blueprint.nodes[0].node_id, blueprint.nodes[len(blueprint.nodes)-1].node_id) 
+    return graph_funcs.find_all_paths(graph, blueprint.nodes[0].node_id, blueprint.nodes[len(blueprint.nodes)-1].node_id)
+
 
 def createFlowGraphShortestPaths_BlueprintCase2():
     graph, blueprint = createDependencyGraph_BlueprintCase2()
     return graph_funcs.find_shortest_path(graph, blueprint.nodes[0].node_id, blueprint.nodes[len(blueprint.nodes)-1].node_id)
+
+
+# TODO: Remove testing from this class, otherwise let's use unittest for this
 
 if __name__ == "__main__":
     graph, blueprint = createDependencyGraph_BlueprintCase2()

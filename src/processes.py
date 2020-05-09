@@ -1,15 +1,16 @@
-
 import logging
+import operations
+
 from collections import defaultdict
 from queue import Queue
-
-import operations
+from time import sleep
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
 
 log = logging.getLogger()
+
 
 class NodeProcess(object):
     """
@@ -44,10 +45,6 @@ class SocketBasedNodeProcess(NodeProcess):
         """
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
-        # FIXME:
-        # self.cluster.process_specs is a list, not a map, if node_id
-        # becomes a non-int or too large, this crashes. I.e. node_id has to be an integer
-        # in the range [0, len(cluster.process_specs))
         self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
         self.flags = flags
@@ -79,7 +76,13 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.publisher)
         if self.flags['runOps']:
             self.startThread(self.opRunner)
+
         log.info("Successfully started node %s", self.node.get_name())
+
+    async def bootstrap(self):
+        log.debug("Bootstrapping node %s", self.node.get_name())
+        await self.raft_helper.init_flow()
+        log.info("Successfully bootstrapped node %s", self.node.get_name())
 
     def sendMessage(self, message):
         log.debug("sending message %s from node %s", message, self.node.node_id)
