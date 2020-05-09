@@ -1,6 +1,8 @@
+import logging
+import items
+
 from typing import List
 from collections import defaultdict
-import logging
 
 from nodes import BaseNode, ProcessSpec
 
@@ -43,3 +45,46 @@ class Cluster(object):
 
     def __repr__(self):
         return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())
+
+
+class ClusterWideFlow(object):
+    """
+    Object storing details of the cluster wide flow
+    All nodes should interact e.g. get requests through this interface
+    """
+
+    def __init__(self, nodes: List[BaseNode]):
+        self.node_ids = [n.node_id for n in nodes]
+        self.outgoing_flows = {n: [] for n in self.node_ids}
+        self.incoming_flows = {n: [] for n in self.node_ids}
+
+    def addNode(self, node_id):
+        if node_id not in self.node_ids:
+            self.node_ids.append(node_id)
+            self.outgoing_flows[node_id] = []
+            self.incoming_flows[node_id] = []
+
+    def addFlow(self, source, dst, item: items.ItemReq):
+        assert (source in self.node_ids) and (dst in self.node_ids), "Source: {}, Dst: {}".format(source, dst)
+        self.outgoing_flows[source].append((dst, item))
+        self.incoming_flows[dst].append((source, item))
+
+    def getOutgoingFlowsForNode(self, node_id):
+        """
+        Outgoing flows i.e. nodes to which node_id is supposed to give items
+        """
+        return self.outgoing_flows[node_id]
+
+    def getIncomingFlowsForNode(self, node_id):
+        """
+        Incoming flows i.e. nodes from which node_id is supposed to recieve items
+        """
+        return self.incoming_flows[node_id]
+
+    def clearAll(self):
+        self.node_ids = []
+        self.outgoing_flows = {}
+        self.incoming_flows = {}
+
+    def __repr__(self):
+        return "{}".format(self.outgoing_flows)

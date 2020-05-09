@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 log = logging.getLogger()
 
-NUM_NODES = 5
+NUM_NODES = 3
 
 
 async def main():
@@ -42,6 +42,10 @@ async def main():
         # since start() for the node is an async, non-blocking method, use await
         # to make sure the node is started successfully.
         await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
+        log.debug("Node %d started", node.node_id)
+
+    for node in demo_cluster.nodes:
+        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
         log.debug("Node %d started", node.node_id)
 
     log.info("All nodes started")

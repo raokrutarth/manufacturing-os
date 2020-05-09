@@ -1,8 +1,9 @@
 import logging
+import operations
+
 from collections import defaultdict
 from queue import Queue
-
-import operations
+from time import sleep
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
@@ -75,7 +76,13 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.publisher)
         if self.flags['runOps']:
             self.startThread(self.opRunner)
+
         log.info("Successfully started node %s", self.node.get_name())
+
+    async def bootstrap(self):
+        log.debug("Bootstrapping node %s", self.node.get_name())
+        await self.raft_helper.init_flow()
+        log.info("Successfully bootstrapped node %s", self.node.get_name())
 
     def sendMessage(self, message):
         log.debug("sending message %s from node %s", message, self.node.node_id)
