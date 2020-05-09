@@ -8,6 +8,7 @@ from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
+from messages import Action, MsgType
 
 log = logging.getLogger()
 
@@ -94,4 +95,8 @@ class SocketBasedNodeProcess(NodeProcess):
             is expected to be one of the sub-classes of the Message class
             in messages.py
         '''
+        if message.action == Action.Heartbeat and message.type == MsgType.Request:
+            #TODO: update liveness status in global dictionary
+            print(self.node.get_name(), ": I am live!!!")
+
         return

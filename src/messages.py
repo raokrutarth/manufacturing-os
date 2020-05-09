@@ -92,3 +92,18 @@ class AllocateCommit(Message):
     def __init__(self, source: BaseNode, dependency: ItemDependency):
         super(AllocateCommit, self).__init__(source, Action.Allocate, MsgType.Request)
         self.dependency = dependency
+
+class HeartbeatReq(Message):
+    """
+    Signal to every node to response with heartbeat
+    """
+    def __init__(self, source: BaseNode):
+        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request)
+
+class HeartbeatResp(Message):
+    """
+    Nodes replaying their heartbeat
+    """
+    def __init__(self, source:BaseNode, dest:BaseNode, dependency:ItemDependency):
+        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
+        self.dependency = dependency
