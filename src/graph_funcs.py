@@ -1,6 +1,9 @@
 def addEdge(graph,u,v): 
     graph[u].append(v) 
   
+def deleteEdge(graph,u,v): 
+    graph[u].remove(v) 
+  
 # definition of function 
 def generate_edges(graph): 
     edges = [] 
