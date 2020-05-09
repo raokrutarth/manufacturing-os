@@ -52,7 +52,7 @@ class Message(object):
 class Ack(Message):
 
     def __init__(self, source: BaseNode, dest: BaseNode, msgId):
-        super(Ack, self).__init__(source, Action.Allocate, MsgType.Response, dest)
+        super(Ack, self).__init__(source, Action.Ack, MsgType.Response, dest)
         self.msgId = msgId
 
 
@@ -104,6 +104,5 @@ class HeartbeatResp(Message):
     """
     Nodes replaying their heartbeat
     """
-    def __init__(self, source:BaseNode, dest:BaseNode, dependency:ItemDependency):
-        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
-        self.dependency = dependency
+    def __init__(self, source:BaseNode, dest:BaseNode, msgId):
+        super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)

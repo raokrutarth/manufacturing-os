@@ -4,11 +4,12 @@ from collections import defaultdict
 from queue import Queue
 
 import operations
+import messages
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
-from messages import Action, MsgType
+from messages import Action, MsgType, HeartbeatResp
 
 log = logging.getLogger()
 
@@ -96,7 +97,9 @@ class SocketBasedNodeProcess(NodeProcess):
             in messages.py
         '''
         if message.action == Action.Heartbeat and message.type == MsgType.Request:
-            #TODO: update liveness status in global dictionary
-            print(self.node.get_name(), ": I am live!!!")
+            self.sendMessage(HeartbeatResp(self, message.source, "hello"))
+            log.debug("%s: I am live!!!", self.node.get_name())
+        elif message.action == Action.Heartbeat and message.type == MsgType.Response:
+            log.debug("%s : Heartbeat Resp: Roger that!", message.source)
 
         return
