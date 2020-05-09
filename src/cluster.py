@@ -6,6 +6,7 @@ from nodes import BaseNode, ProcessSpec
 
 log = logging.getLogger()
 
+
 class ClusterBlueprint(object):
     """
     Represents the cluster blueprint to create Clusters from
@@ -30,6 +31,7 @@ class Cluster(object):
     def __init__(self, blueprint, port_range_start=5000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
+        self.node_ids = [n.node_id for n in self.nodes]
         self.process_specs = None
         self.init_process_specs(port_range_start)
 
