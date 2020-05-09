@@ -97,6 +97,10 @@ class SocketBasedNodeProcess(NodeProcess):
         '''
         if message.action == Action.Heartbeat and message.type == MsgType.Request:
             #TODO: update liveness status in global dictionary
+            # I am waiting to discuss who will take action of overall liveness exception.
+            # Is the publisher of heartbeat or the leader? If leader takes action,
+            # then there are no need for message to send back to the publisher, instead we can
+            # just update global dictionary of liveness status.
             log.debug("%s: I am live!!!", self.node.get_name())
 
         return
