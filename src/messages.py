@@ -117,3 +117,40 @@ class UpdateReq(Message):
 
     def __repr__(self):
         return "{}, NewDependency: {}".format(super(UpdateReq, self).__repr__(), self.dependency)
+#
+#
+# class MessageHandler(object):
+#     """
+#     Message handler
+#     """
+#
+#     def __init__(self, node_process: 'SocketBasedNodeProcess', ops: List[Op], callback: 'sendMessage', delay=1):
+#         '''
+#             ops: operations the node will run when it starts.
+#             callback: the callback to send a message
+#         '''
+#         super(OpsRunnerThread, self).__init__()
+#
+#         self.node_process = node_process
+#         self.callback = callback
+#         self.ops_to_run = ops
+#         self.delay = delay
+#
+#         self.node_id = node_process.node.get_name()
+#
+#     def get_message_from_op(self, op):
+#         log.info('node %s constructing message for operation %s', self.node_id, op)
+#         return OpHandler.getMsgForOp(self.node_id, op)
+#
+#     def run(self):
+#         log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
+#
+#         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
+#         sleep(self.delay)
+#
+#         for op in self.ops_to_run:
+#             msg = self.get_message_from_op(op)
+#             self.callback(msg)
+#             sleep(self.delay)
+#
+#         log.debug('node %s finished running operations %s', self.node_id, self.ops_to_run)

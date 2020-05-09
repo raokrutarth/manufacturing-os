@@ -1,13 +1,26 @@
 import asyncio
 import raftos
 import logging
-import items
+import pickle, jsonpickle
+import cluster as ctr
+
 from os.path import abspath
 
 log = logging.getLogger()
 
 LEADER_WAL_DIR = abspath("./tmp")
 GRAPH_NAME = 'sc_graph'
+
+
+class ComplexJSONSerializer:
+    @staticmethod
+    def pack(data):
+        return jsonpickle.dumps(data).encode()
+
+    @staticmethod
+    def unpack(data):
+        decoded = data.decode() if isinstance(data, bytes) else data
+        return jsonpickle.loads(decoded)
 
 
 class RaftHelper(object):
@@ -22,10 +35,9 @@ class RaftHelper(object):
             for port_spec in cluster.process_specs.values() if port_spec.port != node.port
         ]
         self.node_address = "127.0.0.1:%d" % node.port
-        self.node_ids = cluster.node_ids
+        self.nodes = cluster.nodes
 
-        self.data = None
-        self.flow_key = 'cluster_flow'
+        self.cluster_flow = None
 
     async def register_node(self):
         '''
@@ -37,22 +49,36 @@ class RaftHelper(object):
 
         raftos.configure({
             'log_path': LEADER_WAL_DIR,
-            'serializer': raftos.serializers.JSONSerializer,
+            'serializer': ComplexJSONSerializer,
         })
 
         await raftos.register(self.node_address, cluster=self.cluster)
 
+        log.debug("registering node with port %s in cluster %s with raft helper",
+                  self.node_address, self.cluster)
+
         # Create replicated dict which can contain different items we want shared amongst nodes
         # Dict-like object: data.update(), data['key'] etc
-        self.data = raftos.ReplicatedDict(name=GRAPH_NAME)
-        await self.data[self.flow_key].set(items.ClusterWideFlow(nodes=self.node_ids))
+        self.cluster_flow = raftos.Replicated(name='cluster_flow')
 
-    async def update_flow(self, new_cluster_flow: items.ClusterWideFlow):
+    @staticmethod
+    def get_leader():
+        return raftos.get_leader()
+
+    async def init_flow(self):
+        if raftos.get_leader() == self.node_address:
+            cluster_flow_obj = ctr.ClusterWideFlow(nodes=self.nodes)
+            log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
+            self.cluster_flow = raftos.Replicated(name='cluster_flow')
+            await self.cluster_flow.set(cluster_flow_obj)
+            log.debug("Finished init cluster flow on leader: {}".format(self.node_address))
+
+    async def update_flow(self, new_cluster_flow: ctr.ClusterWideFlow):
         """
         Utility to persist flow used by leader
         """
         if raftos.get_leader() == self.node_address:
-            await self.data[self.flow_key].set(new_cluster_flow)
+            await self.cluster_flow.set(new_cluster_flow)
             return True
         return False
 

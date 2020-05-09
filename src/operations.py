@@ -89,7 +89,7 @@ class OpsRunnerThread(Thread):
         log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
-        sleep(self.delay)
+        sleep(3 * self.delay)
 
         for op in self.ops_to_run:
             msg = self.get_message_from_op(op)
@@ -97,4 +97,3 @@ class OpsRunnerThread(Thread):
             sleep(self.delay)
 
         log.debug('node %s finished running operations %s', self.node_id, self.ops_to_run)
-
