@@ -1,5 +1,6 @@
 import enum
 import logging
+import copy
 from threading import Thread
 from time import sleep
 from typing import List
@@ -46,6 +47,8 @@ class OpHandler:
         '''
         if op == Op.Allocate:
             return messages.AllocateReq(source)
+        elif op == Op.Heartbeat:
+            return messages.HeartbeatReq(source)
         else:
             assert False, "Invalid op: {}".format(op.name)
 
@@ -82,7 +85,11 @@ class OpsRunnerThread(Thread):
         log.debug('node %s running operation thread with operations %s',
             self.node_id, self.ops_to_run)
 
-        for op in self.ops_to_run:
+        # Add Heartbeat Action
+        ops_to_run = copy.deepcopy(self.ops_to_run)
+        ops_to_run.append(Op.Heartbeat)
+
+        for op in ops_to_run:
             msg = self.to_message_class(op)
             self.callback(msg)
             sleep(self.delay)

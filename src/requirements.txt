@@ -1,3 +1,4 @@
+python=3.5.4
 absl-py==0.6.1
 asn1crypto==0.24.0
 astor==0.7.1
