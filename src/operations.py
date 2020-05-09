@@ -85,9 +85,9 @@ class OpsRunnerThread(Thread):
         log.debug('node %s running operation thread with operations %s',
             self.node_id, self.ops_to_run)
 
-        # Add Heartbeat Action
+        # Add Heartbeat Action first
         ops_to_run = copy.deepcopy(self.ops_to_run)
-        ops_to_run.append(Op.Heartbeat)
+        ops_to_run.insert(0, Op.Heartbeat)
 
         for op in ops_to_run:
             msg = self.to_message_class(op)
