@@ -9,7 +9,7 @@
 
 ```bash
 python3 -m venv ./src
-cd src && source bin/activate
+cd src
 python3 -m pip install -r requirements.txt
 ```
 

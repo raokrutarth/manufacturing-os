@@ -9,6 +9,7 @@ import basecases
 from cluster import Cluster
 import processes
 
+
 class BootstrapCluster(unittest.TestCase):
 
     def setUp(self):
@@ -35,6 +36,7 @@ class TestBootstrapCluster(BootstrapCluster):
         log.info(self.cluster)
         self.spawn_cluster_process(runOps=True)
         sleep(self.TIMEOUT)
+
 
 if __name__ == '__main__':
     unittest.main()

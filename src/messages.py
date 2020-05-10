@@ -19,22 +19,22 @@ class Action(enum.Enum):
     # Inits a heartbeat from a node
     Heartbeat = 1
 
-    # Signals to initiate leader election
-    ElectLeader = 2
-
-    # Notifies everyone of death
-    Death = 3
+    # Signals death of node
+    Death = 2
 
     # Signals to perform re-allocation; different from allocate in case we use a
     # different optimized algorithm for
-    # re-allocation - which we should ideally do
-    ReAllocate = 4
+    # re-allocation
+    ReAllocate = 3
 
     # Signals to initiate initial flow allocation consensus
-    Allocate = 5
+    Allocate = 4
 
-    # Signals an generic Ack
-    Ack = 6
+    # Signals a generic Ack
+    Ack = 5
+
+    # Signals to update dependency i.e. production-consumption requirements
+    Update = 6
 
 
 class Message(object):
@@ -48,11 +48,14 @@ class Message(object):
         self.dest = dest
         self.action = action
 
+    def __repr__(self):
+        return "{}-{}:{}->{}".format(self.action, self.type, self.source, self.dest)
+
 
 class Ack(Message):
 
     def __init__(self, source: BaseNode, dest: BaseNode, msgId):
-        super(Ack, self).__init__(source, Action.Ack, MsgType.Response, dest)
+        super(Ack, self).__init__(source, Action.Allocate, MsgType.Response, dest)
         self.msgId = msgId
 
 
@@ -106,3 +109,24 @@ class HeartbeatResp(Message):
     """
     def __init__(self, source:BaseNode, dest:BaseNode, msgId):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
+
+
+"""
+Helper classes for Update related operations. Current implementation assumes,
+    Step 1. UpdateReq
+    Step 2. Source gets Ack from Leader
+    Step 3. Leader performs reallocation using the Allocate Paradigm
+"""
+
+
+class UpdateReq(Message):
+    """
+    Signal to every node to that the source has updated its requirements
+    """
+
+    def __init__(self, source: BaseNode, new_dependency: ItemDependency):
+        super(UpdateReq, self).__init__(source, Action.Update, MsgType.Request)
+        self.dependency = new_dependency
+
+    def __repr__(self):
+        return "{}, NewDependency: {}".format(super(UpdateReq, self).__repr__(), self.dependency)
