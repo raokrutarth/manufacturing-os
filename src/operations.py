@@ -1,10 +1,12 @@
 import enum
 import logging
+import messages
+import items
+import copy
 from threading import Thread
 from time import sleep
 from typing import List
 
-import messages
 from nodes import BaseNode
 
 
@@ -15,9 +17,6 @@ class Op(enum.Enum):
 
     # Inits a heartbeat from a node
     Heartbeat = 1
-
-    # Signals to initiate leader election
-    ElectLeader = 2
 
     # Notifies everyone of death
     Death = 2
@@ -49,6 +48,10 @@ class OpHandler:
         '''
         if op == Op.Allocate:
             return messages.AllocateReq(source)
+        elif op == op.Heartbeat:
+            return messages.HeartbeatReq(source)
+        elif op == Op.UpdateDep:
+            return messages.UpdateReq(source, items.ItemDependency.newNullDependency())
         else:
             assert False, "Invalid op: {}".format(op.name)
 
@@ -76,7 +79,6 @@ class OpsRunnerThread(Thread):
         self.node_process = node_process
         self.callback = callback
         self.ops_to_run = ops
-        self.node_id = node_process.node.get_name()
         self.delay = delay
 
         self.node_id = node_process.node.get_name()
