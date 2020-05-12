@@ -89,7 +89,6 @@ class SocketBasedNodeProcess(NodeProcess):
         self.message_queue.put_nowait(message)
 
     def onMessage(self, message: 'Message'):
-        # de-serialize message
         log.debug("Received: %s from %s", message, message.source)
         '''
             TODO

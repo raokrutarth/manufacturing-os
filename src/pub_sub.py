@@ -31,7 +31,7 @@ class SubscribeThread(Thread):
 
         other_node_ports = \
             [spec.port for spec in self.cluster.process_specs.values() if spec.port != self.node_process.port]
-        log.debug("connecting to sockets %s in subscriber thread for node %d", other_node_ports, self.node_id)
+        log.debug("subscriber in node %d connecting to sockets %s", self.node_id, other_node_ports)
 
         for port in other_node_ports:
             # NOTE:
