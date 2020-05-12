@@ -52,7 +52,7 @@ class Message(object):
         return "{}-{}:{}->{}".format(self.action, self.type, self.source, self.dest)
 
 
-class Ack(Message):
+class AckResp(Message):
 
     def __init__(self, source: BaseNode, dest: BaseNode, msgId):
         super(Ack, self).__init__(source, Action.Allocate, MsgType.Response, dest)
@@ -107,7 +107,7 @@ class HeartbeatResp(Message):
     """
     Nodes replaying their heartbeat
     """
-    def __init__(self, source:BaseNode, dest:BaseNode, msgId):
+    def __init__(self, source:BaseNode, dest:BaseNode):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
 

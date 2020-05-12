@@ -28,8 +28,8 @@ async def main():
     demo_nodes = [
         nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(NUM_NODES)
     ]
-    #demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
-    demo_ops = {n.node_id: [operations.Op.Heartbeat] for n in demo_nodes}
+    demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
+    #demo_ops = {n.node_id: [operations.Op.Heartbeat] for n in demo_nodes}
     #demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep, operations.Op.Heartbeat] for n in demo_nodes}
 
     # build the cluster object

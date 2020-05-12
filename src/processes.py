@@ -9,6 +9,7 @@ from cluster import Cluster
 from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
 from messages import Action, MsgType, HeartbeatResp
+from operations import OpHandler
 
 log = logging.getLogger()
 
@@ -99,8 +100,8 @@ class SocketBasedNodeProcess(NodeProcess):
             in messages.py
         '''
         if message.action == Action.Heartbeat and message.type == MsgType.Request:
-            self.sendMessage(HeartbeatResp(source=self, dest=message.source, msgId="hello"))
-            log.debug("%s: I am live!!!", self.node.get_name())
+            response = OpHandler.getMsgForOp(source=self.node, op=Action.Heartbeat, type = MsgType.Response, dest = message.source)
+            self.sendMessage(response)
         elif message.action == Action.Heartbeat and message.type == MsgType.Response:
             log.debug("%s : Heartbeat Resp: Roger that!", message.source)
 

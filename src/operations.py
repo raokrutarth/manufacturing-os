@@ -8,6 +8,7 @@ from time import sleep
 from typing import List
 
 from nodes import BaseNode
+from messages import MsgType
 
 
 log = logging.getLogger()
@@ -39,7 +40,7 @@ class Op(enum.Enum):
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source: BaseNode, op: Op):
+    def getMsgForOp(source: BaseNode, op: Op, type: MsgType = MsgType.Request, dest=None):
         '''
             TODO (Nishant): explain why this is needed.
 
@@ -49,7 +50,10 @@ class OpHandler:
         if op == Op.Allocate:
             return messages.AllocateReq(source)
         elif op == op.Heartbeat:
-            return messages.HeartbeatReq(source)
+            if type == MsgType.Request:
+               return messages.HeartbeatReq(source)
+            else:
+               return messages.HeartbeatResp(source, dest)
         elif op == Op.UpdateDep:
             return messages.UpdateReq(source, items.ItemDependency.newNullDependency())
         else:
@@ -87,19 +91,33 @@ class OpsRunnerThread(Thread):
         log.info('node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node_id, op)
 
+    def check_adjacent_nodes_liveness(self):
+        log.debug('node %s running operation thread with heartbeat before %s', self.node_id, self.ops_to_run)
+
+        # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
+        sleep(3 * self.delay)
+        # Append Hearbeat action to check liveness
+        #self.ops_to_run.append(Op.Heartbeat)
+        print("******* ops to run: ", len(self.ops_to_run), " , ", self.ops_to_run)
+
+        for op in self.ops_to_run:
+            heartbeat = OpHandler.getMsgForOp(source=self, op=op.Heartbeat, dest=self)
+            self.node_process.sendMessage(heartbeat)
+            sleep(self.delay)
+
+        log.debug('node %s finished running heartbeat and ready to run operations %s', self.node_id, self.ops_to_run)
+
     def run(self):
         log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
         sleep(3 * self.delay)
 
-        for op in self.ops_to_run:
-            msg = self.get_message_from_op(op)
-        # Add Heartbeat Action first
-        ops_to_run = copy.deepcopy(self.ops_to_run)
-        ops_to_run.insert(0, Op.Heartbeat)
+        # Append Hearbeat action to check liveness
+        self.ops_to_run.append(Op.Heartbeat)  # to be replaced by check_adjacent_nodes_liveness
+        #self.check_adjacent_nodes_liveness()
 
-        for op in ops_to_run:
+        for op in self.ops_to_run:
             msg = self.get_message_from_op(op)
             self.callback(msg)
             sleep(self.delay)
