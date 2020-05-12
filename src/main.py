@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import List
 import os
 from multiprocessing import Process
 from time import sleep
@@ -21,13 +22,55 @@ log = logging.getLogger()
 
 NUM_NODES = 3
 
+async def bootstrap_dependencies_three_nodes():
+    """
+    initialize demo_node with the following dependencies
+    0 -> 1 -> 2
+    """ 
+    demo_nodes = [
+        nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(3)
+    ]
+
+    wood = items.ItemReq(items.Item('wood', 0), 1)
+    door = items.ItemReq(items.Item('door', 1), 1)
+    house = items.ItemReq(items.Item('house', 2), 1)
+
+    demo_nodes[0].dependency = items.ItemDependency([], [wood])
+    demo_nodes[1].dependency = items.ItemDependency([wood], [door])
+    demo_nodes[2].dependency = items.ItemDependency([door], [house])
+
+    return demo_nodes
+
+async def bootstrap_dependencies_five_nodes():
+    """
+    initialize demo_node with the following dependencies
+    0 -> |         | -> 3
+    1 -> | -> 2 -> | -> 4
+    """
+    demo_nodes = [
+        nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(5)
+    ]
+
+    wood = items.ItemReq(items.Item('wood', 0), 1)
+    screws = items.ItemReq(items.Item('screw', 1), 1)
+    basic_material = items.ItemReq(items.Item('basic_material', 2), 1)
+    premium_material = items.ItemReq(items.Item('premium_material', 3), 1)
+    basic_door = items.ItemReq(items.Item('basic_door', 4), 1)
+    premium_door = items.ItemReq(items.Item('premium_door', 5), 1)
+
+    demo_nodes[0].dependency = items.ItemDependency([], [wood])
+    demo_nodes[1].dependency = items.ItemDependency([], [screws])
+    demo_nodes[2].dependency = items.ItemDependency([wood, screws], [basic_material, premium_material])
+    demo_nodes[3].dependency = items.ItemDependency([basic_material], [basic_door])
+    demo_nodes[4].dependency = items.ItemDependency([premium_material], [premium_door])
+
+    return demo_nodes
 
 async def main():
     # determine nodes (of type single item node) and operations for the demo cluster
-    # TODO determine bootstrap dependency per node --
-    demo_nodes = [
-        nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(NUM_NODES)
-    ]
+    #demo_nodes = await bootstrap_dependencies_three_nodes()
+    demo_nodes = await bootstrap_dependencies_five_nodes()
+
     demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
 
     # build the cluster object

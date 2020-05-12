@@ -55,8 +55,12 @@ class ClusterWideFlow(object):
 
     def __init__(self, nodes: List[BaseNode]):
         self.node_ids = [n.node_id for n in nodes]
+        self.nodes = nodes
         self.outgoing_flows = {n: [] for n in self.node_ids}
         self.incoming_flows = {n: [] for n in self.node_ids}
+
+    def bootstrap(self):
+        pass
 
     def addNode(self, node_id):
         if node_id not in self.node_ids:
