@@ -44,25 +44,24 @@ async def bootstrap_dependencies_three_nodes():
 async def bootstrap_dependencies_five_nodes():
     """
     initialize demo_node with the following dependencies
-    0 -> |         | -> 3
-    1 -> | -> 2 -> | -> 4
+    0 -> | -> 1 -> | -> 3
+         | -> 2 -> | -> 4
     """
     demo_nodes = [
         nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(5)
     ]
 
-    wood = items.ItemReq(items.Item('wood', 0), 1)
-    screws = items.ItemReq(items.Item('screw', 1), 1)
-    basic_material = items.ItemReq(items.Item('basic_material', 2), 1)
-    premium_material = items.ItemReq(items.Item('premium_material', 3), 1)
-    basic_door = items.ItemReq(items.Item('basic_door', 4), 1)
-    premium_door = items.ItemReq(items.Item('premium_door', 5), 1)
+    start = items.ItemReq(items.Item('start', 0), 1)  # There is always only one node starting the whole graph!
+    wood = items.ItemReq(items.Item('wood', 1), 1)
+    screws = items.ItemReq(items.Item('screws', 2), 1)
+    basic_door = items.ItemReq(items.Item('basic_door', 3), 1)
+    premium_door = items.ItemReq(items.Item('premium_door', 4), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], [wood])
-    demo_nodes[1].dependency = items.ItemDependency([], [screws])
-    demo_nodes[2].dependency = items.ItemDependency([wood, screws], [basic_material, premium_material])
-    demo_nodes[3].dependency = items.ItemDependency([basic_material], [basic_door])
-    demo_nodes[4].dependency = items.ItemDependency([premium_material], [premium_door])
+    demo_nodes[0].dependency = items.ItemDependency([], [start])
+    demo_nodes[1].dependency = items.ItemDependency([start], [wood])
+    demo_nodes[2].dependency = items.ItemDependency([start], [screws])
+    demo_nodes[3].dependency = items.ItemDependency([wood, screws], [basic_door])
+    demo_nodes[4].dependency = items.ItemDependency([wood, screws], [premium_door])
 
     return demo_nodes
 
