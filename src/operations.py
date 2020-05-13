@@ -2,12 +2,13 @@ import enum
 import logging
 import messages
 import items
-
+import copy
 from threading import Thread
 from time import sleep
 from typing import List
 
 from nodes import BaseNode
+from messages import MsgType
 
 
 log = logging.getLogger()
@@ -39,7 +40,7 @@ class Op(enum.Enum):
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source: BaseNode, op: Op):
+    def getMsgForOp(source: BaseNode, op: Op, type: MsgType = MsgType.Request, dest=None):
         '''
             TODO (Nishant): explain why this is needed.
 
@@ -48,6 +49,11 @@ class OpHandler:
         '''
         if op == Op.Allocate:
             return messages.AllocateReq(source)
+        elif op == op.Heartbeat:
+            if type == MsgType.Request:
+               return messages.HeartbeatReq(source)
+            else:
+               return messages.HeartbeatResp(source, dest)
         elif op == Op.UpdateDep:
             return messages.UpdateReq(source, items.ItemDependency.newNullDependency())
         else:
@@ -85,6 +91,19 @@ class OpsRunnerThread(Thread):
         log.info('node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node_id, op)
 
+    def check_and_notify_adjacent_nodes_liveness(self):
+        self.callback(self.get_message_from_op(Op.Heartbeat))
+        sleep(self.delay)
+
+        #   TODO: Send heartbeat message to only adjacent nodes
+        #   heartbeat = OpHandler.getMsgForOp(source=self, op=Op.Heartbeat)
+        #    for node in adjacent_nodes :
+        #        node.sendMessage(heartbeat)
+
+        # notify the leader the dead adjacent node
+
+        return
+
     def run(self):
         log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
 
@@ -95,5 +114,7 @@ class OpsRunnerThread(Thread):
             msg = self.get_message_from_op(op)
             self.callback(msg)
             sleep(self.delay)
+
+        self.check_and_notify_adjacent_nodes_liveness()
 
         log.debug('node %s finished running operations %s', self.node_id, self.ops_to_run)

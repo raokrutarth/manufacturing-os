@@ -1,13 +1,15 @@
-import logging
-import operations
 
+import logging
 from collections import defaultdict
 from queue import Queue
-from time import sleep
+
+import operations
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
+from messages import Action, MsgType, HeartbeatResp
+from operations import OpHandler
 
 log = logging.getLogger()
 
@@ -96,4 +98,10 @@ class SocketBasedNodeProcess(NodeProcess):
             is expected to be one of the sub-classes of the Message class
             in messages.py
         '''
+        if message.action == Action.Heartbeat and message.type == MsgType.Request:
+            response = OpHandler.getMsgForOp(source=self.node, op=Action.Heartbeat, type = MsgType.Response, dest = message.source)
+            self.sendMessage(response)
+        elif message.action == Action.Heartbeat and message.type == MsgType.Response:
+            log.debug("%s : Heartbeat Resp: Roger that!", message.source)
+
         return
