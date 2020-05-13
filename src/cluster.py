@@ -47,6 +47,9 @@ class Cluster(object):
         return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())
 
 def bootstrap_all_paths(nodes: List[BaseNode]):
+    """
+    Create a flow with all possible dependency paths
+    """
     cluster_flow = ClusterWideFlow(nodes)
     # Iterate over all nodes
     for node_input in cluster_flow.nodes:
@@ -73,12 +76,6 @@ class ClusterWideFlow(object):
         self.nodes = nodes
         self.outgoing_flows = {n: [] for n in self.node_ids}
         self.incoming_flows = {n: [] for n in self.node_ids}
-
-    # No very fast from an algorithmic perspective! 
-    # Put it out of CLUSTERWIDEFLOW
-    # Call it to create a new clusterwideflow object
-    # 
-    
 
     def addNode(self, node_id):
         if node_id not in self.node_ids:
