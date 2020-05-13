@@ -46,34 +46,15 @@ class Cluster(object):
     def __repr__(self):
         return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())
 
-def bootstrap_all_paths(nodes: List[BaseNode]):
-    """
-    Create a flow with all possible dependency paths
-    """
-    cluster_flow = ClusterWideFlow(nodes)
-    # Iterate over all nodes
-    for node_input in cluster_flow.nodes:
-        # Iterate over their input requirements
-        for input in node_input.dependency.input_item_reqs:
-            # Iterate over all nodes
-            for node_output in cluster_flow.nodes:
-                # Iterate over their output requirements
-                result = node_output.dependency.result_item_req
-                # add flow if item id in result = item id in input
-                if result.item.id == input.item.id:
-                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result.item)
-
-    return cluster_flow
-
 class ClusterWideFlow(object):
     """
     Object storing details of the cluster wide flow
     All nodes should interact e.g. get requests through this interface
     """
 
-    def __init__(self, nodes: List[BaseNode]): # Shouldn't that be ItemNodes?
-        self.node_ids = [n.node_id for n in nodes]
+    def __init__(self, nodes: List[BaseNode]):
         self.nodes = nodes
+        self.node_ids = [n.node_id for n in nodes]
         self.outgoing_flows = {n: [] for n in self.node_ids}
         self.incoming_flows = {n: [] for n in self.node_ids}
 
@@ -82,6 +63,20 @@ class ClusterWideFlow(object):
             self.node_ids.append(node_id)
             self.outgoing_flows[node_id] = []
             self.incoming_flows[node_id] = []
+    
+    def removeNode(self, node_id):
+        if node_id in self.node_ids:
+            self.node_ids.remove(node_id)
+            self.outgoing_flows.remove(node_id)
+            self.incoming_flows.remove(node_id)
+            for node in self.outgoing_flows:
+                for tup in node:
+                    if node_id in tup:
+                        node.remove(tup)
+            for node in self.incoming_flows:
+                for tup in node:
+                    if node_id in tup:
+                        node.remove(tup)
 
     def addFlow(self, source, dst, item: items.ItemReq):
         assert (source in self.node_ids) and (dst in self.node_ids), "Source: {}, Dst: {}".format(source, dst)
@@ -107,3 +102,72 @@ class ClusterWideFlow(object):
 
     def __repr__(self):
         return "{}".format(self.outgoing_flows)
+
+def bootstrap_all_paths(nodes: List[BaseNode]):
+    """
+    Create a flow with all possible dependency paths
+    """
+    cluster_flow = ClusterWideFlow(nodes)
+    # Iterate over all nodes
+    for node_input in cluster_flow.nodes:
+        # Iterate over their input requirements
+        for input in node_input.dependency.input_item_reqs:
+            # Iterate over all nodes
+            for node_output in cluster_flow.nodes:
+                # Iterate over their output requirements
+                result = node_output.dependency.result_item_req
+                # add flow if item id in result = item id in input
+                if result.item.id == input.item.id:
+                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result)
+
+    return cluster_flow
+
+def shortest_path_helper(outgoing_flows, start_node, end_node, path=[]):
+    '''
+    Helper function that finds the shortest path in a graph.
+    Output in the form of e.g. [0, 2, 4], i.e. node_id= 0 -> 2 -> 4
+    '''
+    path = path + [start_node] 
+    if start_node == end_node: 
+        return path
+    shortest = None
+    for node in outgoing_flows[start_node]: 
+        if node[0] not in path: 
+            newpath = shortest_path_helper(outgoing_flows, node[0], end_node, path)
+            if newpath:
+                if not shortest or len(newpath) < len(shortest):
+                    shortest = newpath
+    return shortest 
+
+# def add_dummy_node(cluster_flow: ClusterWideFlow):
+#     '''
+#     The ClusterWideFlow is supposed to have one starting node called dummy_node to make algo calculation easier
+#     '''
+#     cluster_flow.addNode(-1)
+#     for node in cluster_flow.incoming_flows:
+#         if not node:
+#             cluster_flow.addFlow(-1, node, items.ItemReq(items.Item('null', -1), 1))
+#     return cluster_flow
+
+def bootstrap_shortest_path(nodes: List[BaseNode]):
+    """
+    Create a flow with the shortest path
+    """
+    # Create a cluster_flow with all possible paths first
+    cluster_flow = bootstrap_all_paths(nodes)
+    start_node = nodes[0].node_id
+    end_node = nodes[len(nodes)-1].node_id
+    
+    log.debug("Cluster flow created: {}".format(cluster_flow))
+
+    # Output the shortest path
+    shortest = shortest_path_helper(cluster_flow.outgoing_flows, start_node, end_node)
+
+    # Create a new ClusterWideFlow object containing only the shortest paths.
+    cluster_flow_shortest = ClusterWideFlow(nodes)
+    for i in range(len(shortest)-1):
+        cluster_flow_shortest.addFlow(nodes[shortest[i]].node_id, nodes[shortest[i+1]].node_id, nodes[shortest[i+1]].dependency.result_item_req)
+    
+    log.debug("Cluster flow created: {}".format(cluster_flow_shortest))
+
+    return cluster_flow_shortest
