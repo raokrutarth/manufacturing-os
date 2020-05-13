@@ -46,21 +46,21 @@ class Cluster(object):
     def __repr__(self):
         return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())
 
-# Create a flow including all paths
 def bootstrap_all_paths(nodes: List[BaseNode]):
-        cluster_flow = ClusterWideFlow(nodes)
-        # Iterate over all nodes
-        for node_input in cluster_flow.nodes:
-            # Iterate over their input requirements
-            for input in node_input.dependency.input_item_reqs:
-                # Iterate over all nodes
-                for node_output in cluster_flow.nodes:
-                    # Iterate over their output requirements
-                    for result in node_output.dependency.result_item_reqs:
-                        # add flow if item id in result = item id in input
-                        if result.item.id == input.item.id:
-                            cluster_flow.addFlow(node_output.node_id, node_input.node_id, result.item)
-        return cluster_flow
+    cluster_flow = ClusterWideFlow(nodes)
+    # Iterate over all nodes
+    for node_input in cluster_flow.nodes:
+        # Iterate over their input requirements
+        for input in node_input.dependency.input_item_reqs:
+            # Iterate over all nodes
+            for node_output in cluster_flow.nodes:
+                # Iterate over their output requirements
+                result = node_output.dependency.result_item_req
+                # add flow if item id in result = item id in input
+                if result.item.id == input.item.id:
+                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result.item)
+
+    return cluster_flow
 
 class ClusterWideFlow(object):
     """

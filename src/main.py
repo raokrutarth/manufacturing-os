@@ -20,8 +20,6 @@ logging.basicConfig(
 )
 log = logging.getLogger()
 
-NUM_NODES = 3
-
 async def bootstrap_dependencies_three_nodes():
     """
     initialize demo_node with the following dependencies
@@ -31,13 +29,13 @@ async def bootstrap_dependencies_three_nodes():
         nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(3)
     ]
 
-    wood = items.ItemReq(items.Item('wood', 0), 1)
-    door = items.ItemReq(items.Item('door', 1), 1)
-    house = items.ItemReq(items.Item('house', 2), 1)
+    start = items.ItemReq(items.Item('start', 0), 1)
+    wood = items.ItemReq(items.Item('wood', 1), 1)
+    door = items.ItemReq(items.Item('door', 2), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], [wood])
-    demo_nodes[1].dependency = items.ItemDependency([wood], [door])
-    demo_nodes[2].dependency = items.ItemDependency([door], [house])
+    demo_nodes[0].dependency = items.ItemDependency([], [start])
+    demo_nodes[1].dependency = items.ItemDependency([start], [wood])
+    demo_nodes[2].dependency = items.ItemDependency([wood], [door])
 
     return demo_nodes
 
@@ -57,11 +55,11 @@ async def bootstrap_dependencies_five_nodes():
     basic_door = items.ItemReq(items.Item('basic_door', 3), 1)
     premium_door = items.ItemReq(items.Item('premium_door', 4), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], [start])
-    demo_nodes[1].dependency = items.ItemDependency([start], [wood])
-    demo_nodes[2].dependency = items.ItemDependency([start], [screws])
-    demo_nodes[3].dependency = items.ItemDependency([wood, screws], [basic_door])
-    demo_nodes[4].dependency = items.ItemDependency([wood, screws], [premium_door])
+    demo_nodes[0].dependency = items.ItemDependency([], start)
+    demo_nodes[1].dependency = items.ItemDependency([start], wood)
+    demo_nodes[2].dependency = items.ItemDependency([start], screws)
+    demo_nodes[3].dependency = items.ItemDependency([wood, screws], basic_door)
+    demo_nodes[4].dependency = items.ItemDependency([wood, screws], premium_door)
 
     return demo_nodes
 
