@@ -24,7 +24,7 @@ class ItemDependency(object):
     def __init__(self, input_item_reqs: List[ItemReq], result_item_req: ItemReq):
         """
             input_item_reqs: List of input items required (Can be empty for source node)
-            result_item_req: List of end items produced (can be one or many)
+            result_item_req: end item produced
         """
         self.result_item_req = result_item_req
         self.input_item_reqs = input_item_reqs
