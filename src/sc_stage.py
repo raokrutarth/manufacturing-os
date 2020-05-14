@@ -15,7 +15,7 @@ class SuppyChainStage(Thread):
         is given a stream of parts/items that get converted into a stream of
         outputs.
 
-        i.e. SCG mocks a physical production stage that consums and creates
+        i.e. SCG mocks a physical production stage that consumes and creates
         products like a stage in production would.
     '''
 
