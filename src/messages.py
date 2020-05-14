@@ -6,7 +6,6 @@ from items import ItemDependency
 
 log = logging.getLogger()
 
-
 class MsgType(enum.Enum):
     Request = 1
     Response = 2
@@ -53,7 +52,7 @@ class Message(object):
         return "{}-{}:{}->{}".format(self.action, self.type, self.source, self.dest)
 
 
-class Ack(Message):
+class AckResp(Message):
 
     def __init__(self, source: BaseNode, dest: BaseNode, msgId):
         super(Ack, self).__init__(source, Action.Allocate, MsgType.Response, dest)
@@ -96,6 +95,20 @@ class AllocateCommit(Message):
     def __init__(self, source: BaseNode, dependency: ItemDependency):
         super(AllocateCommit, self).__init__(source, Action.Allocate, MsgType.Request)
         self.dependency = dependency
+
+class HeartbeatReq(Message):
+    """
+    Signal to every node to response with heartbeat
+    """
+    def __init__(self, source: BaseNode):
+        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request)
+
+class HeartbeatResp(Message):
+    """
+    Nodes replaying their heartbeat
+    """
+    def __init__(self, source:BaseNode, dest:BaseNode):
+        super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
 
 """
