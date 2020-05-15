@@ -98,7 +98,7 @@ class HeartbeatThread(Thread):
         while True:
             # TODO: Currently this is a broadcast, change it to P2P communication
             message = messages.MessageHandler.getMsgForAction(
-                source=self.node, action=messages.Action.Heartbeat, type=messages.MsgType.Request
+                source=self.node.node_id, action=messages.Action.Heartbeat, type=messages.MsgType.Request
             )
             log.debug("node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)

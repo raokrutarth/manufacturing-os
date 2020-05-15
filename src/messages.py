@@ -45,11 +45,15 @@ class Message(object):
     Base class for all messages
     """
 
-    def __init__(self, source: BaseNode, action: Action, type: MsgType, dest=None):
-        self.type = type
+    def __init__(self, source, action: Action, typeVal: MsgType, dest=""):
+        self.type = typeVal
         self.source = source
         self.dest = dest
         self.action = action
+
+        # Allow any basic types for source, dest
+        assert type(self.source) in [str, int], "Invalid type of source: {}".format(self.source)
+        assert type(self.dest) in [str, int], "Invalid type of dest: {}".format(self.dest)
 
     def __repr__(self):
         return "{}-{}:{}->{}".format(self.action, self.type, self.source, self.dest)
@@ -57,7 +61,7 @@ class Message(object):
 
 class AckResp(Message):
 
-    def __init__(self, source: BaseNode, dest: BaseNode, msgId=""):
+    def __init__(self, source, dest, msgId=""):
         super(AckResp, self).__init__(source, Action.Ack, MsgType.Response, dest)
         self.msgId = msgId
 
@@ -75,7 +79,7 @@ class AllocateReq(Message):
     Signal to every node to communicate their supply requirements
     """
 
-    def __init__(self, source: BaseNode):
+    def __init__(self, source):
         super(AllocateReq, self).__init__(source, Action.Allocate, MsgType.Request)
 
 
@@ -84,7 +88,7 @@ class AllocateResp(Message):
     Nodes replying their requirements, capacity, supply, etc
     """
 
-    def __init__(self, source: BaseNode, dest: BaseNode, dependency: ItemDependency):
+    def __init__(self, source, dest, dependency: ItemDependency):
         super(AllocateResp, self).__init__(source, Action.Allocate, MsgType.Response, dest)
         self.dependency = dependency
 
@@ -95,7 +99,7 @@ class AllocateCommit(Message):
     Contains the allocated dependency for the node
     """
 
-    def __init__(self, source: BaseNode, dependency: ItemDependency):
+    def __init__(self, source, dependency: ItemDependency):
         super(AllocateCommit, self).__init__(source, Action.Allocate, MsgType.Request)
         self.dependency = dependency
 
@@ -104,7 +108,7 @@ class HeartbeatReq(Message):
     """
     Signal to every node to response with heartbeat
     """
-    def __init__(self, source: BaseNode):
+    def __init__(self, source):
         super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request)
 
 
@@ -112,7 +116,7 @@ class HeartbeatResp(Message):
     """
     Nodes replaying their heartbeat
     """
-    def __init__(self, source: BaseNode, dest: BaseNode):
+    def __init__(self, source, dest):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
 
@@ -129,7 +133,7 @@ class UpdateReq(Message):
     Signal to every node to that the source has updated its requirements
     """
 
-    def __init__(self, source: BaseNode, new_dependency: ItemDependency):
+    def __init__(self, source, new_dependency: ItemDependency):
         super(UpdateReq, self).__init__(source, Action.Update, MsgType.Request)
         self.dependency = new_dependency
 
@@ -147,7 +151,7 @@ class MessageHandler(object):
     """
 
     @staticmethod
-    def getMsgForAction(source: BaseNode, action: Action, type: MsgType, dest=None):
+    def getMsgForAction(source, action: Action, type: MsgType, dest=""):
         """
             returns an object of type Message for the specified message
         """
@@ -224,7 +228,7 @@ class MessageHandler(object):
     def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat
         response = MessageHandler.getMsgForAction(
-            source=self.node,
+            source=self.node.node_id,
             action=message.action,
             type=MsgType.Response,
             dest=message.source
@@ -244,8 +248,6 @@ class MessageHandler(object):
         is_leader = self.node_process.raft_helper.am_i_leader()
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
-            log.debug('{} is the leader'.format(self.node.node_id))
-            log.debug('message: {}'.format(message))
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
             # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
@@ -254,7 +256,7 @@ class MessageHandler(object):
 
             # Send an ack
             response = MessageHandler.getMsgForAction(
-                source=self.node,
+                source=self.node.node_id,
                 action=Action.Ack,
                 type=MsgType.Response,
                 dest=message.source
