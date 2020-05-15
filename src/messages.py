@@ -1,5 +1,6 @@
 import enum
 import logging
+import cluster as ctr
 
 from nodes import BaseNode
 from items import ItemDependency
@@ -186,7 +187,7 @@ class MessageHandler(object):
             Action.ReAllocate: self.none_fn,
             Action.Allocate: self.none_fn,
             Action.Ack: self.none_fn,
-            Action.Update: self.none_fn,
+            Action.Update: self.on_update_req,
         }
         response_callbacks = {
             Action.Heartbeat: self.on_heartbeat_resp,
@@ -194,7 +195,7 @@ class MessageHandler(object):
             Action.ReAllocate: self.none_fn,
             Action.Allocate: self.none_fn,
             Action.Ack: self.none_fn,
-            Action.Update: self.none_fn,
+            Action.Update: self.on_update_resp,
         }
         callbacks = {
             MsgType.Response: response_callbacks,
@@ -234,17 +235,26 @@ class MessageHandler(object):
         # Update your local state?
 
     def on_update_req(self, message):
-        # Check if this is leader;
+        assert message.action == Action.Update
+
         is_leader = self.node_process.raft_helper.am_i_leader()
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
-        assert message.action == Action.Update
-        response = MessageHandler.getMsgForAction(
-            source=self.node,
-            action=message.action,
-            type=MsgType.Response,
-            dest=message.source
-        )
-        self.sendMessage(response)
+        if is_leader:
+            # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
+
+            # flow = self.node_process.raft_helper.get_flow()
+            self.node_process.cluster.update_deps(message.source, message.dependency)
+            new_flow = ctr.bootstrap_shortest_path(self.node_process.cluster.nodes)
+            self.node_process.raft_helper.update_flow(new_flow)
+
+            # Send an ack
+            response = MessageHandler.getMsgForAction(
+                source=self.node,
+                action=Action.Ack,
+                type=MsgType.Response,
+                dest=message.source
+            )
+            self.sendMessage(response)
 
     def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)
