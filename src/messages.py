@@ -210,11 +210,11 @@ class MessageHandler(object):
         return callbacks
 
     def sendMessage(self, message):
-        log.debug("sending message %s from node %s", message, self.node.node_id)
+        log.info("sending message %s from node %s", message, self.node.node_id)
         self.node_process.message_queue.put(message)
 
     def onMessage(self, message):
-        log.debug("Received: %s from %s", message, message.source)
+        log.info("Received: %s from %s", message, message.source)
         return self.callbacks[message.type][message.action](message)
 
     """
