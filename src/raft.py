@@ -81,13 +81,20 @@ class RaftHelper(object):
             self.node_address, leader)
         return leader
 
+    async def am_i_leader(self):
+        """
+            returns whether this node is a leader. Is a blocking call
+        """
+        leader = await self._get_leader()
+        return leader == self.node_address
+
     async def init_flow(self):
         '''
             Registers a replicated raftos collection and sets initial values 
             for the initial flow state of the supplychain.
         '''
-        leader = await self._get_leader()
-        if leader == self.node_address:
+        is_leader = await self.am_i_leader()
+        if is_leader:
             cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)            
             log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
