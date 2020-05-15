@@ -1,6 +1,7 @@
 import zmq
 import logging
 import pickle
+
 from time import sleep
 from threading import Thread
 from queue import Queue
@@ -10,8 +11,8 @@ log = logging.getLogger()
 
 
 class SubscribeThread(Thread):
-    def __init__(self, node_process: 'SocketBasedNodeProcess', cluster: 'Cluster', callback: 'onMessage'):
-        super(SubscribeThread, self).__init__()
+    def __init__(self, node_process: 'SocketBasedNodeProcess', cluster: 'Cluster', callback: 'onMessage', target=None):
+        super(SubscribeThread, self).__init__(target=target)
 
         self.node_process = node_process
         self.cluster = cluster
@@ -51,8 +52,8 @@ class SubscribeThread(Thread):
 
 class PublishThread(Thread):
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', message_queue: Queue, delay=0.1):
-        super(PublishThread, self).__init__()
+    def __init__(self, node_process: 'SocketBasedNodeProcess', message_queue: Queue, delay=0.1, target=None):
+        super(PublishThread, self).__init__(target=target)
 
         self.node_process = node_process
         self.message_queue = message_queue

@@ -1,5 +1,6 @@
 import enum
 import logging
+import asyncio
 import cluster as ctr
 
 from nodes import BaseNode
@@ -209,17 +210,18 @@ class MessageHandler(object):
 
     def onMessage(self, message):
         log.debug("Received: %s from %s", message, message.source)
-        return self.callbacks[message.type][message.action](message)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.callbacks[message.type][message.action](message))
 
     """
     Callback implementations of all possible messages and their requests/response variants
     MessageHandler has access to specifics of
     """
 
-    def none_fn(self, _message):
+    async def none_fn(self, _message):
         pass
 
-    def on_heartbeat_req(self, message):
+    async def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat
         response = MessageHandler.getMsgForAction(
             source=self.node,
@@ -229,15 +231,15 @@ class MessageHandler(object):
         )
         self.sendMessage(response)
 
-    def on_heartbeat_resp(self, message):
+    async def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
         log.debug("%s : Heartbeat Resp: Roger that!", message.source)
         # Update your local state?
 
-    def on_update_req(self, message):
+    async def on_update_req(self, message):
         assert message.action == Action.Update
 
-        is_leader = self.node_process.raft_helper.am_i_leader()
+        is_leader = await self.node_process.raft_helper.am_i_leader()
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
@@ -256,5 +258,5 @@ class MessageHandler(object):
             )
             self.sendMessage(response)
 
-    def on_update_resp(self, message):
+    async def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)

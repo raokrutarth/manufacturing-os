@@ -77,8 +77,7 @@ class RaftHelper(object):
         log.debug("Node %s waiting for leader election to complete", self.node_address)
         await raftos.State.wait_for_election_success()
         leader = raftos.get_leader()
-        log.debug("Node %s detected %s as leader node", 
-            self.node_address, leader)
+        log.debug("Node %s detected %s as leader node", self.node_address, leader)
         return leader
 
     async def am_i_leader(self):
@@ -86,17 +85,18 @@ class RaftHelper(object):
         return leader == self.node_address
 
     async def init_flow(self):
-        '''
+        """
             Registers a replicated raftos collection and sets initial values 
             for the initial flow state of the supplychain.
-        '''
+        """
         is_leader = await self.am_i_leader()
         if is_leader:
-            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)            
+            log.debug("Starting to compute init cluster flow on leader: {}".format(self.node_address))
+            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)
             log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
             await self.cluster_flow.set(cluster_flow_obj)
-            log.info("Finished init cluster flow on leader: {}".format(self.node_address))
+            log.debug("Finished init cluster flow on leader: {}".format(self.node_address))
 
     async def update_flow(self, new_cluster_flow: ctr.ClusterWideFlow):
         """
@@ -104,7 +104,9 @@ class RaftHelper(object):
         """
         is_leader = await self.am_i_leader()
         if is_leader:
+            log.debug("Updating cluster flow: {} on leader: {}".format(self.node_address, new_cluster_flow))
             await self.cluster_flow.set(new_cluster_flow)
+            log.debug("Finished updating cluster flow on leader: {}".format(self.node_address))
             return True
         return False
 

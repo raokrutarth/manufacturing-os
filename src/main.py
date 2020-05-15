@@ -22,11 +22,17 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-async def main():
-    # determine nodes (of type single item node) and operations for the demo cluster
-    demo_nodes = basecases.bootstrap_dependencies_five_nodes()
+def spawn_cluster_processes(cluster, flags):
+    for node in cluster.nodes:
+        Process(target=processes.SocketBasedNodeProcess, args=(node, cluster, flags)).start()
+        log.debug("Node %d started", node.node_id)
 
-    demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
+
+def main():
+    # determine nodes (of type single item node) and operations for the demo cluster
+    demo_nodes = basecases.bootstrap_dependencies_three_nodes()
+
+    demo_ops = {n.node_id: [operations.Op.UpdateDep] for n in demo_nodes}
 
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
@@ -34,17 +40,21 @@ async def main():
 
     log.info("Starting %s", demo_cluster)
 
+    # TODO (Krutarth): Make this truly asynchronous, we have barriers due to await at the moment so our current
+    #  design doesn't have independent threads operating
+
     # start the nodes with operations enabled
     flags = {'runOps': True}
-    for node in demo_cluster.nodes:
-        # since start() for the node is an async, non-blocking method, use await
-        # to make sure the node is started successfully.
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        log.debug("Node %d started", node.node_id)
+    spawn_cluster_processes(demo_cluster, flags)
 
-    for node in demo_cluster.nodes:
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
-        log.debug("Node %d started", node.node_id)
+    # for node in demo_cluster.nodes:
+    #     # since start() for the node is an async, non-blocking method, use await
+    #     # to make sure the node is started successfully.
+    #     await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
+    #
+    # for node in demo_cluster.nodes:
+    #     await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
+    #     log.debug("Node %d started", node.node_id)
 
     log.info("All nodes started")
     while 1:
@@ -52,6 +62,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    main()
     log.critical("All nodes exited")

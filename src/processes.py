@@ -1,9 +1,11 @@
 import logging
 import messages
+import asyncio
+import operations
+
 from collections import defaultdict
 from queue import Queue
 
-import operations
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
@@ -40,6 +42,11 @@ class NodeProcess(object):
 
 class SocketBasedNodeProcess(NodeProcess):
 
+    @staticmethod
+    def init_event_loop():
+        event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(event_loop)
+
     def __init__(self, node: BaseNode, cluster: Cluster, flags=defaultdict(lambda: False)):
         """
             Takes node info as input
@@ -63,6 +70,14 @@ class SocketBasedNodeProcess(NodeProcess):
                 self.cluster.blueprint.node_specific_ops[self.node.node_id],
                 self.sendMessage,
             )
+
+        self.init_event_loop()
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.start())
+        print('here')
+        loop.run_until_complete(self.bootstrap())
+        print('here2')
 
     def startThread(self, thread):
         thread.daemon = True
