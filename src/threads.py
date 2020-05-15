@@ -86,6 +86,12 @@ class HeartbeatThread(Thread):
         self.node = node_process.node
         self.node_id = node_process.node.get_name()
 
+    def send_message_for_dead_nodes(self):
+        dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
+        for node in dead_nodes:
+            # Send message to leader to notify of death
+            log.debug('Detected death of node %s by %s', node, self.node_id)
+
     def run(self):
         log.debug('node %s starting heartbeat thread', self.node_id)
 
@@ -96,4 +102,5 @@ class HeartbeatThread(Thread):
             )
             log.debug("node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)
+            self.send_message_for_dead_nodes()
             sleep(self.delay)

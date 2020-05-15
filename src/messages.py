@@ -233,8 +233,8 @@ class MessageHandler(object):
 
     def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
-        log.debug("%s : Heartbeat Resp: Roger that!", message.source)
-        # Update your local state?
+        log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
+        self.node_process.update_heartbeat(message.source)
 
     # TODO: No await here! Causes something downstream to fail for some reason.
     #  Figure out how to convert this into async
