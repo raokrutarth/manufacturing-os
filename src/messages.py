@@ -4,7 +4,9 @@ import logging
 from nodes import BaseNode
 from items import ItemDependency
 
+
 log = logging.getLogger()
+
 
 class MsgType(enum.Enum):
     Request = 1
@@ -96,12 +98,14 @@ class AllocateCommit(Message):
         super(AllocateCommit, self).__init__(source, Action.Allocate, MsgType.Request)
         self.dependency = dependency
 
+
 class HeartbeatReq(Message):
     """
     Signal to every node to response with heartbeat
     """
     def __init__(self, source: BaseNode):
         super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request)
+
 
 class HeartbeatResp(Message):
     """
@@ -130,3 +134,117 @@ class UpdateReq(Message):
 
     def __repr__(self):
         return "{}, NewDependency: {}".format(super(UpdateReq, self).__repr__(), self.dependency)
+
+
+class MessageHandler(object):
+    """
+        Message Handler responsible for managing and manipulating state mutations upon sending and receiving messages
+        In order to support any given action in the MessageHandler, follow the below steps.
+            1. Add the necessary action type in Action e.g. Heartbeat
+            2. Add on request and response functions for the action e.g. on_heartbeat_req and on_heartbeat_resp
+            3. Add the function to the callbacks in get_action_callbacks
+    """
+
+    @staticmethod
+    def getMsgForAction(source: BaseNode, action: Action, type: MsgType, dest=None):
+        """
+            returns an object of type Message for the specified message
+        """
+        if action == Action.Allocate:
+            return AllocateReq(source)
+        elif action == Action.Heartbeat:
+            if type == MsgType.Request:
+                return HeartbeatReq(source)
+            else:
+                return HeartbeatResp(source, dest)
+        elif action == Action.Update:
+            return UpdateReq(source, ItemDependency.newNullDependency())
+        elif action == Action.Death:
+            return UpdateReq(source, ItemDependency.newNullDependency())
+        else:
+            assert False, "Invalid action: {}".format(action.name)
+
+    def __init__(self, node_process: 'SocketBasedNodeProcess'):
+        '''
+            ops: operations the node will run when it starts.
+            callback: the callback to send a message
+        '''
+        super(MessageHandler, self).__init__()
+
+        self.node_process = node_process
+        self.node = node_process.node
+        self.node_id = node_process.node.get_name()
+        self.callbacks = self.get_action_callbacks()
+
+    def get_action_callbacks(self):
+        """
+        Fill details of all callbacks in this function. See existing instances for examples
+        """
+        request_callbacks = {
+            Action.Heartbeat: self.on_heartbeat_req,
+            Action.Death: self.none_fn,
+            Action.ReAllocate: self.none_fn,
+            Action.Allocate: self.none_fn,
+            Action.Ack: self.none_fn,
+            Action.Update: self.none_fn,
+        }
+        response_callbacks = {
+            Action.Heartbeat: self.on_heartbeat_resp,
+            Action.Death: self.none_fn,
+            Action.ReAllocate: self.none_fn,
+            Action.Allocate: self.none_fn,
+            Action.Ack: self.none_fn,
+            Action.Update: self.none_fn,
+        }
+        callbacks = {
+            MsgType.Response: response_callbacks,
+            MsgType.Request: request_callbacks,
+        }
+        return callbacks
+
+    def sendMessage(self, message):
+        log.debug("sending message %s from node %s", message, self.node.node_id)
+        self.node_process.message_queue.put(message)
+
+    def onMessage(self, message):
+        log.debug("Received: %s from %s", message, message.source)
+        return self.callbacks[message.type][message.action](message)
+
+    """
+    Callback implementations of all possible messages and their requests/response variants
+    MessageHandler has access to specifics of
+    """
+
+    def none_fn(self, _message):
+        pass
+
+    def on_heartbeat_req(self, message):
+        assert message.action == Action.Heartbeat
+        response = MessageHandler.getMsgForAction(
+            source=self.node,
+            action=message.action,
+            type=MsgType.Response,
+            dest=message.source
+        )
+        self.sendMessage(response)
+
+    def on_heartbeat_resp(self, message):
+        assert message.action == Action.Heartbeat
+        log.debug("%s : Heartbeat Resp: Roger that!", message.source)
+        # Update your local state?
+
+    def on_update_req(self, message):
+        # Check if this is leader;
+        is_leader = self.node_process.raft_helper.am_i_leader()
+        # TODO: add handling when this is not the leader; Simple fail and retry on source?
+        assert message.action == Action.Update
+        response = MessageHandler.getMsgForAction(
+            source=self.node,
+            action=message.action,
+            type=MsgType.Response,
+            dest=message.source
+        )
+        self.sendMessage(response)
+
+    def on_update_resp(self, message):
+        log.debug("%s : Update Resp received: {}", message.source)

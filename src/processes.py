@@ -1,5 +1,5 @@
-
 import logging
+import messages
 from collections import defaultdict
 from queue import Queue
 
@@ -51,6 +51,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.port = self.process_spec.port
         self.flags = flags
 
+        self.msg_handler = messages.MessageHandler(self)
         self.subscriber = SubscribeThread(self, self.cluster, self.onMessage)
         self.publisher = PublishThread(self, self.message_queue)
         self.raft_helper = RaftHelper(self, self.cluster)
@@ -85,21 +86,7 @@ class SocketBasedNodeProcess(NodeProcess):
         log.info("Successfully bootstrapped node %s", self.node.get_name())
 
     def sendMessage(self, message):
-        log.debug("sending message %s from node %s", message, self.node.node_id)
-        self.message_queue.put_nowait(message)
+        self.msg_handler.sendMessage(message)
 
     def onMessage(self, message: 'Message'):
-        log.debug("Received: %s from %s", message, message.source)
-        '''
-            TODO
-            add logic to take an action based on the message object that
-            is expected to be one of the sub-classes of the Message class
-            in messages.py
-        '''
-        if message.action == Action.Heartbeat and message.type == MsgType.Request:
-            response = OpHandler.getMsgForOp(source=self.node, op=Action.Heartbeat, type = MsgType.Response, dest = message.source)
-            self.sendMessage(response)
-        elif message.action == Action.Heartbeat and message.type == MsgType.Response:
-            log.debug("%s : Heartbeat Resp: Roger that!", message.source)
-
-        return
+        self.msg_handler.onMessage(message)

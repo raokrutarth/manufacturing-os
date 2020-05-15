@@ -1,14 +1,13 @@
 import enum
 import logging
-import messages
 import items
+import messages
 import copy
+
 from threading import Thread
 from time import sleep
 from typing import List
-
 from nodes import BaseNode
-from messages import MsgType
 
 
 log = logging.getLogger()
@@ -40,17 +39,14 @@ class Op(enum.Enum):
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source: BaseNode, op: Op, type: MsgType = MsgType.Request, dest=None):
+    def getMsgForOp(source: BaseNode, op: Op, type: messages.MsgType=messages.MsgType.Request, dest=None):
         '''
-            TODO (Nishant): explain why this is needed.
-
             returns an object of type Message from messages.py.
-            Which allows ___
         '''
         if op == Op.Allocate:
             return messages.AllocateReq(source)
         elif op == op.Heartbeat:
-            if type == MsgType.Request:
+            if type == messages.MsgType.Request:
                return messages.HeartbeatReq(source)
             else:
                return messages.HeartbeatResp(source, dest)
