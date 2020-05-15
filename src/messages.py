@@ -57,8 +57,8 @@ class Message(object):
 
 class AckResp(Message):
 
-    def __init__(self, source: BaseNode, dest: BaseNode, msgId):
-        super(Ack, self).__init__(source, Action.Allocate, MsgType.Response, dest)
+    def __init__(self, source: BaseNode, dest: BaseNode, msgId=""):
+        super(AckResp, self).__init__(source, Action.Ack, MsgType.Response, dest)
         self.msgId = msgId
 
 
@@ -162,6 +162,8 @@ class MessageHandler(object):
             return UpdateReq(source, ItemDependency.newNullDependency())
         elif action == Action.Death:
             return UpdateReq(source, ItemDependency.newNullDependency())
+        elif action == Action.Ack:
+            return AckResp(source, dest)
         else:
             assert False, "Invalid action: {}".format(action.name)
 
@@ -234,14 +236,17 @@ class MessageHandler(object):
         log.debug("%s : Heartbeat Resp: Roger that!", message.source)
         # Update your local state?
 
+    # TODO: No await here! Causes something downstream to fail for some reason.
+    #  Figure out how to convert this into async
     def on_update_req(self, message):
         assert message.action == Action.Update
 
         is_leader = self.node_process.raft_helper.am_i_leader()
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
+            log.debug('{} is the leader'.format(self.node.node_id))
+            log.debug('message: {}'.format(message))
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
-
             # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
             new_flow = ctr.bootstrap_shortest_path(self.node_process.cluster.nodes)

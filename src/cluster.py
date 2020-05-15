@@ -45,9 +45,8 @@ class Cluster(object):
 
     def update_deps(self, node: SingleItemNode, new_dependency: items.ItemDependency):
         for idx in range(len(self.nodes)):
-            if self.nodes[idx].node_id == node.node_id:
+            if self.nodes[idx].node_id == node:
                 self.nodes[idx].dependency = new_dependency
-                log.info("Updated nodes: {}, {}, {}".format(node, self.node_ids[idx], idx))
 
     def __repr__(self):
         return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())
@@ -139,7 +138,7 @@ def shortest_path_helper(outgoing_flows, start_node, end_node, path=[]):
     path = path + [start_node] 
     if start_node == end_node: 
         return path
-    shortest = None
+    shortest = []
     for node in outgoing_flows[start_node]: 
         if node[0] not in path: 
             newpath = shortest_path_helper(outgoing_flows, node[0], end_node, path)
@@ -160,11 +159,12 @@ def bootstrap_shortest_path(nodes: List[SingleItemNode]):
     
     log.debug("Cluster flow created: {}".format(cluster_flow))
 
+    # Create a new ClusterWideFlow object containing only the shortest paths.
+    cluster_flow_shortest = ClusterWideFlow(nodes)
+
     # Output the shortest path
     shortest = shortest_path_helper(cluster_flow.outgoing_flows, start_node, end_node)
 
-    # Create a new ClusterWideFlow object containing only the shortest paths.
-    cluster_flow_shortest = ClusterWideFlow(nodes)
     for i in range(len(shortest)-1):
         cluster_flow_shortest.addFlow(
             nodes[shortest[i]].node_id,

@@ -24,9 +24,9 @@ log = logging.getLogger()
 
 async def main():
     # determine nodes (of type single item node) and operations for the demo cluster
-    demo_nodes = basecases.bootstrap_dependencies_five_nodes()
+    demo_nodes = basecases.bootstrap_dependencies_three_nodes()
 
-    demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
+    demo_ops = {n.node_id: [operations.Op.UpdateDep] for n in demo_nodes}
 
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
