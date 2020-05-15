@@ -7,7 +7,7 @@ import copy
 from threading import Thread
 from time import sleep
 from typing import List
-from nodes import BaseNode
+from nodes import SingleItemNode
 
 
 log = logging.getLogger()
@@ -39,19 +39,22 @@ class Op(enum.Enum):
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source, op: Op, type: messages.MsgType=messages.MsgType.Request, dest=""):
+    def getMsgForOp(source: SingleItemNode, op: Op, type: messages.MsgType=messages.MsgType.Request, dest=""):
         '''
             returns an object of type Message from messages.py.
         '''
+        source_id = source.node_id
         if op == Op.TriggerAllocate:
-            return messages.AllocateReq(source)
+            return messages.AllocateReq(source_id)
         elif op == op.SendHeartbeat:
             if type == messages.MsgType.Request:
-               return messages.HeartbeatReq(source)
+               return messages.HeartbeatReq(source_id)
             else:
-               return messages.HeartbeatResp(source, dest)
+               return messages.HeartbeatResp(source_id, dest)
         elif op == Op.SendUpdateDep:
-            return messages.UpdateReq(source, items.ItemDependency.newNullDependency())
+            return messages.UpdateReq(source_id, items.ItemDependency.halveDependency(source.dependency))
+        elif op == Op.BroadcastDeath:
+            return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
         else:
             assert False, "Invalid op: {}".format(op.name)
 
@@ -80,11 +83,12 @@ class OpsRunnerThread(Thread):
         self.ops_to_run = ops
         self.delay = delay
 
+        self.node = node_process.node
         self.node_id = node_process.node.get_name()
 
     def get_message_from_op(self, op):
         log.info('node %s constructing message for operation %s', self.node_id, op)
-        return OpHandler.getMsgForOp(self.node_id, op)
+        return OpHandler.getMsgForOp(self.node, op)
 
     def run(self):
         log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
