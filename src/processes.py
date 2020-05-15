@@ -63,8 +63,6 @@ class SocketBasedNodeProcess(NodeProcess):
                 self.sendMessage,
             )
 
-        self.start()
-
     def startThread(self, thread):
         thread.daemon = True
         thread.start()
