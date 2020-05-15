@@ -1,15 +1,15 @@
 import logging
 import messages
-from collections import defaultdict
-from queue import Queue
+import threads
 
 import operations
+
+from queue import Queue
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
-from pub_sub import SubscribeThread, PublishThread
-from messages import Action, MsgType, HeartbeatResp
-from operations import OpHandler
+from collections import defaultdict
+
 
 log = logging.getLogger()
 
@@ -52,16 +52,15 @@ class SocketBasedNodeProcess(NodeProcess):
         self.flags = flags
 
         self.msg_handler = messages.MessageHandler(self)
-        self.subscriber = SubscribeThread(self, self.cluster, self.onMessage)
-        self.publisher = PublishThread(self, self.message_queue)
+        self.subscriber = threads.SubscribeThread(self, self.cluster, self.onMessage)
+        self.publisher = threads.PublishThread(self)
+        self.heartbeat = threads.HeartbeatThread(self)
         self.raft_helper = RaftHelper(self, self.cluster)
 
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
-            self.opRunner = operations.OpsRunnerThread(
-                self,
-                self.cluster.blueprint.node_specific_ops[self.node.node_id],
-                self.sendMessage,
+            self.testOpRunner = operations.OpsRunnerThread(
+                self, self.cluster.blueprint.node_specific_ops[self.node.node_id]
             )
 
     def startThread(self, thread):
@@ -75,8 +74,9 @@ class SocketBasedNodeProcess(NodeProcess):
 
         self.startThread(self.subscriber)
         self.startThread(self.publisher)
+        self.startThread(self.heartbeat)
         if self.flags['runOps']:
-            self.startThread(self.opRunner)
+            self.startThread(self.testOpRunner)
 
         log.info("Successfully started node %s", self.node.get_name())
 
@@ -85,7 +85,7 @@ class SocketBasedNodeProcess(NodeProcess):
         await self.raft_helper.init_flow()
         log.info("Successfully bootstrapped node %s", self.node.get_name())
 
-    def sendMessage(self, message):
+    def sendMessage(self, message: 'Message'):
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message: 'Message'):

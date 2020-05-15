@@ -1,6 +1,8 @@
 import zmq
 import logging
 import pickle
+import messages
+
 from time import sleep
 from threading import Thread
 from queue import Queue
@@ -51,11 +53,10 @@ class SubscribeThread(Thread):
 
 class PublishThread(Thread):
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', message_queue: Queue, delay=0.1):
+    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=0.1):
         super(PublishThread, self).__init__()
 
         self.node_process = node_process
-        self.message_queue = message_queue
         self.delay = delay
         self.node_id = node_process.node.get_name()
 
@@ -67,9 +68,32 @@ class PublishThread(Thread):
         socket.bind("tcp://127.0.0.1:%d" % self.node_process.port)
 
         while True:
-            if not self.message_queue.empty():
-                message = self.message_queue.get()
+            if not self.node_process.message_queue.empty():
+                message = self.node_process.message_queue.get()
                 log.debug("publisher in node %s sending message %s", self.node_id, message)
                 socket.send(pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL))
             else:
                 sleep(self.delay)
+
+
+class HeartbeatThread(Thread):
+
+    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=5.0):
+        super(HeartbeatThread, self).__init__()
+
+        self.node_process = node_process
+        self.delay = delay
+        self.node = node_process.node
+        self.node_id = node_process.node.get_name()
+
+    def run(self):
+        log.debug('node %s starting heartbeat thread', self.node_id)
+
+        while True:
+            # TODO: Currently this is a broadcast, change it to P2P communication
+            message = messages.MessageHandler.getMsgForAction(
+                source=self.node, action=messages.Action.Heartbeat, type=messages.MsgType.Request
+            )
+            log.debug("node %s sending heartbeat %s", self.node_id, message)
+            self.node_process.sendMessage(message)
+            sleep(self.delay)

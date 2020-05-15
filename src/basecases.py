@@ -23,7 +23,7 @@ def dummyNodes(n):
 
 
 def dummyOperationsAllocateCase(nodes):
-    return {n.node_id: [operations.Op.Allocate] for n in nodes}
+    return {n.node_id: [operations.Op.TriggerAllocate] for n in nodes}
 
 
 def dummyBlueprintCase0():

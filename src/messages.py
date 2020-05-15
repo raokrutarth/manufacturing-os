@@ -112,7 +112,7 @@ class HeartbeatResp(Message):
     """
     Nodes replaying their heartbeat
     """
-    def __init__(self, source:BaseNode, dest:BaseNode):
+    def __init__(self, source: BaseNode, dest: BaseNode):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
 
