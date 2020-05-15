@@ -57,7 +57,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.flags = flags
 
         self.msg_handler = messages.MessageHandler(self)
-        self.subscriber = threads.SubscribeThread(self, self.cluster, self.onMessage)
+        self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
         self.raft_helper = RaftHelper(self, self.cluster)
 
@@ -71,7 +71,8 @@ class SocketBasedNodeProcess(NodeProcess):
                 self, self.cluster.blueprint.node_specific_ops[self.node.node_id]
             )
 
-    def startThread(self, thread):
+    def startThread(self, thread, suffix):
+        thread.name = suffix + '-' + str(self.node.node_id)
         thread.daemon = True
         thread.start()
 
@@ -80,11 +81,11 @@ class SocketBasedNodeProcess(NodeProcess):
 
         await self.raft_helper.register_node()
 
-        self.startThread(self.subscriber)
-        self.startThread(self.publisher)
-        self.startThread(self.heartbeat)
+        self.startThread(self.subscriber, 'subscriber')
+        self.startThread(self.publisher, 'publisher')
+        self.startThread(self.heartbeat, 'heartbeat')
         if self.flags['runOps']:
-            self.startThread(self.testOpRunner)
+            self.startThread(self.testOpRunner, 'heartbeat')
 
         log.info("Successfully started node %s", self.node.get_name())
 

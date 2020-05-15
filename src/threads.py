@@ -12,12 +12,11 @@ log = logging.getLogger()
 
 
 class SubscribeThread(Thread):
-    def __init__(self, node_process: 'SocketBasedNodeProcess', cluster: 'Cluster', callback: 'onMessage'):
+    def __init__(self, node_process: 'SocketBasedNodeProcess', cluster: 'Cluster'):
         super(SubscribeThread, self).__init__()
 
         self.node_process = node_process
         self.cluster = cluster
-        self.callback = callback
         self.node_id = node_process.node.get_name()
         self.DELAY = 0.01
 
@@ -45,7 +44,7 @@ class SubscribeThread(Thread):
             message = socket.recv()
             message = pickle.loads(message)
             log.debug("subscriber in node %s got message %s", self.node_id, message)
-            self.callback(message)
+            self.node_process.onMessage(message)
 
             # Polling based approach to receive messages. Can convert to blocking call if needed
             sleep(self.DELAY)

@@ -17,7 +17,8 @@ logging.basicConfig(
     level=os.environ.get("LOGLEVEL", "DEBUG"),
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
-    format='%(levelname)s [%(asctime)s - %(filename)s:%(lineno)d - %(funcName)s] %(message)s',
+    format='%(levelname)-6s | %(threadName)-12s | %(asctime)s - %(filename)-15s:%(lineno)-4d - %(funcName)-25s | %('
+           'message)s',
 )
 log = logging.getLogger()
 
