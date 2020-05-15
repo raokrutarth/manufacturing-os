@@ -32,12 +32,6 @@ class SuppyChainStage(Thread):
             requirements: the set of items the stage can use as raw material.
             produces: the item the stage produces.
             time_per_unit: time in seconds it takes to make one unit.
-            has_inbound:  the stage has incoming raw materials in the supplychain.
-                if not, it mocks an coming stream of raw materials it can
-                consume. e.g. an aluminium plant.
-            has_outbound: the stage has outbound edges. i.e if the resulting product of
-                the stage is consumed by another stage. if not, the inventory
-                count increases indefinitely.
         '''
         super(SuppyChainStage, self).__init__()
         self.name = "sc-stage-{}".format(name)
