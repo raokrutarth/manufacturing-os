@@ -1,9 +1,8 @@
-import asyncio
+
 import raftos
 import logging
-import pickle, jsonpickle
+import jsonpickle
 import cluster as ctr
-import json
 
 from os.path import abspath
 
@@ -29,10 +28,10 @@ class RaftHelper(object):
     Helper class abstracting out the underlying raftos configuration
     """
 
-    # NOTE: 
+    # NOTE:
     # the ports passed in __init__ are used by the zmq protocols.
     # Need to give raftos different ports to operate on.
-    # Should verify the raftos ports do not overlap with 
+    # Should verify the raftos ports do not overlap with
     # zmq ports.
     PORT_OFFSET = -50
 
@@ -69,7 +68,7 @@ class RaftHelper(object):
         # Create replicated dict which can contain different items we want shared amongst nodes
         # Dict-like object: data.update(), data['key'] etc
         self.cluster_flow = raftos.Replicated(name='cluster_flow')
-    
+
     async def _get_leader(self):
         '''
             returns the leader of the raftos cluster. Is a blocking call
@@ -77,18 +76,18 @@ class RaftHelper(object):
         log.debug("Node %s waiting for leader election to complete", self.node_address)
         await raftos.State.wait_for_election_success()
         leader = raftos.get_leader()
-        log.debug("Node %s detected %s as leader node", 
+        log.debug("Node %s detected %s as leader node",
             self.node_address, leader)
         return leader
 
     async def init_flow(self):
         '''
-            Registers a replicated raftos collection and sets initial values 
+            Registers a replicated raftos collection and sets initial values
             for the initial flow state of the supplychain.
         '''
         leader = await self._get_leader()
         if leader == self.node_address:
-            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)            
+            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)
             log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
             await self.cluster_flow.set(cluster_flow_obj)
@@ -126,7 +125,7 @@ class RaftHelper(object):
             return True
 
         return False
-    
+
     def __repr__(self):
         return str({
             'RaftHelper': {

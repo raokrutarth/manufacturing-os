@@ -8,6 +8,7 @@ from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
 from pub_sub import SubscribeThread, PublishThread
+from sc_stage import SuppyChainStage
 from messages import Action, MsgType, HeartbeatResp
 from operations import OpHandler
 
@@ -54,6 +55,11 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = SubscribeThread(self, self.cluster, self.onMessage)
         self.publisher = PublishThread(self, self.message_queue)
         self.raft_helper = RaftHelper(self, self.cluster)
+        self.sc_stage = SuppyChainStage(
+            self.node.get_name(),
+            self.node.get_dependency(),
+        )
+
 
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
@@ -76,6 +82,7 @@ class SocketBasedNodeProcess(NodeProcess):
 
         self.startThread(self.subscriber)
         self.startThread(self.publisher)
+        self.startThread(self.sc_stage)
         if self.flags['runOps']:
             self.startThread(self.opRunner)
 
