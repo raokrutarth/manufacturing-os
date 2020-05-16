@@ -7,19 +7,20 @@ from collections import defaultdict
 log = logging.getLogger()
 
 
-'''
-    Item represents a single indivisible production unit.
-    type: there can be many units of the same type. e.g. blue-door
-    id: unique to the specific instance of the item. e.g. YHG87
-        there can only be one item per id and given type
-'''
 class Item:
-    def __init__(self, name, id):
-        self.name = name
+    '''
+        Item represents a single indivisible production unit.
+        type: there can be many units of the same type. e.g. blue-door
+        id: unique to the specific instance of the item. e.g. YHG87
+            there can only be one item per id and given type
+    '''
+
+    def __init__(self, type, id):
+        self.type = type
         self.id = id
 
     def __repr__(self):
-        return "{}-{}".format(self.name, self.id)
+        return "{}-{}".format(self.type, self.id)
 
 
 # Item requirement - Item, Quantity

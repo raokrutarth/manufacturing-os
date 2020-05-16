@@ -5,10 +5,10 @@ import cluster as ctr
 
 from os.path import abspath
 
+
 log = logging.getLogger()
 
 LEADER_WAL_DIR = abspath("./tmp")
-GRAPH_NAME = 'sc_graph'
 
 
 class ComplexJSONSerializer:
