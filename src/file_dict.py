@@ -32,6 +32,7 @@ class FileDict:
                     raise KeyError
 
             except FileNotFoundError:
+                # FIXME watch out for corruption if this write is interrupted here.
                 open(self.filename, 'w+b').close()
                 raise KeyError
 
@@ -54,6 +55,7 @@ class FileDict:
             key = name
 
         content.update({key: value})
+        # FIXME watch out for corruption if this write is interrupted here.
         with open(self.filename, 'w+b') as f:
             f.write(self.serializer.pack(content))
 
@@ -77,4 +79,5 @@ class FileDict:
 
     def clear(self):
         self.cache = {}
+        # FIXME watch out for corruption if this write is interrupted here.
         open(self.filename, 'w').close()

@@ -26,19 +26,19 @@ class SuppyChainStage(Thread):
     DELIVERED_STAGE = "delivered"
     CONSUMED_STAGE = "consumed"
 
-    def __init__(self, name, item_dependency: ItemDependency, time_per_unit=1):
+    def __init__(self, name, item_dependency: ItemDependency, time_per_batch=1):
         '''
             name: debugging purposes only.
             requirements: the set of items the stage can use as raw material.
             produces: the item the stage produces.
-            time_per_unit: time in seconds it takes to make one unit.
+            time_per_batch: time in seconds it takes to make one unit.
         '''
         super(SuppyChainStage, self).__init__()
         self.name = "sc-stage-{}".format(name)
         self.item_dep = item_dependency
         self.inbound_material = Queue() if item_dependency else None
         self.outbound_material = Queue()
-        self.time_per_unit = time_per_unit
+        self.time_per_batch = time_per_batch
 
         self.inbound_log = FileDict(abspath("./tmp/" + self.name + ".inbound.log"))
         self.outbound_log = FileDict(abspath("./tmp/" + self.name + ".outbound.log"))
@@ -136,7 +136,7 @@ class SuppyChainStage(Thread):
         self.outbound_log[item] = self.DELIVERED_STAGE
 
 
-    def send_product(self):
+    def manufacture_batch_and_enqueue(self):
         '''
             TODO
             logic to poll/query/update the inbound queue until it can make one unit of
@@ -168,5 +168,5 @@ class SuppyChainStage(Thread):
 
         while self.running.is_set():
 
-            self.send_product()
-            sleep(self.time_per_unit)
+            self.manufacture_batch_and_enqueue()
+            sleep(self.time_per_batch)
