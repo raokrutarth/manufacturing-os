@@ -2,7 +2,6 @@ import logging
 import messages
 import threads
 import time
-
 import operations
 
 from queue import Queue
@@ -10,6 +9,7 @@ from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
 from collections import defaultdict
+from sc_stage import SuppyChainStage
 
 
 log = logging.getLogger()
@@ -60,6 +60,11 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
         self.raft_helper = RaftHelper(self, self.cluster)
+        self.sc_stage = SuppyChainStage(
+            self.node.get_name(),
+            self.node.get_dependency(),
+        )
+
 
         # Manage heartbeats and liveness between nodes
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
@@ -84,6 +89,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
         self.startThread(self.heartbeat, 'heartbeat')
+        self.startThread(self.sc_stage, 'supplyChain')
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
