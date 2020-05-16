@@ -1,6 +1,6 @@
 import os
 import ujson
-
+import jsonpickle
 
 
 class JSONSerializer:
@@ -12,6 +12,7 @@ class JSONSerializer:
     def unpack(data):
         decoded = data.decode() if isinstance(data, bytes) else data
         return ujson.loads(decoded)
+
 
 class FileDict:
     """Persistent dict-like storage on a disk accessible by obj['item_name']"""
@@ -48,9 +49,9 @@ class FileDict:
             content = {}
 
         if not isinstance(name, str):
-            # hack to use objects as keys
-            # convert key to json string
-            key = str(ujson.dumps(name))
+            # hack to use objects as keys - convert key to json string
+            # jsonpickle allows encoding complex python classes
+            key = str(jsonpickle.dumps(name))
         else:
             key = name
 
@@ -75,7 +76,7 @@ class FileDict:
     def items(self):
         contents = self._get_file_content()
         for key, value in contents.items():
-            yield ujson.loads(key), value
+            yield jsonpickle.loads(key), value
 
     def clear(self):
         self.cache = {}
