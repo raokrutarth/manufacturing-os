@@ -45,7 +45,9 @@ class Message(object):
     Base class for all messages
     """
 
-    def __init__(self, source, action: Action, typeVal: MsgType, dest=""):
+    ALL = "all"
+
+    def __init__(self, source, action: Action, typeVal: MsgType, dest=ALL):
         self.type = typeVal
         self.source = source
         self.dest = dest
@@ -214,8 +216,17 @@ class MessageHandler(object):
         self.node_process.message_queue.put(message)
 
     def onMessage(self, message):
-        log.info("Received: %s from %s", message, message.source)
-        return self.callbacks[message.type][message.action](message)
+        is_msg_for_all = message.dest == Message.ALL
+        is_msg_for_me = message.dest == self.node_id
+        is_msg_from_me = message.source == self.node_id
+        if is_msg_from_me:
+            # Ignore the message from myself
+            return None
+        elif is_msg_for_all or is_msg_for_me:
+            log.info("Received: %s from %s", message, message.source)
+            return self.callbacks[message.type][message.action](message)
+        else:
+            return None
 
     """
     Callback implementations of all possible messages and their requests/response variants
