@@ -1,21 +1,36 @@
 import logging
 
 from typing import Set
-from collections import namedtuple, defaultdict
+from copy import deepcopy
+from collections import defaultdict
 
 log = logging.getLogger()
 
 
-'''
-    Item represents a single indivisible production unit.
-    type: there can be many units of the same type. e.g. blue-door
-    id: unique to the specific instance of the item. e.g. YHG87
-        there can only be one item per id and given type
-'''
-Item = namedtuple('Item', ['type', 'id'])
+class Item:
+    '''
+        Item represents a single indivisible production unit.
+        type: there can be many units of the same type. e.g. blue-door
+        id: unique to the specific instance of the item. e.g. YHG87
+            there can only be one item per id and given type
+    '''
 
-# Item requirement - item: Item, quantity: int
-ItemReq = namedtuple('ItemReq', ['item', 'quantity'])
+    def __init__(self, type, id):
+        self.type = type
+        self.id = id
+
+    def __repr__(self):
+        return "{}-{}".format(self.type, self.id)
+
+
+# Item requirement - Item, Quantity
+class ItemReq:
+    def __init__(self, item: Item, quantity):
+        self.item = item
+        self.quantity = quantity
+
+    def __repr__(self):
+        return "{}({})".format(self.item, self.quantity)
 
 
 class ItemDependency(object):
@@ -26,6 +41,16 @@ class ItemDependency(object):
         returns a null item dependency i.e. [] -> []
         """
         return cls([], ItemReq(Item('null', -1), 0))
+
+    @staticmethod
+    def halveDependency(itemDep):
+        """
+        returns a halved item dependency where requirements are reduced
+        """
+        newItemDep = deepcopy(itemDep)
+        for idx in range(len(newItemDep.input_item_reqs)):
+            newItemDep.input_item_reqs[idx].quantity //= 2
+        return newItemDep
 
     def __init__(self, input_item_reqs: Set[ItemReq], result_item_req: ItemReq):
         """
@@ -67,4 +92,4 @@ class ItemDependency(object):
 
 
     def __repr__(self):
-        return "{} -> {}".format(self.input_item_reqs, self.result_item_req)
+        return "{}->{}".format(self.input_item_reqs, self.result_item_req)

@@ -27,7 +27,7 @@ class BaseNode(object):
         self.node_id = node_id
 
     def __repr__(self):
-        return str(self.node_id)
+        return "id:{}".format(self.node_id)
 
     def get_name(self):
         return self.node_id

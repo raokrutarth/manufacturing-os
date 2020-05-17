@@ -1,16 +1,16 @@
-
 import logging
-from collections import defaultdict
-from queue import Queue
-
+import messages
+import threads
+import time
 import operations
+
+from queue import Queue
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
-from pub_sub import SubscribeThread, PublishThread
+from collections import defaultdict
 from sc_stage import SuppyChainStage
-from messages import Action, MsgType, HeartbeatResp
-from operations import OpHandler
+
 
 log = logging.getLogger()
 
@@ -48,12 +48,17 @@ class SocketBasedNodeProcess(NodeProcess):
         """
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
+        # Execution constants for the process
+        self.heartbeat_delay = 5.0
+        self.num_unresponded_hearbeats_for_death = 5
+
         self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
         self.flags = flags
 
-        self.subscriber = SubscribeThread(self, self.cluster, self.onMessage)
-        self.publisher = PublishThread(self, self.message_queue)
+        self.msg_handler = messages.MessageHandler(self)
+        self.subscriber = threads.SubscribeThread(self, self.cluster)
+        self.publisher = threads.PublishThread(self)
         self.raft_helper = RaftHelper(self, self.cluster)
         self.sc_stage = SuppyChainStage(
             self.node.get_name(),
@@ -61,17 +66,18 @@ class SocketBasedNodeProcess(NodeProcess):
         )
 
 
+        # Manage heartbeats and liveness between nodes
+        self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
+        self.init_liveness_state()
+
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
-            self.opRunner = operations.OpsRunnerThread(
-                self,
-                self.cluster.blueprint.node_specific_ops[self.node.node_id],
-                self.sendMessage,
+            self.testOpRunner = operations.OpsRunnerThread(
+                self, self.cluster.blueprint.node_specific_ops[self.node.node_id]
             )
 
-        self.start()
-
-    def startThread(self, thread):
+    def startThread(self, thread, suffix):
+        thread.name = suffix + '-' + str(self.node.node_id)
         thread.daemon = True
         thread.start()
 
@@ -80,11 +86,12 @@ class SocketBasedNodeProcess(NodeProcess):
 
         await self.raft_helper.register_node()
 
-        self.startThread(self.subscriber)
-        self.startThread(self.publisher)
-        self.startThread(self.sc_stage)
+        self.startThread(self.subscriber, 'subscriber')
+        self.startThread(self.publisher, 'publisher')
+        self.startThread(self.heartbeat, 'heartbeat')
+        self.startThread(self.sc_stage, 'supplyChain')
         if self.flags['runOps']:
-            self.startThread(self.opRunner)
+            self.startThread(self.testOpRunner, 'heartbeat')
 
         log.info("Successfully started node %s", self.node.get_name())
 
@@ -93,22 +100,29 @@ class SocketBasedNodeProcess(NodeProcess):
         await self.raft_helper.init_flow()
         log.info("Successfully bootstrapped node %s", self.node.get_name())
 
-    def sendMessage(self, message):
-        log.debug("sending message %s from node %s", message, self.node.node_id)
-        self.message_queue.put_nowait(message)
+    def sendMessage(self, message: 'Message'):
+        self.msg_handler.sendMessage(message)
 
     def onMessage(self, message: 'Message'):
-        log.debug("Received: %s from %s", message, message.source)
-        '''
-            TODO
-            add logic to take an action based on the message object that
-            is expected to be one of the sub-classes of the Message class
-            in messages.py
-        '''
-        if message.action == Action.Heartbeat and message.type == MsgType.Request:
-            response = OpHandler.getMsgForOp(source=self.node, op=Action.Heartbeat, type = MsgType.Response, dest = message.source)
-            self.sendMessage(response)
-        elif message.action == Action.Heartbeat and message.type == MsgType.Response:
-            log.debug("%s : Heartbeat Resp: Roger that!", message.source)
+        self.msg_handler.onMessage(message)
 
-        return
+    """
+    Functions for heartbeats, maintaining and changing the states, etc
+    """
+
+    def init_liveness_state(self):
+        # -1 means no last known connection timestamp
+        self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
+
+    def update_heartbeat(self, node):
+        # NOTE: This is a VERY strong assumption; we usually don't have precise synced distributed clocks
+        curr_time = time.time()
+        self.last_known_heartbeat[node] = curr_time
+
+    def detect_and_fetch_dead_nodes(self):
+        """
+        Goes over the last_known_heartbeat dict and finds which nodes are probably dead
+        """
+        curr_time = time.time()
+        margin = self.num_unresponded_hearbeats_for_death * self.heartbeat_delay
+        return [n for n, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)]

@@ -1,79 +1,38 @@
 import asyncio
 import logging
-from typing import List
 import os
-from multiprocessing import Process
-from time import sleep
-
-import nodes
 import processes
 import operations
 import cluster
-import items
+import basecases
+import argparse
+
+from time import sleep
+
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
     level=os.environ.get("LOGLEVEL", "DEBUG"),
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
-    format='%(levelname)s [%(asctime)s - %(filename)s:%(lineno)d - %(funcName)s] %(message)s',
+    format='%(levelname)-6s | %(threadName)-12s | %(asctime)s - %(filename)-15s:%(lineno)-4d - %(funcName)-25s | %('
+           'message)s',
 )
 log = logging.getLogger()
 
-async def bootstrap_dependencies_three_nodes():
-    """
-    initialize demo_node with the following dependencies
-    0 -> 1 -> 2
-    """ 
-    demo_nodes = [
-        nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(3)
-    ]
 
-    wood = items.ItemReq(items.Item('wood', 0), 1)
-    door = items.ItemReq(items.Item('door', 1), 1)
-    house = items.ItemReq(items.Item('house', 2), 1)
+async def main(args):
 
-    demo_nodes[0].dependency = items.ItemDependency([], wood)
-    demo_nodes[1].dependency = items.ItemDependency([wood], door)
-    demo_nodes[2].dependency = items.ItemDependency([door], house)
-
-    return demo_nodes
-
-async def bootstrap_dependencies_five_nodes():
-    """
-    initialize demo_node with the following dependencies
-    0 -> | ->  1 -----> | -> 3 -> | -> 4 -> | -> 5
-           ->  2 -> |-> |         |
-                 -> |-----------> |
-    """
-    demo_nodes = [
-        nodes.SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(6)
-    ]
-
-    start = items.ItemReq(items.Item('start', 0), 1)
-    wood = items.ItemReq(items.Item('wood', 1), 1)  # There is always only one node starting the whole graph!
-    timber = items.ItemReq(items.Item('timber', 2), 1)
-    premium_timber = items.ItemReq(items.Item('premium_timber', 3), 1)
-    door = items.ItemReq(items.Item('door', 4), 1)
-    house = items.ItemReq(items.Item('house', 5), 1)
-
-    demo_nodes[0].dependency = items.ItemDependency([], start)
-    demo_nodes[1].dependency = items.ItemDependency([start], wood)
-    demo_nodes[2].dependency = items.ItemDependency([start], timber)
-    demo_nodes[3].dependency = items.ItemDependency([wood, timber], premium_timber)
-    demo_nodes[4].dependency = items.ItemDependency([timber, premium_timber], door)
-    demo_nodes[5].dependency = items.ItemDependency([door], house)
-
-    return demo_nodes
-
-async def main():
     # determine nodes (of type single item node) and operations for the demo cluster
-    #demo_nodes = await bootstrap_dependencies_three_nodes()
-    demo_nodes = await bootstrap_dependencies_five_nodes()
+    # TODO: Add more fine-grained control over the exact topology and number of nodes
+    if args.num_nodes == 3:
+        demo_nodes = basecases.bootstrap_dependencies_three_nodes()
+    elif args.num_nodes == 5:
+        demo_nodes = basecases.bootstrap_dependencies_five_nodes()
+    else:
+        demo_nodes = None
 
-    demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep] for n in demo_nodes}
-    #demo_ops = {n.node_id: [operations.Op.Heartbeat] for n in demo_nodes}
-    #demo_ops = {n.node_id: [operations.Op.Allocate, operations.Op.UpdateDep, operations.Op.Heartbeat] for n in demo_nodes}
+    demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
 
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
@@ -81,8 +40,11 @@ async def main():
 
     log.info("Starting %s", demo_cluster)
 
-    # start the nodes with operations enabled
-    flags = {'runOps': True}
+    # start the nodes with operations runner based on what's specified
+    flags = {'runOps': args.run_test_ops}
+
+    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code. Barriers add a bottleneck to the
+    #  execution. Also see MessageHandler.on_update_req for another major blocker.
     for node in demo_cluster.nodes:
         # since start() for the node is an async, non-blocking method, use await
         # to make sure the node is started successfully.
@@ -98,7 +60,47 @@ async def main():
         sleep(60)
 
 
+"""
+Utilities for argument parsing. Helps provide easy running of experiments.
+"""
+
+
+def str2bool(s):
+    """Convert string to bool (in argparse context)."""
+    if s.lower() not in ['true', 'false']:
+        raise ValueError('Need bool; got %r' % s)
+    return {'true': True, 'false': False}[s.lower()]
+
+
+def str2list(s):
+    """Convert string to list of strs, split on _"""
+    return s.split('_')
+
+
+def get_cluster_run_args():
+    parser = argparse.ArgumentParser()
+
+    # General global training parameters
+    parser.add_argument('--num_nodes', default=3, type=int)
+    parser.add_argument('--topology', default="simple", type=str, help='Type of graph topology to use')
+
+    # Options to interact and simulate the system
+    parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
+    parser.add_argument('--run_cli', default=False, type=str2bool, help='Whether to run the interative cli')
+    parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
+
+    # Execution level arguments
+    parser.add_argument('--log_level', default="debug", type=str, help='Logging level to set')
+    return parser
+
+
 if __name__ == "__main__":
+    parser = get_cluster_run_args()
+    args = parser.parse_args()
+
+    # Init log level according to what's specified
+    logging.getLogger().setLevel(args.log_level.upper())
+
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    loop.run_until_complete(main(args))
     log.critical("All nodes exited")

@@ -1,4 +1,5 @@
 import operations
+import items
 from collections import defaultdict 
 
 import graph_funcs
@@ -22,7 +23,7 @@ def dummyNodes(n):
 
 
 def dummyOperationsAllocateCase(nodes):
-    return {n.node_id: [operations.Op.Allocate] for n in nodes}
+    return {n.node_id: [operations.Op.TriggerAllocate] for n in nodes}
 
 
 def dummyBlueprintCase0():
@@ -58,6 +59,54 @@ def fiveDummyItemNodes():
     itemnodes.append(DependencyNode(node_id=4, dependency=[1, 2]))
     itemnodes.append(DependencyNode(node_id=5, dependency=[3, 4]))
     return itemnodes
+
+
+def bootstrap_dependencies_three_nodes():
+    """
+    initialize demo_node with the following dependencies
+    0 -> 1 -> 2
+    """
+    demo_nodes = [
+        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(3)
+    ]
+
+    wood = items.ItemReq(items.Item('wood', 0), 1)
+    door = items.ItemReq(items.Item('door', 1), 1)
+    house = items.ItemReq(items.Item('house', 2), 1)
+
+    demo_nodes[0].dependency = items.ItemDependency([], wood)
+    demo_nodes[1].dependency = items.ItemDependency([wood], door)
+    demo_nodes[2].dependency = items.ItemDependency([door], house)
+
+    return demo_nodes
+
+
+def bootstrap_dependencies_five_nodes():
+    """
+    initialize demo_node with the following dependencies
+    0 -> | ->  1 -----> | -> 3 -> | -> 4 -> | -> 5
+           ->  2 -> |-> |         |
+                 -> |-----------> |
+    """
+    demo_nodes = [
+        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(6)
+    ]
+
+    start = items.ItemReq(items.Item('start', 0), 1)
+    wood = items.ItemReq(items.Item('wood', 1), 1)  # There is always only one node starting the whole graph!
+    timber = items.ItemReq(items.Item('timber', 2), 1)
+    premium_timber = items.ItemReq(items.Item('premium_timber', 3), 1)
+    door = items.ItemReq(items.Item('door', 4), 1)
+    house = items.ItemReq(items.Item('house', 5), 1)
+
+    demo_nodes[0].dependency = items.ItemDependency([], start)
+    demo_nodes[1].dependency = items.ItemDependency([start], wood)
+    demo_nodes[2].dependency = items.ItemDependency([start], timber)
+    demo_nodes[3].dependency = items.ItemDependency([wood, timber], premium_timber)
+    demo_nodes[4].dependency = items.ItemDependency([timber, premium_timber], door)
+    demo_nodes[5].dependency = items.ItemDependency([door], house)
+
+    return demo_nodes
 
 
 def dummyBlueprintCase2():

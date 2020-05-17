@@ -1,4 +1,3 @@
-
 import raftos
 import logging
 import jsonpickle
@@ -6,10 +5,10 @@ import cluster as ctr
 
 from os.path import abspath
 
+
 log = logging.getLogger()
 
 LEADER_WAL_DIR = abspath("./tmp")
-GRAPH_NAME = 'sc_graph'
 
 
 class ComplexJSONSerializer:
@@ -80,14 +79,18 @@ class RaftHelper(object):
             self.node_address, leader)
         return leader
 
+    async def am_i_leader(self):
+        leader = await self._get_leader()
+        return leader == self.node_address
+
     async def init_flow(self):
         '''
             Registers a replicated raftos collection and sets initial values
             for the initial flow state of the supplychain.
         '''
-        leader = await self._get_leader()
-        if leader == self.node_address:
-            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)
+        is_leader = await self.am_i_leader()
+        if is_leader:
+            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)            
             log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
             await self.cluster_flow.set(cluster_flow_obj)
@@ -97,34 +100,15 @@ class RaftHelper(object):
         """
             Utility to persist flow used by leader
         """
-        leader = await self._get_leader()
-        if leader == self.node_address:
+        is_leader = await self.am_i_leader()
+        if is_leader:
             await self.cluster_flow.set(new_cluster_flow)
             return True
         return False
 
-    async def request_leader_based_restructure(self, updated_edges):
-        '''
-            Each node can make a call to request_leader_based_restructure to make the
-            leader peform updates on the system state and modify the edges connected
-            to the calling node.
-
-            The function returns true when the calling node is the leader.
-        '''
-        leader = await self._get_leader()
-        if leader == self.node_address:
-            current_graph = await self.data.get()
-            # TODO
-            # logic to look at current graph and check if it can be modified,
-            # adding edges to the graph, removing edges should be done/called from here.
-
-            new_edges = {}  # REMOVE once TODO above is complete
-
-            await self.data.update(new_edges)
-
-            return True
-
-        return False
+    async def get_flow(self):
+        flow = await self.cluster_flow.get()
+        return flow
 
     def __repr__(self):
         return str({
