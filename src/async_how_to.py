@@ -2,6 +2,11 @@ import asyncio
 import requests
 import time
 
+
+'''
+
+    details: https://www.google.com/search?client=firefox-b-1-d&q=async+python3.5
+'''
 async def my_async_func(my_arg_1, my_arg_2):
     '''
         An async function that makes a get call
