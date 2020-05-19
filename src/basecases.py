@@ -81,7 +81,7 @@ def bootstrap_dependencies_three_nodes():
     return demo_nodes
 
 
-def bootstrap_dependencies_five_nodes():
+def bootstrap_dependencies_six_nodes():
     """
     initialize demo_node with the following dependencies
     0 -> | ->  1 -----> | -> 3 -> | -> 4 -> | -> 5
@@ -105,6 +105,35 @@ def bootstrap_dependencies_five_nodes():
     demo_nodes[3].dependency = items.ItemDependency([wood, timber], premium_timber)
     demo_nodes[4].dependency = items.ItemDependency([timber, premium_timber], door)
     demo_nodes[5].dependency = items.ItemDependency([door], house)
+
+    return demo_nodes
+
+def bootstrap_dependencies_seven_nodes():
+    """
+    initialize demo_node with the following dependencies
+    0 -> | 1 | 4 | -> 6
+         | 2 | 5 |
+         | 3 |
+    """
+
+    # All item reqs here involve 1 unit of product. So we have redundant sources of materials.
+
+    demo_nodes = [
+        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(7)
+    ]
+
+    start = items.ItemReq(items.Item('start', 0), 1)
+    wood = items.ItemReq(items.Item('wood', 1), 1) 
+    screws = items.ItemReq(items.Item('screws', 2), 1)
+    awesomeness = items.ItemReq(items.Item('awesomeness', 3), 1)
+    
+    demo_nodes[0].dependency = items.ItemDependency([], start)
+    demo_nodes[1].dependency = items.ItemDependency([start], wood)
+    demo_nodes[2].dependency = items.ItemDependency([start], wood)
+    demo_nodes[3].dependency = items.ItemDependency([start], wood)
+    demo_nodes[4].dependency = items.ItemDependency([wood], screws)
+    demo_nodes[5].dependency = items.ItemDependency([wood], screws)
+    demo_nodes[6].dependency = items.ItemDependency([screws], awesomeness)
 
     return demo_nodes
 
