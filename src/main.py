@@ -27,8 +27,10 @@ async def main(args):
     # TODO: Add more fine-grained control over the exact topology and number of nodes
     if args.num_nodes == 3:
         demo_nodes = basecases.bootstrap_dependencies_three_nodes()
-    elif args.num_nodes == 5:
-        demo_nodes = basecases.bootstrap_dependencies_five_nodes()
+    elif args.num_nodes == 6:
+        demo_nodes = basecases.bootstrap_dependencies_six_nodes()
+    elif args.num_nodes == 7:
+        demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
     else:
         demo_nodes = None
 
