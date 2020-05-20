@@ -89,7 +89,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
         self.startThread(self.heartbeat, 'heartbeat')
-        self.startThread(self.sc_stage, 'supplyChain')
+        self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
@@ -115,7 +115,8 @@ class SocketBasedNodeProcess(NodeProcess):
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
     def update_heartbeat(self, node):
-        # NOTE: This is a VERY strong assumption; we usually don't have precise synced distributed clocks
+        # NOTE: This is a VERY strong assumption; we usually don't have
+        # precise synced distributed clocks
         curr_time = time.time()
         self.last_known_heartbeat[node] = curr_time
 
@@ -125,4 +126,7 @@ class SocketBasedNodeProcess(NodeProcess):
         """
         curr_time = time.time()
         margin = self.num_unresponded_hearbeats_for_death * self.heartbeat_delay
-        return [n for n, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)]
+        return [
+            n for n, lt in self.last_known_heartbeat.items() \
+                if (lt < (curr_time - margin)) and (lt >= 0)
+        ]

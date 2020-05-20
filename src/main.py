@@ -32,6 +32,7 @@ async def main(args):
     elif args.num_nodes == 7:
         demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
     else:
+        log.error("%d node count not supported by any demo/test scenerio", args.num_nodes)
         demo_nodes = None
 
     demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}

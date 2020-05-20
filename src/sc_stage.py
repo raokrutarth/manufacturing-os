@@ -26,9 +26,9 @@ class SuppyChainStage(Thread):
     DELIVERED_STAGE = "delivered"
     CONSUMED_STAGE = "consumed"
 
-    def __init__(self, name, item_dependency: ItemDependency, time_per_batch=1):
+    def __init__(self, name: str, item_dependency: ItemDependency, time_per_batch=1):
         '''
-            name: debugging purposes only.
+            name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
             produces: the item the stage produces.
             time_per_batch: time in seconds it takes to make one unit.
@@ -131,7 +131,7 @@ class SuppyChainStage(Thread):
         '''
             callback invoked by the node to mark
             an result item delivered to a downstream
-            node
+            node. updates the persistant log.
         '''
         self.outbound_log[item] = self.DELIVERED_STAGE
 
