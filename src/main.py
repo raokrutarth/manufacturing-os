@@ -45,7 +45,8 @@ async def main(args):
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}
 
-    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code. Barriers add a bottleneck to the
+    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code.
+    #  Barriers add a bottleneck to the
     #  execution. Also see MessageHandler.on_update_req for another major blocker.
     for node in demo_cluster.nodes:
         # since start() for the node is an async, non-blocking method, use await
@@ -83,26 +84,48 @@ def get_cluster_run_args():
     parser = argparse.ArgumentParser()
 
     # General global training parameters
-    parser.add_argument('--num_nodes', default=3, type=int)
-    parser.add_argument('--topology', default="simple", type=str, help='Type of graph topology to use')
+    parser.add_argument(
+        '--num_nodes',
+        default=3,
+        type=int,
+    )
+    parser.add_argument(
+        '--topology',
+        default="simple",
+        type=str,
+        help='Type of graph topology to use',
+    )
 
     # Options to interact and simulate the system
-    parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
-    parser.add_argument('--run_cli', default=False, type=str2bool, help='Whether to run the interative cli')
-    parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
+    parser.add_argument(
+        '--run_test_ops',
+        default=True,
+        type=str2bool,
+        help='Whether to run test ops or not',
+    )
+    parser.add_argument(
+        '--run_cli',
+        default=False,
+        type=str2bool,
+        help='Whether to run the interative cli',
+    )
+    parser.add_argument(
+        '--ops_to_run',
+        default=[],
+        type=str2list,
+        help='Which ops to run on each node during test bootstrap. Seperated by "_"',
+    )
 
-    # Execution level arguments
-    parser.add_argument('--log_level', default="debug", type=str, help='Logging level to set')
     return parser
 
 
 if __name__ == "__main__":
-    parser = get_cluster_run_args()
-    args = parser.parse_args()
+    p = get_cluster_run_args()
+    main_args = p.parse_args()
 
     # Init log level according to what's specified
-    logging.getLogger().setLevel(args.log_level.upper())
+    logging.getLogger().setLevel(main_args.log_level.upper())
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(args))
+    loop.run_until_complete(main(main_args))
     log.critical("All nodes exited")
