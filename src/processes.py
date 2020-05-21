@@ -52,7 +52,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.heartbeat_delay = 5.0
         self.num_unresponded_hearbeats_for_death = 5
 
-        self.process_spec = self.cluster.process_specs[self.node.node_id]
+        self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
         self.port = self.process_spec.port
         self.flags = flags
 
@@ -60,10 +60,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
         self.raft_helper = RaftHelper(self, self.cluster)
-        self.sc_stage = SuppyChainStage(
-            self.node.get_name(),
-            self.node.get_dependency(),
-        )
+        self.sc_stage = SuppyChainStage(self)
 
 
         # Manage heartbeats and liveness between nodes
@@ -72,8 +69,9 @@ class SocketBasedNodeProcess(NodeProcess):
 
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
+            ops = self.cluster.get_node_ops(self.node.node_id)
             self.testOpRunner = operations.OpsRunnerThread(
-                self, self.cluster.blueprint.node_specific_ops[self.node.node_id]
+                self, ops,
             )
 
     def startThread(self, thread, suffix):
@@ -82,7 +80,7 @@ class SocketBasedNodeProcess(NodeProcess):
         thread.start()
 
     async def start(self):
-        log.debug("Starting node %s", self.node.get_name())
+        log.debug("Starting node %s", self.node.get_id())
 
         await self.raft_helper.register_node()
 
@@ -93,12 +91,20 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
-        log.info("Successfully started node %s", self.node.get_name())
+        log.info("Successfully started node %s", self.node.get_id())
 
     async def bootstrap(self):
-        log.debug("Bootstrapping node %s", self.node.get_name())
+        log.debug("Bootstrapping node %s", self.node.get_id())
         await self.raft_helper.init_flow()
-        log.info("Successfully bootstrapped node %s", self.node.get_name())
+        log.info("Successfully bootstrapped node %s", self.node.get_id())
+
+    def get_subscriber_address(self):
+        '''
+            returns the <ip address>:<port> formatted zmq address
+            string of the node's subscriber
+        '''
+        return "127.0.0.1:%d" % (self.port)
+
 
     def sendMessage(self, message: 'Message'):
         self.msg_handler.sendMessage(message)

@@ -124,9 +124,6 @@ if __name__ == "__main__":
     p = get_cluster_run_args()
     main_args = p.parse_args()
 
-    # Init log level according to what's specified
-    logging.getLogger().setLevel(main_args.log_level.upper())
-
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(main_args))
     log.critical("All nodes exited")

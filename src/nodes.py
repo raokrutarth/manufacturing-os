@@ -27,9 +27,9 @@ class BaseNode(object):
         self.node_id = node_id
 
     def __repr__(self):
-        return "id:{}".format(self.node_id)
+        return "BaseNode(id:{})".format(self.node_id)
 
-    def get_name(self):
+    def get_id(self):
         return self.node_id
 
 
@@ -40,7 +40,7 @@ class SingleItemNode(BaseNode):
         - Contains the input items required to produce that quantity
     """
 
-    def __init__(self, node_id, dependency: ItemDependency):
+    def __init__(self, node_id: int, dependency: ItemDependency):
         super(SingleItemNode, self).__init__(node_id)
         self.dependency = dependency
 
@@ -48,12 +48,12 @@ class SingleItemNode(BaseNode):
         return self.dependency
 
     def __repr__(self):
-        return "{}::{}".format(self.node_id, self.dependency)
+        return "SingleItemNode(id: {}, deps: {})".format(self.node_id, self.dependency)
 
 
 class DependencyNode(BaseNode):
 
-    def __init__(self, node_id, dependency):
+    def __init__(self, node_id: int, dependency):
         super(DependencyNode, self).__init__(node_id)
         self.dependency = dependency
 
@@ -61,4 +61,4 @@ class DependencyNode(BaseNode):
         return self.dependency
 
     def __repr__(self):
-        return "{}::{}".format(self.node_id, self.dependency)
+        return "DependencyNode(id: {}, deps: {})".format(self.node_id, self.dependency)
