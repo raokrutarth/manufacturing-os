@@ -5,15 +5,13 @@ import logging
 from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
-from enum import Enum
-import asyncio
 
 from items import Item, ItemDependency
 from file_dict import FileDict
 
 log = logging.getLogger()
 
-class StageStatus(Enum):
+class StageStatus():
     IN_QUEUE = "in-queue"  # ready to be consumed or sent
     DELIVERED = "delivered"  # item was delivered downstream
     CONSUMED = "consumed"  # item was consumed in present node

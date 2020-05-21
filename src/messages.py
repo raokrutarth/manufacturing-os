@@ -86,8 +86,8 @@ class Message(object):
         assert isinstance(self.dest, int), "Invalid type of dest: {}".format(self.dest)
 
     def __repr__(self):
-        return "Message(action:{}, type:{}, from:{}, to:{})" \
-            .format(self.action, self.type, self.source, self.dest)
+        return "Message(from:{}, to:{}, type:{}, action:{})" \
+            .format(self.source, self.dest, self.type, self.action)
 
 
 class AckResp(Message):
@@ -286,7 +286,7 @@ class MessageHandler(object):
             Action.Ack: self.none_fn,
             Action.Update: self.on_update_req,
 
-            Action.RequestMaterial: self.on_request_material_req,
+            Action.RequestMaterialBatch: self.on_request_material_req,
             Action.CheckBatchStatus: self.on_check_batch_status_req,
         }
         response_callbacks = {

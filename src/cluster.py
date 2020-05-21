@@ -129,7 +129,9 @@ class ClusterWideFlow(object):
         return self.incoming_flows
 
     def __repr__(self):
-        return "{}".format(self.outgoing_flows)
+        return "ClusterWideFlow(in:{}, out:{})".format(
+            self.incoming_flows, self.outgoing_flows
+        )
 
 
 def bootstrap_all_paths(nodes: List[SingleItemNode]):

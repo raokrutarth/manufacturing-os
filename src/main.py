@@ -35,6 +35,7 @@ async def main(args):
         log.error("%d node count not supported by any demo/test scenerio", args.num_nodes)
         demo_nodes = None
 
+    # FIXME nodes always start with the ops below instead of args.run_test_ops
     demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
 
     # build the cluster object
