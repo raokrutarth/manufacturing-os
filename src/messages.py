@@ -64,15 +64,24 @@ class Message(object):
     Base class for all messages
     """
 
-    ALL = "all"
+    ALL = -1  # assumes a node id is always an int > 0
 
     def __init__(self, source, action: Action, typeVal: MsgType, dest=ALL):
+        '''
+            source: node_id of the node sending the message.
+            dest: node_id of the intended recepient.
+            type: can be response/request.
+            action: determines the purpose of the message.
+        '''
         self.type = typeVal
         self.source = source
         self.dest = dest
         self.action = action
 
-        # Allow any basic types for source, dest
+        # NOTE
+        # since the source and dest are node_ids, make sure the values
+        # qualify as valid node_ids. Skipping the check to verify if the id
+        # is a valid id of a node in the cluster.
         assert isinstance(self.source, int), "Invalid type of source: {}".format(self.source)
         assert isinstance(self.dest, int), "Invalid type of dest: {}".format(self.dest)
 
@@ -171,7 +180,7 @@ class UpdateReq(Message):
 
 class BatchRequest(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
-        super(BatchRequest, self).__init__(source, Action.RequestMaterialBatch, MsgType.Request)
+        super(BatchRequest, self).__init__(source, Action.RequestMaterialBatch, MsgType.Request, dest)
         self.item_req = item_req
         self.request_id = request_id
 
@@ -182,7 +191,7 @@ class BatchRequest(Message):
 
 class BatchSentResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
-        super(BatchSentResponse, self).__init__(source, Action.SentItemBatch, MsgType.Response)
+        super(BatchSentResponse, self).__init__(source, Action.SentItemBatch, MsgType.Response, dest)
         self.item_req = item_req
         self.request_id = request_id
 
@@ -193,7 +202,7 @@ class BatchSentResponse(Message):
 
 class BatchUnavailableResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
-        super(BatchUnavailableResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response)
+        super(BatchUnavailableResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response, dest)
         self.item_req = item_req
         self.request_id = request_id
 
@@ -204,7 +213,7 @@ class BatchUnavailableResponse(Message):
 
 class WaitingForBatchResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
-        super(WaitingForBatchResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response)
+        super(WaitingForBatchResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response, dest)
         self.item_req = item_req
         self.request_id = request_id
 
@@ -215,7 +224,7 @@ class WaitingForBatchResponse(Message):
 
 class BatchDeliveryConfirmResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
-        super(BatchDeliveryConfirmResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response)
+        super(BatchDeliveryConfirmResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response, dest)
         self.item_req = item_req
         self.request_id = request_id
 
