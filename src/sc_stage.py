@@ -14,9 +14,9 @@ from file_dict import FileDict
 log = logging.getLogger()
 
 class StageStatus(Enum):
-    IN_QUEUE = "in-queue"
-    DELIVERED = "delivered"
-    CONSUMED = "consumed"
+    IN_QUEUE = "in-queue"  # ready to be consumed or sent
+    DELIVERED = "delivered"  # item was delivered downstream
+    CONSUMED = "consumed"  # item was consumed in present node
     IN_TRANSIT = "in-transit"
 
 class SuppyChainStage(Thread):
@@ -125,18 +125,28 @@ class SuppyChainStage(Thread):
     def get_outbound_waiting_items_count(self):
         return self.outbound_material.qsize()
 
-    async def _request_material(self):
+    async def _acquire_needed_materials(self):
         '''
             Identifies the nodes from where parts are to be requested
-            and makes a request for the
+            and makes a request for the parts from that node.
         '''
+        if not self.item_dep.has_prereq():
+            # stage requires no inbound material.
+            return True
+
         flow = await self.raft_helper.get_flow()
 
         for node_id in flow.get_inbound_node_ids():
             node = self.cluster.get_node(node_id)
+            # TODO send material request message and retry
+            # until materials are acquired. reply with waiting,
+            # then delivered.
+            # Then mark consumed in log.
+
+        return True
 
 
-    def verify_material(self, material: Item):
+    def _verify_material(self, material: Item):
         '''
             is a function called as a callback by the node-process
             when it receives material from an inbound edge/node.

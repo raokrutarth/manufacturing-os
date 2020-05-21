@@ -73,6 +73,16 @@ class ItemDependency(object):
                 return True
         return False
 
+    def has_prereq(self):
+        '''
+            Returns true if the Dependency requires a prerequisite.
+            i.e. if there is an incoming edge.
+        '''
+        if self.input_item_reqs and len(self.input_item_reqs) > 0:
+            return False
+        return True
+
+
     def can_make_result(self, materials: Set[Item]):
         '''
             returns true if the materials can make the
