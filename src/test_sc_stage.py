@@ -17,23 +17,6 @@ log = logging.getLogger()
 
 class TestSupplyChainStage(unittest.TestCase):
 
-    def get_internal_node_single_unit_stage(self):
-        '''
-            return a stage that consumes 1 unit each of 2 materials
-            to produce 1 unit of a result item
-        '''
-        input_materials = set([
-            ItemReq(item=Item(type="door-frame-type-x", id=""), quantity=1),
-            ItemReq(item=Item(type="window-type-y", id=""), quantity=1)
-        ])
-        result_materials = ItemReq(item=Item(type="door-type-z", id=""), quantity=1)
-
-        stage = SuppyChainStage(
-            name='test-single-output-internal',
-            item_dependency=ItemDependency(input_materials, result_materials)
-        )
-        return stage
-
     def start_stage(self, stage):
         stage.daemon = True
         stage.start()

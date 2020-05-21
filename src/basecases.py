@@ -1,10 +1,10 @@
 import operations
-import items
-from collections import defaultdict 
+from items import Item, ItemReq, ItemDependency
+from collections import defaultdict
 
 import graph_funcs
 from nodes import BaseNode, SingleItemNode, DependencyNode
-from cluster import ClusterBlueprint
+from cluster import ClusterBlueprint, Cluster
 
 import logging
 
@@ -42,13 +42,49 @@ def dummyBlueprintCase1():
     ops = dummyOperationsAllocateCase(nodes)
     return ClusterBlueprint(nodes, ops)
 
+def get_2_node_single_items_cluster():
+    '''
+        Returns a single 2 node cluster with one edge between nodes:
+            node-0 -> node-1
+
+        - node-0 supplies 1 window-type-y to node-1.
+        - node-1 creates 1 door-type-z.
+
+        Used to test SC stage.
+    '''
+
+    # define node 1 and it's deps
+    input_materials = set() # no inputs to node-0
+    result_materials = ItemReq(item=Item(type="window-type-y", id=""), quantity=1)
+    node_zero_deps = ItemDependency(input_item_reqs=input_materials, result_item_req=result_materials)
+    node_zero = SingleItemNode(node_id=0, dependency=node_zero_deps)
+
+    # define node 2 and it's deps
+    input_materials = set([
+        ItemReq(item=Item(type="window-type-y", id=""), quantity=1)
+    ])
+    result_materials = ItemReq(item=Item(type="door-type-z", id=""), quantity=1)
+    node_one_deps = ItemDependency(input_item_reqs=input_materials, result_item_req=result_materials)
+    node_one = SingleItemNode(node_id=1, dependency=node_one_deps)
+
+    # define per node bootstrap ops with cluster blueprint
+    # i.e. no bootstrap ops are run in the nodes
+    b = ClusterBlueprint(nodes=[node_zero, node_one])
+    cluster = Cluster(b)  # define cluster using blueprint
+
+    # TODO
+    # implement a cluster.start() function.
+    # After which this method will return the cluster object and
+    # the caller can start/stop the cluster as needed.
+
+    return cluster
 
 def fiveDummyItemNodes():
     """
     Creating 5 itemnodes that have the following dependencies
        |-> 1 -> |
-    0--|-> 2 -> | -> 4 -> |   
-       |-> 3------------> | -> 5 
+    0--|-> 2 -> | -> 4 -> |
+       |-> 3------------> | -> 5
 
     """
     itemnodes = []
@@ -67,16 +103,16 @@ def bootstrap_dependencies_three_nodes():
     0 -> 1 -> 2
     """
     demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(3)
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(3)
     ]
 
-    wood = items.ItemReq(items.Item('wood', 0), 1)
-    door = items.ItemReq(items.Item('door', 1), 1)
-    house = items.ItemReq(items.Item('house', 2), 1)
+    wood = ItemReq(Item('wood', 0), 1)
+    door = ItemReq(Item('door', 1), 1)
+    house = ItemReq(Item('house', 2), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], wood)
-    demo_nodes[1].dependency = items.ItemDependency([wood], door)
-    demo_nodes[2].dependency = items.ItemDependency([door], house)
+    demo_nodes[0].dependency = ItemDependency([], wood)
+    demo_nodes[1].dependency = ItemDependency([wood], door)
+    demo_nodes[2].dependency = ItemDependency([door], house)
 
     return demo_nodes
 
@@ -89,22 +125,22 @@ def bootstrap_dependencies_six_nodes():
                  -> |-----------> |
     """
     demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(6)
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(6)
     ]
 
-    start = items.ItemReq(items.Item('start', 0), 1)
-    wood = items.ItemReq(items.Item('wood', 1), 1)  # There is always only one node starting the whole graph!
-    timber = items.ItemReq(items.Item('timber', 2), 1)
-    premium_timber = items.ItemReq(items.Item('premium_timber', 3), 1)
-    door = items.ItemReq(items.Item('door', 4), 1)
-    house = items.ItemReq(items.Item('house', 5), 1)
+    start = ItemReq(Item('start', 0), 1)
+    wood = ItemReq(Item('wood', 1), 1)  # There is always only one node starting the whole graph!
+    timber = ItemReq(Item('timber', 2), 1)
+    premium_timber = ItemReq(Item('premium_timber', 3), 1)
+    door = ItemReq(Item('door', 4), 1)
+    house = ItemReq(Item('house', 5), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], start)
-    demo_nodes[1].dependency = items.ItemDependency([start], wood)
-    demo_nodes[2].dependency = items.ItemDependency([start], timber)
-    demo_nodes[3].dependency = items.ItemDependency([wood, timber], premium_timber)
-    demo_nodes[4].dependency = items.ItemDependency([timber, premium_timber], door)
-    demo_nodes[5].dependency = items.ItemDependency([door], house)
+    demo_nodes[0].dependency = ItemDependency([], start)
+    demo_nodes[1].dependency = ItemDependency([start], wood)
+    demo_nodes[2].dependency = ItemDependency([start], timber)
+    demo_nodes[3].dependency = ItemDependency([wood, timber], premium_timber)
+    demo_nodes[4].dependency = ItemDependency([timber, premium_timber], door)
+    demo_nodes[5].dependency = ItemDependency([door], house)
 
     return demo_nodes
 
@@ -119,21 +155,21 @@ def bootstrap_dependencies_seven_nodes():
     # All item reqs here involve 1 unit of product. So we have redundant sources of materials.
 
     demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(7)
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(7)
     ]
 
-    start = items.ItemReq(items.Item('start', 0), 1)
-    wood = items.ItemReq(items.Item('wood', 1), 1) 
-    screws = items.ItemReq(items.Item('screws', 2), 1)
-    awesomeness = items.ItemReq(items.Item('awesomeness', 3), 1)
-    
-    demo_nodes[0].dependency = items.ItemDependency([], start)
-    demo_nodes[1].dependency = items.ItemDependency([start], wood)
-    demo_nodes[2].dependency = items.ItemDependency([start], wood)
-    demo_nodes[3].dependency = items.ItemDependency([start], wood)
-    demo_nodes[4].dependency = items.ItemDependency([wood], screws)
-    demo_nodes[5].dependency = items.ItemDependency([wood], screws)
-    demo_nodes[6].dependency = items.ItemDependency([screws], awesomeness)
+    start = ItemReq(Item('start', 0), 1)
+    wood = ItemReq(Item('wood', 1), 1)
+    screws = ItemReq(Item('screws', 2), 1)
+    awesomeness = ItemReq(Item('awesomeness', 3), 1)
+
+    demo_nodes[0].dependency = ItemDependency([], start)
+    demo_nodes[1].dependency = ItemDependency([start], wood)
+    demo_nodes[2].dependency = ItemDependency([start], wood)
+    demo_nodes[3].dependency = ItemDependency([start], wood)
+    demo_nodes[4].dependency = ItemDependency([wood], screws)
+    demo_nodes[5].dependency = ItemDependency([wood], screws)
+    demo_nodes[6].dependency = ItemDependency([screws], awesomeness)
 
     return demo_nodes
 
@@ -151,7 +187,7 @@ def createDependencyGraph_BlueprintCase2():
     """
     Creating a graph with all the possible connections
     """
-    graph = defaultdict(list) 
+    graph = defaultdict(list)
     blueprint = dummyBlueprintCase2()
     for node in blueprint.nodes:
         for dep in node.dependency:
@@ -173,7 +209,7 @@ def createFlowGraphShortestPaths_BlueprintCase2():
 
 if __name__ == "__main__":
     graph, blueprint = createDependencyGraph_BlueprintCase2()
-    
+
     print("Printing nodes in cluster blueprint")
     print(blueprint.nodes)
 

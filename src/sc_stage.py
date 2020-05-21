@@ -6,6 +6,7 @@ from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
 from enum import Enum
+import asyncio
 
 from items import Item, ItemDependency
 from file_dict import FileDict
@@ -31,7 +32,7 @@ class SuppyChainStage(Thread):
     '''
 
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', time_per_batch=1):
+    def __init__(self, node_process, time_per_batch=1):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -133,8 +134,6 @@ class SuppyChainStage(Thread):
 
         for node_id in flow.get_inbound_node_ids():
             node = self.cluster.get_node(node_id)
-
-
 
 
     def verify_material(self, material: Item):
