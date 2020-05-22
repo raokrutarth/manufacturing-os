@@ -56,11 +56,11 @@ class SocketBasedNodeProcess(NodeProcess):
         self.port = self.process_spec.port
         self.flags = flags
 
+        self.raft_helper = RaftHelper(self, self.cluster)
+        self.sc_stage = SuppyChainStage(self)
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
-        self.raft_helper = RaftHelper(self, self.cluster)
-        self.sc_stage = SuppyChainStage(self)
 
 
         # Manage heartbeats and liveness between nodes

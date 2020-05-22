@@ -30,7 +30,7 @@ class ItemReq:
         self.quantity = quantity
 
     def __repr__(self):
-        return "{}({})".format(self.item, self.quantity)
+        return "ItemReq({} X {})".format(self.item, self.quantity)
 
 
 class ItemDependency(object):
@@ -62,7 +62,6 @@ class ItemDependency(object):
 
     def is_valid_material(self, new_item: Item):
         '''
-            TODO
             return true if new_item is a valid raw material to produce
             self.result_item_req type items
         '''
@@ -79,8 +78,8 @@ class ItemDependency(object):
             i.e. if there is an incoming edge.
         '''
         if self.input_item_reqs and len(self.input_item_reqs) > 0:
-            return False
-        return True
+            return True
+        return False
 
 
     def can_make_result(self, materials: Set[Item]):
@@ -102,4 +101,4 @@ class ItemDependency(object):
 
 
     def __repr__(self):
-        return "{}->{}".format(self.input_item_reqs, self.result_item_req)
+        return "ItemDependency(in:{}, out:{})".format(self.input_item_reqs, self.result_item_req)

@@ -185,7 +185,18 @@ class BatchRequest(Message):
         self.request_id = request_id
 
     def __repr__(self):
-        return "BatchRequest(from:{}, to: {}, requested:{}, req-id:{})".format(
+        return "BatchRequest(from:{}, to: {}, batch:{}, req-id:{})".format(
+            self.source, self.dest, self.item_req, self.request_id,
+        )
+
+class BatchStatusRequest(Message):
+    def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
+        super(BatchStatusRequest, self).__init__(source, Action.CheckBatchStatus, MsgType.Request, dest)
+        self.item_req = item_req
+        self.request_id = request_id
+
+    def __repr__(self):
+        return "BatchStatusRequest(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
 
@@ -196,7 +207,7 @@ class BatchSentResponse(Message):
         self.request_id = request_id
 
     def __repr__(self):
-        return "BatchSentResponse(from:{}, to: {}, requested:{}, req-id:{})".format(
+        return "BatchSentResponse(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
 
@@ -207,7 +218,7 @@ class BatchUnavailableResponse(Message):
         self.request_id = request_id
 
     def __repr__(self):
-        return "BatchUnavailableResponse(from:{}, to: {}, requested:{}, req-id:{})".format(
+        return "BatchUnavailableResponse(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
 
@@ -218,7 +229,7 @@ class WaitingForBatchResponse(Message):
         self.request_id = request_id
 
     def __repr__(self):
-        return "WaitingForBatchResponse(from:{}, to: {}, requested:{}, req-id:{})".format(
+        return "WaitingForBatchResponse(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
 
@@ -229,7 +240,7 @@ class BatchDeliveryConfirmResponse(Message):
         self.request_id = request_id
 
     def __repr__(self):
-        return "BatchDeliveryConfirmResponse(from:{}, to: {}, requested:{}, req-id:{})".format(
+        return "BatchDeliveryConfirmResponse(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
 
@@ -269,6 +280,7 @@ class MessageHandler(object):
 
         self.node_process = node_process
         self.node = node_process.node
+        self.sc_stage = node_process.sc_stage
         self.node_id = node_process.node.get_id()
         self.callbacks = self.get_action_callbacks()
 
@@ -342,7 +354,7 @@ class MessageHandler(object):
         # outbound queue and mark item in-transit and send SentItemBatch.
         # if item not available send ItemBatchNotAvailable
         assert message.action == Action.RequestMaterialBatch
-
+        self.sc_stage.process_batch_request(message)
 
     def on_item_sent_resp(self, message: Message):
         '''
@@ -352,6 +364,7 @@ class MessageHandler(object):
             Message is a response to a RequestMaterialBatch or CheckBatchStatus request.
         '''
         assert message.action == Action.SentItemBatch
+        self.sc_stage.process_batch_request_response(message)
 
     def on_batch_unavailable_resp(self, message: Message):
         '''
@@ -361,6 +374,7 @@ class MessageHandler(object):
             Message is a response to a RequestMaterialBatch request by upstream node.
         '''
         assert message.action == Action.ItemBatchNotAvailable
+        self.sc_stage.process_batch_request_response(message)
 
     def on_item_waiting_resp(self, message: Message):
         '''

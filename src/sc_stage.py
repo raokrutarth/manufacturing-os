@@ -5,10 +5,16 @@ import logging
 from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
+from uuid import uuid4
 
-from items import Item, ItemDependency
+from items import Item, ItemDependency, ItemReq
 from file_dict import FileDict
-
+from messages import BatchRequest, \
+                    BatchStatusRequest, \
+                    BatchSentResponse, \
+                    Message, \
+                    WaitingForBatchResponse, \
+                    BatchDeliveryConfirmResponse
 log = logging.getLogger()
 
 class StageStatus():
@@ -46,9 +52,16 @@ class SuppyChainStage(Thread):
         self.time_per_batch = time_per_batch
         self.raft_helper = node_process.raft_helper
         self.cluster = node_process.cluster
+        self.node_id = node_process.node.get_id()
+
+        self.send_message = node_process.sendMessage  # function to send messages to cluster
 
         self.inbound_log = FileDict(abspath("./tmp/" + self.name + ".inbound.log"))
         self.outbound_log = FileDict(abspath("./tmp/" + self.name + ".outbound.log"))
+
+        # dict to keep track of requests that haven't gotten
+        # a response and need additional retries.
+        self.pending_requests = {}
 
         # hack to stop stage
         self.running = Event()
@@ -73,12 +86,14 @@ class SuppyChainStage(Thread):
                 self.inbound_material.put(item)
 
         for item, state in self.outbound_log.items():
+            # TODO (Chen)
+            # check with neighbors if the item status
+            # in the logs is accurate. i.e. if it is marked
+            # in-transit or in-queue or consumed in their logs.
             if state == StageStatus.IN_QUEUE:
                 self.outbound_material.put(item)
             elif state == StageStatus.IN_TRANSIT:
-                # TODO check with neighbors if this item was delivered
                 pass
-
             self.manufacture_count += 1
 
         return
@@ -134,27 +149,70 @@ class SuppyChainStage(Thread):
 
         flow = await self.raft_helper.get_flow()
 
+        # FIXME (KR) works for only single item, single pre-req node
+        required_item = next(iter(self.item_dep.input_item_reqs))
+
         for node_id in flow.get_inbound_node_ids():
-            node = self.cluster.get_node(node_id)
-            # TODO send material request message and retry
-            # until materials are acquired. reply with waiting,
-            # then delivered.
-            # Then mark consumed in log.
+            batch_request = BatchRequest(
+                source=self.node_id,
+                dest=node_id,
+                item_req=required_item,
+                request_id=uuid4()
+            )
+            self.send_message(batch_request)
+            self.pending_requests[batch_request.request_id] = batch_request
+
+            # TODO await a batch sent response from upstream node
 
         return True
 
+    def reply_to_batch_status_query(self, request: Message):
+        log.debug("Received batch status check query %s", request)
+        # TODO Chen
+        # reply with right the status the item as present in
+        # the node's inbound/outbound logs.
 
-    def _verify_material(self, material: Item):
+
+    def process_batch_request(self, request: Message):
+        log.debug("Received request to supply with message %s", request)
+
+    def process_batch_request_response(self, response: Message):
         '''
-            is a function called as a callback by the node-process
-            when it receives material from an inbound edge/node.
+            receives a BatchSentResponse or BatchUnavailableResponse message
         '''
-        if self.item_dep.is_valid_material(material):
+        log.debug("Received response %s after request %s", response, response.request_id)
+        if isinstance(response, BatchSentResponse):
+            material = response.item_req
+            if not self.item_dep.is_valid_material(material):
+                log.error("Invalid batch sent %s to node with deps %s", material, self.item_dep)
+
+            self.inbound_log[material] = StageStatus.IN_TRANSIT
+
+            ack = WaitingForBatchResponse(
+                source=self.node_id,
+                dest=response.source,
+                item_req=material,
+                request_id=response.request_id,
+            )
+            self.send_message(ack)
+            log.info("Material %s marked in-transit from upstream node", response.item_req)
+
+            sleep(1) # HACK simulated transit time
+
             self.inbound_log[material] = StageStatus.IN_QUEUE
+            ack = BatchDeliveryConfirmResponse(
+                source=self.node_id,
+                dest=response.source,
+                item_req=material,
+                request_id=response.request_id,
+            )
+            self.send_message(ack)
             self.inbound_material.put(material)
-            return True
+            log.info("Received material %s from upstream node", response.item_req)
+        else:
+            log.error("Unable to obtain material for request %s", response.request_id)
 
-        return False
+        del self.pending_requests[response.request_id]
 
     def _generate_new_item_id(self):
         return ''.join(choice(ascii_uppercase) for _ in range(5)) + \
@@ -181,7 +239,8 @@ class SuppyChainStage(Thread):
 
 
         try:
-            # TODO deplete only when there is enough material to produce the result item
+            # TODO
+            # deplete only when there is enough material to produce the result item
             material = self.inbound_material.get_nowait()
             self.inbound_log[material] = StageStatus.CONSUMED
         except Empty:
@@ -193,6 +252,7 @@ class SuppyChainStage(Thread):
         self.outbound_log[new_item] = StageStatus.IN_QUEUE
         self.outbound_material.put(new_item)
         self.manufacture_count += 1
+        log.debug("Successfully manufactured item %s in stage %s", new_item, self.name)
 
         return
 
