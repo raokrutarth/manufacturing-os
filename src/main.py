@@ -15,8 +15,8 @@ logging.basicConfig(
     level=os.environ.get("LOGLEVEL", "DEBUG"),
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
-    format='%(levelname)-6s | %(threadName)-12s | %(asctime)s - %(filename)-15s:%(lineno)-4d - %(funcName)-25s | %('
-           'message)s',
+    format='%(levelname)-6s  %(asctime)s %(threadName)-12s %(filename)s:%(lineno)s::'
+           '%(funcName)-20s | %(message)s',
 )
 log = logging.getLogger()
 
@@ -27,8 +27,10 @@ async def main(args):
     # TODO: Add more fine-grained control over the exact topology and number of nodes
     if args.num_nodes == 3:
         demo_nodes = basecases.bootstrap_dependencies_three_nodes()
-    elif args.num_nodes == 5:
-        demo_nodes = basecases.bootstrap_dependencies_five_nodes()
+    elif args.num_nodes == 6:
+        demo_nodes = basecases.bootstrap_dependencies_six_nodes()
+    elif args.num_nodes == 7:
+        demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
     else:
         demo_nodes = None
 
