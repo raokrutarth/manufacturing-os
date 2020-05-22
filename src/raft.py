@@ -91,10 +91,11 @@ class RaftHelper(object):
         is_leader = await self.am_i_leader()
         if is_leader:
             cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)            
-            log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
+            log.warning("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
             await self.cluster_flow.set(cluster_flow_obj)
-            log.info("Finished init cluster flow on leader: {}".format(self.node_address))
+            log.warning(
+                "Finished init cluster flow on leader: {} with flow:{}".format(self.node_address, cluster_flow_obj))
 
     async def update_flow(self, new_cluster_flow: ctr.ClusterWideFlow):
         """

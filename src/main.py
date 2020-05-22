@@ -9,6 +9,22 @@ import argparse
 
 from time import sleep
 
+"""
+Logging guidelines are provided here. Importance increases while going down
+@ DEBUG
+    - Every log e.g. ops inside nodes, debug statements, etc
+@ INFO
+    - Every informative log e.g. connection established, message received, etc
+    - Messages sent and received by nodes
+    - New operations being run
+@ WARNING
+    - Missed heartbeats
+    - Cluster Flow changes
+@ ERROR
+    - Node deaths
+@ CRITICAL
+    - N/A
+"""
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
@@ -57,7 +73,7 @@ async def main(args):
         await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
         log.debug("Node %d started", node.node_id)
 
-    log.info("All nodes started")
+    log.critical("All nodes started")
     while 1:
         sleep(60)
 

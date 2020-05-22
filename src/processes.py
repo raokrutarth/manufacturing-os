@@ -49,7 +49,7 @@ class SocketBasedNodeProcess(NodeProcess):
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
         # Execution constants for the process
-        self.heartbeat_delay = 5.0
+        self.heartbeat_delay = 10.0
         self.num_unresponded_hearbeats_for_death = 5
 
         self.process_spec = self.cluster.process_specs[self.node.node_id]
@@ -64,7 +64,6 @@ class SocketBasedNodeProcess(NodeProcess):
             self.node.get_name(),
             self.node.get_dependency(),
         )
-
 
         # Manage heartbeats and liveness between nodes
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
@@ -82,7 +81,7 @@ class SocketBasedNodeProcess(NodeProcess):
         thread.start()
 
     async def start(self):
-        log.debug("Starting node %s", self.node.get_name())
+        log.warning("Starting node %s", self.node.get_name())
 
         await self.raft_helper.register_node()
 
@@ -93,12 +92,12 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
-        log.info("Successfully started node %s", self.node.get_name())
+        log.warning("Successfully started node %s", self.node.get_name())
 
     async def bootstrap(self):
-        log.debug("Bootstrapping node %s", self.node.get_name())
+        log.warning("Bootstrapping node %s", self.node.get_name())
         await self.raft_helper.init_flow()
-        log.info("Successfully bootstrapped node %s", self.node.get_name())
+        log.warning("Successfully bootstrapped node %s", self.node.get_name())
 
     def sendMessage(self, message: 'Message'):
         self.msg_handler.sendMessage(message)
