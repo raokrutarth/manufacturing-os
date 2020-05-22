@@ -86,9 +86,9 @@ def bootstrap_dependencies_three_nodes():
         SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(3)
     ]
 
-    wood = ItemReq(Item('wood', 0), 1)
-    door = ItemReq(Item('door', 1), 1)
-    house = ItemReq(Item('house', 2), 1)
+    wood = ItemReq(Item('wood', None), 1)
+    door = ItemReq(Item('door', None), 1)
+    house = ItemReq(Item('house', None), 1)
 
     demo_nodes[0].dependency = ItemDependency([], wood)
     demo_nodes[1].dependency = ItemDependency([wood], door)
@@ -108,12 +108,12 @@ def bootstrap_dependencies_six_nodes():
         SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(6)
     ]
 
-    start = ItemReq(Item('start', 0), 1)
-    wood = ItemReq(Item('wood', 1), 1)  # There is always only one node starting the whole graph!
-    timber = ItemReq(Item('timber', 2), 1)
-    premium_timber = ItemReq(Item('premium_timber', 3), 1)
-    door = ItemReq(Item('door', 4), 1)
-    house = ItemReq(Item('house', 5), 1)
+    start = ItemReq(Item('start', None), 1)
+    wood = ItemReq(Item('wood', None), 1)  # There is always only one node starting the whole graph!
+    timber = ItemReq(Item('timber', None), 1)
+    premium_timber = ItemReq(Item('premium_timber', None), 1)
+    door = ItemReq(Item('door', None), 1)
+    house = ItemReq(Item('house', None), 1)
 
     demo_nodes[0].dependency = ItemDependency([], start)
     demo_nodes[1].dependency = ItemDependency([start], wood)
@@ -138,9 +138,9 @@ def bootstrap_dependencies_seven_nodes():
         SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(7)
     ]
 
-    start = ItemReq(Item('start', 0), 1)
-    wood = ItemReq(Item('wood', 1), 1)
-    screws = ItemReq(Item('screws', 2), 1)
+    start = ItemReq(Item('start', None), 1)
+    wood = ItemReq(Item('wood', None), 1)
+    screws = ItemReq(Item('screws', None), 1)
     awesomeness = ItemReq(Item('awesomeness', 3), 1)
 
     demo_nodes[0].dependency = ItemDependency([], start)

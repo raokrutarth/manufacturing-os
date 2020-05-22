@@ -20,7 +20,7 @@ class Item:
         self.id = id
 
     def __repr__(self):
-        return "{}-{}".format(self.type, self.id)
+        return "Item(type:{}, id:{})".format(self.type, self.id)
 
 
 # Item requirement - Item, Quantity

@@ -384,6 +384,7 @@ class MessageHandler(object):
             Message is a response to SentItemBatch or CheckBatchStatus messages.
         '''
         assert message.action == Action.WaitingForMaterialBatch
+        self.sc_stage.process_item_waiting_response(message)
 
     def on_delivery_confirmed_resp(self, message: Message):
         '''
@@ -394,6 +395,7 @@ class MessageHandler(object):
             response to SentItemBatch (after a WaitingForMaterialBatch).
         '''
         assert message.action == Action.BatchDeliveryConfirm
+        self.sc_stage.mark_item_delivered(message)
 
     def on_check_batch_status_req(self, message: Message):
         '''
@@ -404,6 +406,7 @@ class MessageHandler(object):
             SentItemBatch
         '''
         assert message.action == Action.CheckBatchStatus
+        self.sc_stage.reply_to_batch_status_query(message)
 
 
     def on_heartbeat_req(self, message):
