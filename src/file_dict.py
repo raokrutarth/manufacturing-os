@@ -1,7 +1,7 @@
 import os
 import ujson
 import jsonpickle
-
+from atomicfile import AtomicFile
 
 class JSONSerializer:
     @staticmethod
@@ -33,8 +33,8 @@ class FileDict:
                     raise KeyError
 
             except FileNotFoundError:
-                # FIXME watch out for corruption if this write is interrupted here.
-                open(self.filename, 'w+b').close()
+                with AtomicFile(self.filename, "w+b") as f:
+                    f.close()
                 raise KeyError
 
             else:
@@ -56,8 +56,7 @@ class FileDict:
             key = name
 
         content.update({key: value})
-        # FIXME watch out for corruption if this write is interrupted here.
-        with open(self.filename, 'w+b') as f:
+        with AtomicFile(self.filename, "w+b") as f:
             f.write(self.serializer.pack(content))
 
         self.cache = content
@@ -80,5 +79,4 @@ class FileDict:
 
     def clear(self):
         self.cache = {}
-        # FIXME watch out for corruption if this write is interrupted here.
-        open(self.filename, 'w').close()
+        AtomicFile(self.filename, 'w').close()
