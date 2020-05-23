@@ -8,6 +8,7 @@ import multiprocessing as mp
 import aioprocessing as aio
 from multiprocessing import Process
 from time import sleep
+from asgiref.sync import async_to_sync
 
 import nodes
 import processes
@@ -22,133 +23,72 @@ LEADER_WAL_DIR = abspath("./tmp")
 
 class DummyProcess(object):
 
-    def init_event_loop(self):
-        # Do aioprocessing specific things
-        # policy = asyncio.get_event_loop_policy()
-        # policy.set_event_loop(policy.new_event_loop())
-        asyncio.set_event_loop(asyncio.new_event_loop())
-
     def __init__(self, port, ports):
         self.port = port
         self.ports = ports
-
-        sleep(random.random())
-        print('construct dummy', self.port)
-        self.init_event_loop()
-        print('init event loop', self.port)
         self.dummy = None
 
-        event_loop = asyncio.get_event_loop()
-        event_loop.run_until_complete(self.init_everything())
+        self.init_everything()
 
-    async def init_everything(self):
+    def init_everything(self):
+        loop = asyncio.new_event_loop()
         print("started init on", self.port)
 
-        await self.init_raftos()
-        print('init raftos done', self.port)
+        res = loop.run_until_complete(self.init_raftos(loop))
+        print('init raftos done in node with port', self.port, res)
+        # everything okay till here
 
-        await self.am_i_leader()
+        print("Node ", self.port, " about to check self leader status")
+        loop.run_until_complete(self.am_i_leader())
         print('am_i_leader done', self.port)
-        for i in range(10):
-            sleep(1.0)
-            print(self.port, raftos.get_leader())
 
-        # event_loop.run_until_complete(self.boot_raftos())
-
-    async def init_raftos(self):
+    async def init_raftos(self, loop):
         raftos.configure({
             'log_path': LEADER_WAL_DIR,
         })
 
-        print('init_raftos', self.port)
+        self_address = '127.0.0.1:%d' % self.port
+        cluster_addresses = ['127.0.0.1:%d' % p for p in self.ports if p != self.port]
+        print('init_raftos', self.port, self.ports, cluster_addresses)
 
         await raftos.register(
             # node running on this machine
-            '127.0.0.1:%d' % self.port,
+            self_address,
             # other servers
-            cluster=['127.0.0.1:%d' % p for p in self.ports]
+            cluster=cluster_addresses,
+            loop=loop,
         )
+        print('raftos register completed in node with port', self.port)
+        return True
 
-        sleep(5.0)
-        print('done with init_raftos', self.port)
 
-    async def boot_raftos(self):
-        print('boot_raftos', self.port)
-        await self.init_repl_obj()
-        print('done with boot_raftos', self.port)
-
-    async def _get_leader(self):
-        print("GL: Node %s waiting for leader election to complete. Current leader: %s", self.port, raftos.get_leader())
+    async def am_i_leader(self):
         await raftos.State.wait_for_election_success()
         leader = raftos.get_leader()
         print("GL: Node {} detected {} as leader node".format(self.port, leader))
-        return leader
+        return leader == "127.0.0.1:%d" % (self.port)
 
-    async def am_i_leader(self):
-        leader = await self._get_leader()
-        return leader == self.port
-
-    async def init_repl_obj(self):
-        is_leader = await self.am_i_leader()
-        if is_leader and False:
-            print("I'm on leader: {}".format(self.port))
-            dummy_obj = {'x': 0, 'y': 1}
-            self.dummy = raftos.Replicated(name='dummy')
-            print("Starting to init cluster flow: {} on leader: {}".format(self.port, dummy_obj))
-            await self.dummy.set(dummy_obj)
-            print("Finished init cluster flow on leader: {}".format(self.node_address))
-
-ports = None
-def init_cluster_helper(args):
-    node = DummyProcess(args[0], args[1])
-    print(node.port, "is done")
-
-
-def init_cluster_helper_onearg(port):
+def init_node_helper(args):
+    port, ports = args
     node = DummyProcess(port, ports)
-    print(node.port, "is done")
-
-
-async def spawn_cluster_processes(n):
-    global ports
-    ports = list(range(8000, 8000 + n))
-    ps = []
-    for port in ports:
-        p = aio.AioProcess(target=init_cluster_helper_onearg, args=(port,), daemon=True)
-        ps.append(p)
-        print("Node %d started", port)
-        p.start()
-    print("Now joining all")
-    for p in ps:
-        await p.coro_join()
-
-
-async def spawn_cluster_processes_main_approach(n):
-    ports = list(range(8000, 8000 + n))
-    ps = []
-    for port in ports:
-        n = DummyProcess(port, ports)
-        await n.init_everything()
-    print("Now joining all")
-
-
-def spawn_cluster_processes_async(n):
-    ports = list(range(8000, 8000 + n))
-    nodes = [DummyProcess(port, ports) for port in ports]
-
-    loop = asyncio.get_event_loop()
-    tasks = [asyncio.ensure_future(n.init_everything()) for n in nodes]
-    loop.run_until_complete(asyncio.gather(tasks))
-    loop.close()
-
+    print(node.port, "port based node exited")
 
 def main():
-    # spawn_cluster_processes_async(n=3)
-    # spawn_cluster_processes(n=3)
+    ports = list(range(5000, 5000 + 3))
+    ps = []
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(spawn_cluster_processes(5))
-    # loop.run_until_complete(spawn_cluster_processes_main_approach(3))
+    for port in ports:
+        # start a OS process per node
+        args = (port, ports)
+        p = Process(
+            target=init_node_helper,
+            args=(args,),
+            daemon=True
+        )
+        ps.append(p)
+        print("Node with port %d started" % port)
+        p.start()
+
 
     print("All nodes started")
     while 1:
