@@ -179,7 +179,7 @@ class SuppyChainStage(Thread):
 
     def process_batch_request(self, request: Message):
         log.debug("Received request to supply with message %s", request)
-        # TODO request.source is allowed to make requests to this node
+        # TODO verify request.source is allowed to make requests to this node
         assert request.item_req.type == self.get_stage_result_type()
 
         try:
