@@ -115,6 +115,7 @@ class RaftHelper(object):
 
         # loop = asyncio.get_event_loop()
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         flow = loop.run_until_complete(self.cluster_flow.get())
         return flow
 
