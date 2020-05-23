@@ -39,7 +39,7 @@ class Op(enum.Enum):
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source: SingleItemNode, op: Op, type: messages.MsgType=messages.MsgType.Request, dest=""):
+    def getMsgForOp(source: SingleItemNode, op: Op, type, dest=""):
         '''
             returns an object of type Message from messages.py.
         '''
