@@ -1,4 +1,5 @@
 import enum
+import asyncio
 import logging
 import cluster as ctr
 
@@ -215,7 +216,7 @@ class MessageHandler(object):
         log.info("sending message %s from node %s", message, self.node.node_id)
         self.node_process.message_queue.put(message)
 
-    def onMessage(self, message):
+    def onMessage(self, message, loop=None):
         is_msg_for_all = message.dest == Message.ALL
         is_msg_for_me = message.dest == self.node_id
         is_msg_from_me = message.source == self.node_id
@@ -224,7 +225,8 @@ class MessageHandler(object):
             return None
         elif is_msg_for_all or is_msg_for_me:
             log.info("Received: %s from %s", message, message.source)
-            return self.callbacks[message.type][message.action](message)
+            loop = self.node_process.loop
+            return loop.run_until_complete(self.callbacks[message.type][message.action](message))
         else:
             return None
 
@@ -233,10 +235,10 @@ class MessageHandler(object):
     MessageHandler has access to specifics of
     """
 
-    def none_fn(self, _message):
+    async def none_fn(self, _message):
         pass
 
-    def on_heartbeat_req(self, message):
+    async def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat
         response = MessageHandler.getMsgForAction(
             source=self.node.node_id,
@@ -246,14 +248,14 @@ class MessageHandler(object):
         )
         self.sendMessage(response)
 
-    def on_heartbeat_resp(self, message):
+    async def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
         log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
         self.node_process.update_heartbeat(message.source)
 
     # TODO: No await here! Causes something downstream to fail for some reason.
     #  Figure out how to convert this into async
-    def on_update_req(self, message):
+    async def on_update_req(self, message):
         assert message.action == Action.Update
 
         is_leader = self.node_process.raft_helper.am_i_leader()
@@ -263,7 +265,7 @@ class MessageHandler(object):
             # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
             new_flow = ctr.bootstrap_shortest_path(self.node_process.cluster.nodes)
-            self.node_process.raft_helper.update_flow(new_flow)
+            await self.node_process.raft_helper.update_flow(new_flow)
 
             # Send an ack
             response = MessageHandler.getMsgForAction(
@@ -274,5 +276,5 @@ class MessageHandler(object):
             )
             self.sendMessage(response)
 
-    def on_update_resp(self, message):
+    async def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)

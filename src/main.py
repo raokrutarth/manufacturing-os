@@ -3,11 +3,13 @@ import logging
 import os
 import processes
 import operations
-import cluster
 import basecases
 import argparse
+import cluster as ctr
 
 from time import sleep
+from multiprocessing import Process
+
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -37,46 +39,52 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-async def main(args):
+def main(args):
 
     # determine nodes (of type single item node) and operations for the demo cluster
     # TODO: Add more fine-grained control over the exact topology and number of nodes
     if args.num_nodes == 3:
-        demo_nodes = basecases.bootstrap_dependencies_three_nodes()
+        nodes = basecases.bootstrap_dependencies_three_nodes()
     elif args.num_nodes == 6:
-        demo_nodes = basecases.bootstrap_dependencies_six_nodes()
+        nodes = basecases.bootstrap_dependencies_six_nodes()
     elif args.num_nodes == 7:
-        demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
+        nodes = basecases.bootstrap_dependencies_seven_nodes()
     else:
-        demo_nodes = None
+        nodes = None
 
-    demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
+    ops = {n.node_id: [operations.Op.SendUpdateDep] for n in nodes}
 
     # build the cluster object
-    demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
-    demo_cluster = cluster.Cluster(demo_blueprint)
+    blueprint = ctr.ClusterBlueprint(nodes, ops)
+    cluster = ctr.Cluster(blueprint)
 
-    log.info("Starting %s", demo_cluster)
+    log.info("Starting %s", cluster)
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}
 
-    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code. Barriers add a bottleneck to the
-    #  execution. Also see MessageHandler.on_update_req for another major blocker.
-    for node in demo_cluster.nodes:
-        # since start() for the node is an async, non-blocking method, use await
-        # to make sure the node is started successfully.
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        log.debug("Node %d started", node.node_id)
+    process_set = set()
 
-    for node in demo_cluster.nodes:
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
-        log.debug("Node %d started", node.node_id)
+    try:
+        for node in nodes:
+            node_args = (node, cluster, flags)
+            p = Process(target=processes.run_node_process, args=node_args)
+            log.info("Started process for node: %r", node)
 
-    log.critical("All nodes started")
-    while 1:
-        sleep(60)
+            p.start()
+            process_set.add(p)
 
+        while processes:
+            for process in tuple(process_set):
+                process.join()
+                process_set.remove(process)
+    finally:
+        for process in process_set:
+            if process.is_alive():
+                log.warning('Terminating %r', process)
+                process.terminate()
+
+    log.critical("All node processes exiting")
 
 """
 Utilities for argument parsing. Helps provide easy running of experiments.
@@ -119,6 +127,6 @@ if __name__ == "__main__":
     # Init log level according to what's specified
     logging.getLogger().setLevel(args.log_level.upper())
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(args))
+    main(args)
+
     log.critical("All nodes exited")

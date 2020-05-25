@@ -2,6 +2,7 @@ import zmq
 import logging
 import pickle
 import messages
+import asyncio
 
 from time import sleep
 from threading import Thread
@@ -22,6 +23,7 @@ class SubscribeThread(Thread):
 
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
+        sleep(5)
 
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
@@ -61,6 +63,7 @@ class PublishThread(Thread):
 
     def run(self):
         log.debug('node %s starting publisher thread', self.node_id)
+        sleep(5)
 
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
@@ -93,6 +96,7 @@ class HeartbeatThread(Thread):
 
     def run(self):
         log.debug('node %s starting heartbeat thread', self.node_id)
+        sleep(15)
 
         while True:
             # TODO: Currently this is a broadcast, change it to P2P communication

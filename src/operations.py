@@ -95,6 +95,7 @@ class OpsRunnerThread(Thread):
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
         sleep(3 * self.delay)
+        sleep(10)
 
         for op in self.ops_to_run:
             msg = self.get_message_from_op(op)

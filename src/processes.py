@@ -1,14 +1,15 @@
+import asyncio
 import logging
 import messages
 import threads
 import time
+import raftos
 import operations
 
 from queue import Queue
 from nodes import BaseNode
 from cluster import Cluster
 from raft import RaftHelper
-from collections import defaultdict
 from sc_stage import SuppyChainStage
 
 
@@ -23,6 +24,7 @@ class NodeProcess(object):
 
     def __init__(self, node, cluster):
         self.node = node
+        self.node_id = node.node_id
         self.cluster = cluster
 
         # use a thread-safe queue as message queue to
@@ -41,7 +43,7 @@ class NodeProcess(object):
 
 class SocketBasedNodeProcess(NodeProcess):
 
-    def __init__(self, node: BaseNode, cluster: Cluster, flags=defaultdict(lambda: False)):
+    def __init__(self, node: BaseNode, cluster: Cluster, loop, flags):
         """
             Takes node info as input
             cluster provides the state of the whole cluster, process_specs for other nodes
@@ -55,11 +57,12 @@ class SocketBasedNodeProcess(NodeProcess):
         self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
         self.flags = flags
+        self.loop = loop
 
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
-        self.raft_helper = RaftHelper(self, self.cluster)
+        self.raft_helper = RaftHelper(self, self.cluster, self.loop)
         self.sc_stage = SuppyChainStage(
             self.node.get_name(),
             self.node.get_dependency(),
@@ -85,12 +88,12 @@ class SocketBasedNodeProcess(NodeProcess):
 
         await self.raft_helper.register_node()
 
-        self.startThread(self.subscriber, 'subscriber')
-        self.startThread(self.publisher, 'publisher')
-        self.startThread(self.heartbeat, 'heartbeat')
-        self.startThread(self.sc_stage, 'supplyChain')
-        if self.flags['runOps']:
-            self.startThread(self.testOpRunner, 'heartbeat')
+        # self.startThread(self.subscriber, 'subscriber')
+        # self.startThread(self.publisher, 'publisher')
+        # self.startThread(self.heartbeat, 'heartbeat')
+        # self.startThread(self.sc_stage, 'supplyChain')
+        # if self.flags['runOps']:
+        #     self.startThread(self.testOpRunner, 'heartbeat')
 
         log.warning("Successfully started node %s", self.node.get_name())
 
@@ -103,7 +106,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message: 'Message'):
-        self.msg_handler.onMessage(message)
+        self.msg_handler.onMessage(message, loop=self.loop)
 
     """
     Functions for heartbeats, maintaining and changing the states, etc
@@ -125,3 +128,27 @@ class SocketBasedNodeProcess(NodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_hearbeats_for_death * self.heartbeat_delay
         return [n for n, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)]
+
+
+async def node_process_routine(node_process: SocketBasedNodeProcess):
+    await node_process.start()
+    log.debug("Node %d started", node_process.node_id)
+
+    await node_process.bootstrap()
+    log.debug("Node %d bootstrapped", node_process.node_id)
+
+
+def run_node_process(node: BaseNode, cluster: Cluster, flags):
+    loop = asyncio.new_event_loop()
+
+    node_process = SocketBasedNodeProcess(node, cluster, loop, flags)
+
+    log.debug("Starting loop to init node %d", node_process.node_id)
+    loop.run_until_complete(node_process_routine(node_process))
+    log.debug("Finished loop to init node %d", node_process.node_id)
+
+    # Run for 600 seconds
+    for _ in range(10):
+        time.sleep(60)
+
+    log.info("Node %s : exited" % node)
