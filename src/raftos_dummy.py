@@ -6,6 +6,8 @@ import raftos
 import random
 import multiprocessing as mp
 import aioprocessing as aio
+
+from threading import Thread
 from multiprocessing import Process
 from time import sleep
 
@@ -26,7 +28,9 @@ class DummyProcess(object):
         # Do aioprocessing specific things
         # policy = asyncio.get_event_loop_policy()
         # policy.set_event_loop(policy.new_event_loop())
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self.loop = loop
 
     def __init__(self, port, ports):
         self.port = port
@@ -39,6 +43,7 @@ class DummyProcess(object):
         self.dummy = None
 
         event_loop = asyncio.get_event_loop()
+        assert event_loop == self.loop
         event_loop.run_until_complete(self.init_everything())
 
     async def init_everything(self):
@@ -56,8 +61,10 @@ class DummyProcess(object):
         # event_loop.run_until_complete(self.boot_raftos())
 
     async def init_raftos(self):
+        loop = asyncio.get_event_loop()
         raftos.configure({
             'log_path': LEADER_WAL_DIR,
+            'loop': loop
         })
 
         print('init_raftos', self.port)
@@ -66,11 +73,14 @@ class DummyProcess(object):
             # node running on this machine
             '127.0.0.1:%d' % self.port,
             # other servers
-            cluster=['127.0.0.1:%d' % p for p in self.ports]
+            cluster=['127.0.0.1:%d' % p for p in self.ports],
+            loop=loop
         )
 
         sleep(5.0)
         print('done with init_raftos', self.port)
+
+        return None
 
     async def boot_raftos(self):
         print('boot_raftos', self.port)
@@ -98,6 +108,7 @@ class DummyProcess(object):
             await self.dummy.set(dummy_obj)
             print("Finished init cluster flow on leader: {}".format(self.node_address))
 
+
 ports = None
 def init_cluster_helper(args):
     node = DummyProcess(args[0], args[1])
@@ -105,6 +116,8 @@ def init_cluster_helper(args):
 
 
 def init_cluster_helper_onearg(port):
+    global ports
+    print(ports)
     node = DummyProcess(port, ports)
     print(node.port, "is done")
 
@@ -114,13 +127,13 @@ async def spawn_cluster_processes(n):
     ports = list(range(8000, 8000 + n))
     ps = []
     for port in ports:
-        p = aio.AioProcess(target=init_cluster_helper_onearg, args=(port,), daemon=True)
+        p = Thread(target=init_cluster_helper_onearg, args=(port,), daemon=True)
         ps.append(p)
         print("Node %d started", port)
         p.start()
-    print("Now joining all")
-    for p in ps:
-        await p.coro_join()
+    # print("Now joining all")
+    # for p in ps:
+    #     await p.join()
 
 
 async def spawn_cluster_processes_main_approach(n):
@@ -147,7 +160,7 @@ def main():
     # spawn_cluster_processes(n=3)
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(spawn_cluster_processes(5))
+    loop.run_until_complete(spawn_cluster_processes(2))
     # loop.run_until_complete(spawn_cluster_processes_main_approach(3))
 
     print("All nodes started")

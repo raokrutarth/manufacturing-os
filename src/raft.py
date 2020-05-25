@@ -51,8 +51,7 @@ class RaftHelper(object):
             Adds the node with node ID = node_id to the raftos
             based cluster.
         '''
-        log.debug("registering node with port %s in cluster %s with raft helper",
-                  self.node_address, self.cluster)
+        log.debug("registering node with port %s in cluster %s with raft helper", self.node_address, self.cluster)
 
         raftos.configure({
             'log_path': LEADER_WAL_DIR,
@@ -61,8 +60,7 @@ class RaftHelper(object):
 
         await raftos.register(self.node_address, cluster=self.cluster)
 
-        log.info("Registered node with address %s in raft cluster %s",
-                  self.node_address, self.cluster)
+        log.info("Registered node with address %s in raft cluster %s", self.node_address, self.cluster)
 
         # Create replicated dict which can contain different items we want shared amongst nodes
         # Dict-like object: data.update(), data['key'] etc
@@ -75,8 +73,7 @@ class RaftHelper(object):
         log.debug("Node %s waiting for leader election to complete", self.node_address)
         await raftos.State.wait_for_election_success()
         leader = raftos.get_leader()
-        log.debug("Node %s detected %s as leader node",
-            self.node_address, leader)
+        log.debug("Node %s detected %s as leader node", self.node_address, leader)
         return leader
 
     async def am_i_leader(self):
@@ -90,7 +87,7 @@ class RaftHelper(object):
         '''
         is_leader = await self.am_i_leader()
         if is_leader:
-            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)            
+            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)
             log.warning("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
             await self.cluster_flow.set(cluster_flow_obj)
