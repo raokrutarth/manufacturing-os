@@ -6,6 +6,7 @@ import operations
 import cluster
 import basecases
 import argparse
+from metrics import Metrics
 
 from time import sleep
 
@@ -36,9 +37,11 @@ async def main(args):
 
     demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
 
+    metrics = Metrics()
+
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
-    demo_cluster = cluster.Cluster(demo_blueprint)
+    demo_cluster = cluster.Cluster(metrics, demo_blueprint)
 
     log.info("Starting %s", demo_cluster)
 
