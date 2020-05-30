@@ -3,6 +3,10 @@ import ujson
 import jsonpickle
 from atomicfile import AtomicFile
 
+
+BASE_DIR = './tmp/'
+
+
 class JSONSerializer:
     @staticmethod
     def pack(data):
@@ -18,7 +22,7 @@ class FileDict:
     """Persistent dict-like storage on a disk accessible by obj['item_name']"""
 
     def __init__(self, filename):
-        self.filename = filename.replace(':', '_')
+        self.filename = os.path.join(BASE_DIR, filename.replace(':', '_'))
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
 
         self.cache = {}

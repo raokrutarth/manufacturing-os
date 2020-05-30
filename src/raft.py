@@ -2,6 +2,7 @@ import raftos
 import logging
 import jsonpickle
 import cluster as ctr
+import file_dict as fd
 
 from os.path import abspath
 
@@ -20,6 +21,64 @@ class ComplexJSONSerializer:
     def unpack(data):
         decoded = data.decode() if isinstance(data, bytes) else data
         return jsonpickle.loads(decoded)
+
+
+class FileHelper(object):
+    """
+    Helper class abstracting out the underlying file ops for leader election, flow consensus
+    """
+
+    def __init__(self, node_process, cluster):
+        # extract addresses of other nodes in the cluster
+        self.cluster = cluster
+        self.nodes = cluster.nodes
+        self.node_id = node_process.node.node_id
+
+        # Constructs for maintaining source of truth
+        self.leader_file = fd.FileDict(filename="state:leader")
+        self.consensus_file = fd.FileDict(filename="state:consensus")
+        self.leader_id = "leader_id"
+        self.flow_key = "flow"
+
+    def get_leader(self):
+        leader = self.leader_file[self.leader_id]
+        return leader
+
+    def apply_for_leadership(self):
+        '''
+            Applies for leadership i.e. persists its own id ad leader
+        '''
+        log.debug("Node %s applying for leadership", self.node_id)
+        self.leader_file[self.leader_id] = self.node_id
+
+    def am_i_leader(self):
+        leader = self.get_leader()
+        return leader == self.node_id
+
+    def update_flow(self, new_cluster_flow: ctr.ClusterWideFlow):
+        """
+            Utility to persist flow used by leader
+        """
+        is_leader = self.am_i_leader()
+        if is_leader:
+            log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_id, new_cluster_flow))
+            self.consensus_file[self.flow_key] = new_cluster_flow
+            log.debug(
+                "Finished updating cluster flow on leader: {} with flow:{}".format(self.node_id, new_cluster_flow))
+            return True
+        return False
+
+    def get_flow(self):
+        return self.consensus_file[self.flow_key]
+
+    def __repr__(self):
+        return str({
+            'RaftHelper': {
+                "node ID": self.node_id,
+                "cluster": self.cluster,
+                # TODO add flow and nodes if necessary
+            }
+        })
 
 
 class RaftHelper(object):
