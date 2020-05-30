@@ -9,7 +9,7 @@ BASE_DIR = './tmp/'
 class ComplexJSONSerializer:
     @staticmethod
     def pack(data):
-        return jsonpickle.dumps(data).encode()
+        return jsonpickle.dumps(data, indent=4)
 
     @staticmethod
     def unpack(data):
@@ -25,6 +25,9 @@ class FileDict:
         if self.filename[-4:] != '.log':
             self.filename += '.log'
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+
+        self.write_mode = 'w'
+        self.read_mode = 'r'
 
         self.serializer = ComplexJSONSerializer
 
@@ -49,13 +52,13 @@ class FileDict:
             key = name
 
         content.update({key: value})
-        with AtomicFile(self.filename, "w+b") as f:
+        with AtomicFile(self.filename, self.write_mode) as f:
             f.write(self.serializer.pack(content))
             f.close()
 
     def _get_file_content(self):
         try:
-            with open(self.filename, 'rb') as f:
+            with open(self.filename, self.read_mode) as f:
                 content = f.read()
                 if not content:
                     return {}
@@ -70,4 +73,4 @@ class FileDict:
             yield jsonpickle.loads(key), value
 
     def clear(self):
-        AtomicFile(self.filename, 'w+b').close()
+        AtomicFile(self.filename, self.write_mode).close()
