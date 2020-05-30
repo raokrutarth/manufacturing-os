@@ -182,7 +182,7 @@ class MessageHandler(object):
 
         self.node_process = node_process
         self.node = node_process.node
-        self.node_id = node_process.node.get_name()
+        self.node_id = node_process.node.get_id()
         self.callbacks = self.get_action_callbacks()
 
     def get_action_callbacks(self):

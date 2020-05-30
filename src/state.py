@@ -49,15 +49,18 @@ class FileBasedStateHelper(object):
         """
         is_leader = self.am_i_leader()
         if is_leader:
-            log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_id, new_cluster_flow))
             self.consensus_file[self.flow_key] = new_cluster_flow
-            log.debug(
-                "Finished updating cluster flow on leader: {} with flow:{}".format(self.node_id, new_cluster_flow))
+            log.warning("Updated cluster flow on leader: {} with flow:{}".format(self.node_id, new_cluster_flow))
             return True
         return False
 
     def get_flow(self):
-        return self.consensus_file[self.flow_key]
+        try:
+            flow = self.consensus_file[self.flow_key]
+        except:
+            return None
+        else:
+            return flow
 
     def __repr__(self):
         return str({

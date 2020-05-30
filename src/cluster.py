@@ -114,6 +114,7 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
     """
     Create a flow with all possible dependency paths
     """
+
     cluster_flow = ClusterWideFlow(nodes)
     # Iterate over all nodes
     for node_input in cluster_flow.nodes:
@@ -156,7 +157,7 @@ def bootstrap_shortest_path(nodes: List[SingleItemNode]):
     cluster_flow = bootstrap_all_paths(nodes)
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
-    
+
     # Create a new ClusterWideFlow object containing only the shortest paths.
     cluster_flow_shortest = ClusterWideFlow(nodes)
 

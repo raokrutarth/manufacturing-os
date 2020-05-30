@@ -49,13 +49,14 @@ def main(args):
     else:
         demo_nodes = None
 
-    demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
+    SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
+    demo_ops = {n.node_id: [SU, BD, BD, BD, BD, BD, BD, BD, BD, BD] for n in demo_nodes}
 
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
     demo_cluster = cluster.Cluster(demo_blueprint)
 
-    log.info("Starting %s", demo_cluster)
+    log.critical("Starting %s", demo_cluster)
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}

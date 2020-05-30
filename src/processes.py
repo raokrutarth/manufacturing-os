@@ -3,6 +3,7 @@ import messages
 import threads
 import time
 import operations
+import cluster as ctr
 
 from queue import Queue
 from nodes import BaseNode
@@ -61,7 +62,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.publisher = threads.PublishThread(self)
         self.state_helper = FileBasedStateHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(
-            self.node.get_name(),
+            self.node.get_id(),
             self.node.get_dependency(),
         )
 
@@ -85,8 +86,12 @@ class SocketBasedNodeProcess(NodeProcess):
         self.state_helper.apply_for_leadership()
         # Wait for confirmation of new leader
 
+    def init_cluster_flow(self):
+        new_flow = ctr.bootstrap_shortest_path(self.cluster.nodes)
+        self.state_helper.update_flow(new_flow)
+
     def start(self):
-        log.warning("Starting node %s", self.node.get_name())
+        log.warning("Starting node %s", self.node.get_id())
 
         # Apply for leadership
         self.state_helper.apply_for_leadership()
@@ -98,7 +103,7 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
-        log.warning("Successfully started node %s", self.node.get_name())
+        log.warning("Successfully started node %s", self.node.get_id())
 
     def sendMessage(self, message: 'Message'):
         self.msg_handler.sendMessage(message)

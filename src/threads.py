@@ -17,7 +17,7 @@ class SubscribeThread(Thread):
 
         self.node_process = node_process
         self.cluster = cluster
-        self.node_id = node_process.node.get_name()
+        self.node_id = node_process.node.get_id()
         self.DELAY = 0.01
 
     def run(self):
@@ -57,7 +57,7 @@ class PublishThread(Thread):
 
         self.node_process = node_process
         self.delay = delay
-        self.node_id = node_process.node.get_name()
+        self.node_id = node_process.node.get_id()
 
     def run(self):
         log.debug('node %s starting publisher thread', self.node_id)
@@ -83,7 +83,7 @@ class HeartbeatThread(Thread):
         self.node_process = node_process
         self.delay = delay
         self.node = node_process.node
-        self.node_id = node_process.node.get_name()
+        self.node_id = node_process.node.get_id()
 
     def send_message_for_dead_nodes(self):
         dead_nodes = self.node_process.detect_and_fetch_dead_nodes()

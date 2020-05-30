@@ -32,7 +32,7 @@ class FileDict:
         self.serializer = ComplexJSONSerializer
 
     def __getitem__(self, name):
-        key = str(name)
+        key = self.process_key(name)
         content = self._get_file_content()
         if key not in content:
             raise KeyError
@@ -40,7 +40,7 @@ class FileDict:
 
     @staticmethod
     def process_key(name):
-        if not isinstance(name, str):
+        if not isinstance(name, (str, int)):
             # hack to use objects as keys - convert key to json string
             # jsonpickle allows encoding complex python classes
             key = str(jsonpickle.dumps(name))
