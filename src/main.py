@@ -7,6 +7,7 @@ import basecases
 import argparse
 
 from time import sleep
+from multiprocessing import Process
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -36,6 +37,14 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
+def run_node_routine(node, demo_cluster, flags):
+    node_process = processes.SocketBasedNodeProcess(node, demo_cluster, flags)
+    node_process.start()
+    log.debug("Node %d started", node.node_id)
+    while 1:
+        sleep(60)
+
+
 def main(args):
 
     # determine nodes (of type single item node) and operations for the demo cluster
@@ -50,7 +59,7 @@ def main(args):
         demo_nodes = None
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
-    demo_ops = {n.node_id: [SU, BD, BD, BD, BD, BD, BD, BD, BD, BD] for n in demo_nodes}
+    demo_ops = {n.node_id: [SU, SU, BD, BD, BD, BD, BD, BD] for n in demo_nodes}
 
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
@@ -61,17 +70,25 @@ def main(args):
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}
 
-    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code. Barriers add a bottleneck to the
-    #  execution. Also see MessageHandler.on_update_req for another major blocker.
-    for node in demo_cluster.nodes:
-        # since start() for the node is an async, non-blocking method, use await
-        # to make sure the node is started successfully.
-        processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        log.debug("Node %d started", node.node_id)
+    process_set = set()
+    try:
+        for node in demo_cluster.nodes:
+            node_args = (node, demo_cluster, flags)
+            p = Process(target=run_node_routine, args=node_args)
+            p.start()
+            process_set.add(p)
 
-    log.critical("All nodes started")
-    while 1:
-        sleep(60)
+        log.critical("All nodes started")
+
+        while process_set:
+            for process in tuple(process_set):
+                process.join()
+                process_set.remove(process)
+    finally:
+        for process in process_set:
+            if process.is_alive():
+                log.warning('Terminating %r', process)
+                process.terminate()
 
 
 """

@@ -19,6 +19,9 @@ class Action(enum.Enum):
     Stores classes for actions allowed between different nodes
     """
 
+    def __repr__(self):
+        return "{}".format(self.name)
+
     # Inits a heartbeat from a node
     Heartbeat = 1
 
