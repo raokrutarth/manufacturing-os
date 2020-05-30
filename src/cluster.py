@@ -30,12 +30,13 @@ class Cluster(object):
     Represents the set of nodes interacting
     """
 
-    def __init__(self, blueprint, port_range_start=5000):
+    def __init__(self, metrics, blueprint, port_range_start=5000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.node_ids = [n.node_id for n in self.nodes]
         self.process_specs = None
         self.init_process_specs(port_range_start)
+        self.metrics = metrics
 
     def init_process_specs(self, port_range_start):
         # assign a process name and port to process
@@ -69,7 +70,7 @@ class ClusterWideFlow(object):
             self.node_ids.append(node_id)
             self.outgoing_flows[node_id] = []
             self.incoming_flows[node_id] = []
-    
+
     def removeNode(self, node_id):
         if node_id in self.node_ids:
             self.node_ids.remove(node_id)
@@ -136,17 +137,17 @@ def shortest_path_helper(outgoing_flows, start_node, end_node, path=[]):
     Helper function that finds the shortest path in a graph.
     Output in the form of e.g. [0, 2, 4], i.e. node_id= 0 -> 2 -> 4
     '''
-    path = path + [start_node] 
-    if start_node == end_node: 
+    path = path + [start_node]
+    if start_node == end_node:
         return path
     shortest = []
-    for node in outgoing_flows[start_node]: 
-        if node[0] not in path: 
+    for node in outgoing_flows[start_node]:
+        if node[0] not in path:
             newpath = shortest_path_helper(outgoing_flows, node[0], end_node, path)
             if newpath:
                 if not shortest or len(newpath) < len(shortest):
                     shortest = newpath
-    return shortest 
+    return shortest
 
 
 def bootstrap_shortest_path(nodes: List[SingleItemNode]):

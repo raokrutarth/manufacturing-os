@@ -5,6 +5,7 @@ import operations
 import cluster
 import basecases
 import argparse
+from metrics import Metrics
 
 from time import sleep
 from multiprocessing import Process
@@ -61,9 +62,11 @@ def main(args):
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
     demo_ops = {n.node_id: [SU, SU, BD, BD, BD, BD, BD, BD] for n in demo_nodes}
 
+    metrics = Metrics()
+
     # build the cluster object
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
-    demo_cluster = cluster.Cluster(demo_blueprint)
+    demo_cluster = cluster.Cluster(metrics, demo_blueprint)
 
     log.critical("Starting %s", demo_cluster)
 
