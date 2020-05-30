@@ -19,6 +19,9 @@ class Action(enum.Enum):
     Stores classes for actions allowed between different nodes
     """
 
+    def __repr__(self):
+        return "{}".format(self.name)
+
     # Inits a heartbeat from a node
     Heartbeat = 1
 
@@ -182,7 +185,7 @@ class MessageHandler(object):
 
         self.node_process = node_process
         self.node = node_process.node
-        self.node_id = node_process.node.get_name()
+        self.node_id = node_process.node.get_id()
         self.callbacks = self.get_action_callbacks()
 
     def get_action_callbacks(self):
@@ -251,19 +254,17 @@ class MessageHandler(object):
         log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
         self.node_process.update_heartbeat(message.source)
 
-    # TODO: No await here! Causes something downstream to fail for some reason.
-    #  Figure out how to convert this into async
     def on_update_req(self, message):
         assert message.action == Action.Update
 
-        is_leader = self.node_process.raft_helper.am_i_leader()
+        is_leader = self.node_process.state_helper.am_i_leader()
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
             # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
             new_flow = ctr.bootstrap_shortest_path(self.node_process.cluster.nodes)
-            self.node_process.raft_helper.update_flow(new_flow)
+            self.node_process.state_helper.update_flow(new_flow)
 
             # Send an ack
             response = MessageHandler.getMsgForAction(

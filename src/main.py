@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import processes
@@ -9,7 +8,24 @@ import argparse
 from metrics import Metrics
 
 from time import sleep
+from multiprocessing import Process
 
+"""
+Logging guidelines are provided here. Importance increases while going down
+@ DEBUG
+    - Every log e.g. ops inside nodes, debug statements, etc
+@ INFO
+    - Every informative log e.g. connection established, message received, etc
+    - Messages sent and received by nodes
+    - New operations being run
+@ WARNING
+    - Missed heartbeats
+    - Cluster Flow changes
+@ ERROR
+    - Node deaths
+@ CRITICAL
+    - N/A
+"""
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
@@ -22,7 +38,15 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-async def main(args):
+def run_node_routine(node, demo_cluster, flags):
+    node_process = processes.SocketBasedNodeProcess(node, demo_cluster, flags)
+    node_process.start()
+    log.debug("Node %d started", node.node_id)
+    while 1:
+        sleep(60)
+
+
+def main(args):
 
     # determine nodes (of type single item node) and operations for the demo cluster
     # TODO: Add more fine-grained control over the exact topology and number of nodes
@@ -35,7 +59,8 @@ async def main(args):
     else:
         demo_nodes = None
 
-    demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
+    SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
+    demo_ops = {n.node_id: [SU, SU, BD, BD, BD, BD, BD, BD] for n in demo_nodes}
 
     metrics = Metrics()
 
@@ -43,26 +68,30 @@ async def main(args):
     demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
     demo_cluster = cluster.Cluster(metrics, demo_blueprint)
 
-    log.info("Starting %s", demo_cluster)
+    log.critical("Starting %s", demo_cluster)
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}
 
-    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code. Barriers add a bottleneck to the
-    #  execution. Also see MessageHandler.on_update_req for another major blocker.
-    for node in demo_cluster.nodes:
-        # since start() for the node is an async, non-blocking method, use await
-        # to make sure the node is started successfully.
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        log.debug("Node %d started", node.node_id)
+    process_set = set()
+    try:
+        for node in demo_cluster.nodes:
+            node_args = (node, demo_cluster, flags)
+            p = Process(target=run_node_routine, args=node_args)
+            p.start()
+            process_set.add(p)
 
-    for node in demo_cluster.nodes:
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
-        log.debug("Node %d started", node.node_id)
+        log.critical("All nodes started")
 
-    log.info("All nodes started")
-    while 1:
-        sleep(60)
+        while process_set:
+            for process in tuple(process_set):
+                process.join()
+                process_set.remove(process)
+    finally:
+        for process in process_set:
+            if process.is_alive():
+                log.warning('Terminating %r', process)
+                process.terminate()
 
 
 """
@@ -106,6 +135,6 @@ if __name__ == "__main__":
     # Init log level according to what's specified
     logging.getLogger().setLevel(args.log_level.upper())
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(args))
+    main(args)
+
     log.critical("All nodes exited")

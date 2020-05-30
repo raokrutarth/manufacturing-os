@@ -29,7 +29,7 @@ class BaseNode(object):
     def __repr__(self):
         return "id:{}".format(self.node_id)
 
-    def get_name(self):
+    def get_id(self):
         return self.node_id
 
 
