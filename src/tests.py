@@ -1,13 +1,14 @@
 import unittest
+import logging
+import basecases
+import random
+import time
+from raft import FileHelper
+
+from cluster import Cluster
+import processes as proc
 from time import sleep
 from multiprocessing import Process
-
-import logging
-log = logging.getLogger()
-
-import basecases
-from cluster import Cluster
-import processes
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
@@ -24,7 +25,26 @@ class BootstrapCluster(unittest.TestCase):
     def spawn_cluster_process(self, runOps):
         flags = {'runOps': runOps}
         for node in self.cluster.nodes:
-            Process(target=processes.SocketBasedNodeProcess, args=(node, self.cluster, flags)).start()
+            Process(target=proc.SocketBasedNodeProcess, args=(node, self.cluster, flags)).start()
+
+    def spawn_process(self, cluster, target):
+        processes = set()
+        try:
+            for node in cluster.nodes:
+                node_args = (node, cluster)
+                p = Process(target=target, args=node_args)
+                p.start()
+                processes.add(p)
+
+            while processes:
+                for process in tuple(processes):
+                    process.join()
+                    processes.remove(process)
+        finally:
+            for process in processes:
+                if process.is_alive():
+                    log.warning('Terminating %r', process)
+                    process.terminate()
 
 
 class TestBootstrapCluster(BootstrapCluster):
@@ -42,66 +62,34 @@ class TestBootstrapCluster(BootstrapCluster):
         sleep(self.TIMEOUT)
 
 
-import asyncio
-from random import randint
-from time import sleep
-import logging
-from os.path import abspath
-from multiprocessing import Process
+class TestFileBasedLeaderElection(BootstrapCluster):
 
+    DELAY = 3
 
-def node_routine(node, cluster):
+    def run_leader_election(self, node, file_helper):
+        # Random sleep before applying for leadership
+        sleep(random.random() * self.DELAY)
+        file_helper.apply_for_leadership()
+        log.info("Node {} applied for leadership on: {}".format(node, time.time()))
 
-    TIME = 3
-    num_lives = randint(3, 8)
-    while True:
-        sleep(TIME)
+    def get_elected_leader(self, node, file_helper):
+        leader = file_helper.get_leader()
+        log.info("Node {} detected leader: {}".format(node, leader))
 
-        leader = raftos.get_leader()
-        print("Leader is: {}", leader)
-        if leader == node:
-            num_lives -= 3
-            log.info("%s : I am leader" % (node))
+    def run_node(self, node, cluster):
+        print("node %s started" % (node))
+        file_helper = FileHelper(node, cluster)
+        self.run_leader_election(node, file_helper)
+        time.sleep(self.DELAY)
+        self.get_elected_leader(node, file_helper)
+        log.info("%s : exited" % (node))
 
-        log.info("%s : exiting in %d sec" % (node, num_lives*TIME))
-
-        num_lives -= 1
-        if num_lives <= 0:
-            break
-
-
-def run_node(log_dir, node, cluster):
-    print("node %s started" % (node))
-    node_routine(node, cluster)
-    log.info("%s : exited" % (node))
-
-
-def test():
-
-    cluster = set(['127.0.0.1:{}'.format(port) for port in range(30000, 30034, 2)])
-    print(cluster)
-
-    processes = set([])
-    log_dir = abspath("./tmp")
-
-    try:
-        for node in cluster:
-            node_args = (log_dir, node, cluster - {node})
-            p = Process(target=run_node, args=node_args)
-            log.info("%r", node_args)
-
-            p.start()
-            processes.add(p)
-
-        while processes:
-            for process in tuple(processes):
-                process.join()
-                processes.remove(process)
-    finally:
-        for process in processes:
-            if process.is_alive():
-                log.warning('Terminating %r', process)
-                process.terminate()
+    def test_leader_election(self):
+        self.blueprint = basecases.dummyBlueprintCase1()
+        self.cluster = Cluster(self.blueprint)
+        log.info(self.cluster)
+        self.spawn_process(cluster=self.cluster, target=self.run_node)
+        sleep(self.TIMEOUT)
 
 
 if __name__ == '__main__':

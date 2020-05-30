@@ -23,6 +23,8 @@ class FileDict:
 
     def __init__(self, filename):
         self.filename = os.path.join(BASE_DIR, filename.replace(':', '_'))
+        if self.filename[-4:] != '.log':
+            self.filename += '.log'
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
 
         self.cache = {}

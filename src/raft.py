@@ -28,11 +28,11 @@ class FileHelper(object):
     Helper class abstracting out the underlying file ops for leader election, flow consensus
     """
 
-    def __init__(self, node_process, cluster):
+    def __init__(self, node, cluster):
         # extract addresses of other nodes in the cluster
         self.cluster = cluster
         self.nodes = cluster.nodes
-        self.node_id = node_process.node.node_id
+        self.node_id = node.node_id
 
         # Constructs for maintaining source of truth
         self.leader_file = fd.FileDict(filename="state:leader")
