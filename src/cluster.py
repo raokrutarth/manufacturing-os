@@ -157,8 +157,6 @@ def bootstrap_shortest_path(nodes: List[SingleItemNode]):
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
     
-    log.debug("Cluster flow created: {}".format(cluster_flow))
-
     # Create a new ClusterWideFlow object containing only the shortest paths.
     cluster_flow_shortest = ClusterWideFlow(nodes)
 
@@ -171,7 +169,5 @@ def bootstrap_shortest_path(nodes: List[SingleItemNode]):
             nodes[shortest[i+1]].node_id,
             nodes[shortest[i+1]].dependency.result_item_req
         )
-    
-    log.debug("Cluster flow created: {}".format(cluster_flow_shortest))
 
     return cluster_flow_shortest

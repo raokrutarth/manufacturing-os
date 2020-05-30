@@ -1,5 +1,4 @@
 import os
-import ujson
 import jsonpickle
 from atomicfile import AtomicFile
 
@@ -7,15 +6,15 @@ from atomicfile import AtomicFile
 BASE_DIR = './tmp/'
 
 
-class JSONSerializer:
+class ComplexJSONSerializer:
     @staticmethod
     def pack(data):
-        return ujson.dumps(data).encode()
+        return jsonpickle.dumps(data).encode()
 
     @staticmethod
     def unpack(data):
         decoded = data.decode() if isinstance(data, bytes) else data
-        return ujson.loads(decoded)
+        return jsonpickle.loads(decoded)
 
 
 class FileDict:
@@ -27,7 +26,7 @@ class FileDict:
             self.filename += '.log'
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
 
-        self.serializer = JSONSerializer
+        self.serializer = ComplexJSONSerializer
 
     def __getitem__(self, name):
         key = str(name)

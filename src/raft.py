@@ -12,17 +12,6 @@ log = logging.getLogger()
 LEADER_WAL_DIR = abspath("./tmp")
 
 
-class ComplexJSONSerializer:
-    @staticmethod
-    def pack(data):
-        return jsonpickle.dumps(data).encode()
-
-    @staticmethod
-    def unpack(data):
-        decoded = data.decode() if isinstance(data, bytes) else data
-        return jsonpickle.loads(decoded)
-
-
 class FileHelper(object):
     """
     Helper class abstracting out the underlying file ops for leader election, flow consensus

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import processes
@@ -37,7 +36,7 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-async def main(args):
+def main(args):
 
     # determine nodes (of type single item node) and operations for the demo cluster
     # TODO: Add more fine-grained control over the exact topology and number of nodes
@@ -66,11 +65,7 @@ async def main(args):
     for node in demo_cluster.nodes:
         # since start() for the node is an async, non-blocking method, use await
         # to make sure the node is started successfully.
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        log.debug("Node %d started", node.node_id)
-
-    for node in demo_cluster.nodes:
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
+        processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
         log.debug("Node %d started", node.node_id)
 
     log.critical("All nodes started")
@@ -119,6 +114,6 @@ if __name__ == "__main__":
     # Init log level according to what's specified
     logging.getLogger().setLevel(args.log_level.upper())
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(args))
+    main(args)
+
     log.critical("All nodes exited")

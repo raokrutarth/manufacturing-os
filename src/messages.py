@@ -251,19 +251,17 @@ class MessageHandler(object):
         log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
         self.node_process.update_heartbeat(message.source)
 
-    # TODO: No await here! Causes something downstream to fail for some reason.
-    #  Figure out how to convert this into async
     def on_update_req(self, message):
         assert message.action == Action.Update
 
-        is_leader = self.node_process.raft_helper.am_i_leader()
+        is_leader = self.node_process.state_helper.am_i_leader()
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
             # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
             new_flow = ctr.bootstrap_shortest_path(self.node_process.cluster.nodes)
-            self.node_process.raft_helper.update_flow(new_flow)
+            self.node_process.state_helper.update_flow(new_flow)
 
             # Send an ack
             response = MessageHandler.getMsgForAction(

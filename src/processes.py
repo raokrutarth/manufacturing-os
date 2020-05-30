@@ -7,7 +7,7 @@ import operations
 from queue import Queue
 from nodes import BaseNode
 from cluster import Cluster
-from raft import RaftHelper
+from raft import FileHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
 
@@ -59,7 +59,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
-        self.raft_helper = RaftHelper(self, self.cluster)
+        self.state_helper = FileHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(
             self.node.get_name(),
             self.node.get_dependency(),
@@ -80,10 +80,16 @@ class SocketBasedNodeProcess(NodeProcess):
         thread.daemon = True
         thread.start()
 
-    async def start(self):
+    def perform_leader_election(self):
+        # Apply for leadership
+        self.state_helper.apply_for_leadership()
+        # Wait for confirmation of new leader
+
+    def start(self):
         log.warning("Starting node %s", self.node.get_name())
 
-        await self.raft_helper.register_node()
+        # Apply for leadership
+        self.state_helper.apply_for_leadership()
 
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
@@ -93,11 +99,6 @@ class SocketBasedNodeProcess(NodeProcess):
             self.startThread(self.testOpRunner, 'heartbeat')
 
         log.warning("Successfully started node %s", self.node.get_name())
-
-    async def bootstrap(self):
-        log.warning("Bootstrapping node %s", self.node.get_name())
-        await self.raft_helper.init_flow()
-        log.warning("Successfully bootstrapped node %s", self.node.get_name())
 
     def sendMessage(self, message: 'Message'):
         self.msg_handler.sendMessage(message)
