@@ -38,20 +38,38 @@ class FileDict:
             raise KeyError
         return content[key]
 
-    def __setitem__(self, name, value):
-        try:
-            content = self._get_file_content()
-        except FileNotFoundError:
-            content = {}
-
+    @staticmethod
+    def process_key(name):
         if not isinstance(name, str):
             # hack to use objects as keys - convert key to json string
             # jsonpickle allows encoding complex python classes
             key = str(jsonpickle.dumps(name))
         else:
             key = name
+        return key
+
+    def __setitem__(self, name, value):
+        try:
+            content = self._get_file_content()
+        except FileNotFoundError:
+            content = {}
+
+        key = self.process_key(name)
 
         content.update({key: value})
+        with AtomicFile(self.filename, self.write_mode) as f:
+            f.write(self.serializer.pack(content))
+            f.close()
+
+    def update(self, updates):
+        try:
+            content = self._get_file_content()
+        except FileNotFoundError:
+            content = {}
+
+        mod_updates = {self.process_key(key): value for key, value in updates.items()}
+        content.update(mod_updates)
+
         with AtomicFile(self.filename, self.write_mode) as f:
             f.write(self.serializer.pack(content))
             f.close()

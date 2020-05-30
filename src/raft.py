@@ -1,6 +1,6 @@
 import raftos
+import time
 import logging
-import jsonpickle
 import cluster as ctr
 import file_dict as fd
 
@@ -26,7 +26,10 @@ class FileHelper(object):
         # Constructs for maintaining source of truth
         self.leader_file = fd.FileDict(filename="state:leader")
         self.consensus_file = fd.FileDict(filename="state:consensus")
+
+        # Keys for each of the fields involved
         self.leader_id = "leader_id"
+        self.time_key = "timestamp"
         self.flow_key = "flow"
 
     def get_leader(self):
@@ -38,7 +41,8 @@ class FileHelper(object):
             Applies for leadership i.e. persists its own id ad leader
         '''
         log.debug("Node %s applying for leadership", self.node_id)
-        self.leader_file[self.leader_id] = self.node_id
+        application = {self.time_key: time.time(), self.leader_id: self.node_id}
+        self.leader_file.update(application)
 
     def am_i_leader(self):
         leader = self.get_leader()
