@@ -7,7 +7,7 @@ import operations
 from queue import Queue
 from nodes import BaseNode
 from cluster import Cluster
-from raft import FileHelper
+from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
 
@@ -59,7 +59,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
-        self.state_helper = FileHelper(self.node, self.cluster)
+        self.state_helper = FileBasedStateHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(
             self.node.get_name(),
             self.node.get_dependency(),

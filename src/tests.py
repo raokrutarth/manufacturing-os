@@ -3,7 +3,7 @@ import logging
 import basecases
 import random
 import time
-from raft import FileHelper
+from state import FileBasedStateHelper
 
 from cluster import Cluster
 import processes as proc
@@ -78,7 +78,7 @@ class TestFileBasedLeaderElection(BootstrapCluster):
 
     def run_node(self, node, cluster):
         log.info("node %s started" % (node))
-        file_helper = FileHelper(node, cluster)
+        file_helper = FileBasedStateHelper(node, cluster)
         self.run_leader_election(node, file_helper)
         time.sleep(self.DELAY)
         self.get_elected_leader(node, file_helper)
