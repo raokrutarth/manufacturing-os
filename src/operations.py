@@ -101,7 +101,8 @@ class OpsRunnerThread(Thread):
                 ins = len(flow.getIncomingFlowsForNode(str(self.node_id)))
                 outs = len(flow.getOutgoingFlowsForNode(str(self.node_id)))
                 if (ins * outs) > 0:
-                    return random.random() < 0.2
+                    log.warning("Killing node: {}".format(self.node_id))
+                    return random.random() < 0.25
             except:
                 return False
 
