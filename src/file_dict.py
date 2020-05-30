@@ -27,26 +27,14 @@ class FileDict:
             self.filename += '.log'
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
 
-        self.cache = {}
         self.serializer = JSONSerializer
 
     def __getitem__(self, name):
         key = str(name)
-        if key not in self.cache:
-            try:
-                content = self._get_file_content()
-                if key not in content:
-                    raise KeyError
-
-            except FileNotFoundError:
-                with AtomicFile(self.filename, "w+b") as f:
-                    f.close()
-                raise KeyError
-
-            else:
-                self.cache = content
-
-        return self.cache[key]
+        content = self._get_file_content()
+        if key not in content:
+            raise KeyError
+        return content[key]
 
     def __setitem__(self, name, value):
         try:
@@ -64,8 +52,7 @@ class FileDict:
         content.update({key: value})
         with AtomicFile(self.filename, "w+b") as f:
             f.write(self.serializer.pack(content))
-
-        self.cache = content
+            f.close()
 
     def _get_file_content(self):
         try:
@@ -84,5 +71,4 @@ class FileDict:
             yield jsonpickle.loads(key), value
 
     def clear(self):
-        self.cache = {}
-        AtomicFile(self.filename, 'w').close()
+        AtomicFile(self.filename, 'w+b').close()
