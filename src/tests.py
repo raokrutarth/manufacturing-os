@@ -64,7 +64,7 @@ class TestBootstrapCluster(BootstrapCluster):
 
 class TestFileBasedLeaderElection(BootstrapCluster):
 
-    DELAY = 3
+    DELAY = 0.5
 
     def run_leader_election(self, node, file_helper):
         # Random sleep before applying for leadership
@@ -77,7 +77,7 @@ class TestFileBasedLeaderElection(BootstrapCluster):
         log.info("Node {} detected leader: {}".format(node, leader))
 
     def run_node(self, node, cluster):
-        print("node %s started" % (node))
+        log.info("node %s started" % (node))
         file_helper = FileHelper(node, cluster)
         self.run_leader_election(node, file_helper)
         time.sleep(self.DELAY)
@@ -85,7 +85,7 @@ class TestFileBasedLeaderElection(BootstrapCluster):
         log.info("%s : exited" % (node))
 
     def test_leader_election(self):
-        self.blueprint = basecases.dummyBlueprintCase1()
+        self.blueprint = basecases.dummyBlueprintCasen(n=10)
         self.cluster = Cluster(self.blueprint)
         log.info(self.cluster)
         self.spawn_process(cluster=self.cluster, target=self.run_node)
