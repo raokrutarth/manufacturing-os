@@ -52,7 +52,7 @@ class SuppyChainStage(Thread):
         self.inbound_material = Queue() if self.item_dep else None
         self.outbound_material = Queue()
         self.time_per_batch = time_per_batch
-        self.raft_helper = node_process.raft_helper
+        self.state_helper = node_process.state_helper
         self.cluster = node_process.cluster
         self.node_id = node_process.node.get_id()
 
@@ -149,7 +149,7 @@ class SuppyChainStage(Thread):
             # stage requires no inbound material.
             return True
 
-        flow = self.raft_helper.get_flow()
+        flow = self.state_helper.get_flow()
 
         # FIXME (KR) works for only single item, single pre-req node
         required_item = next(iter(self.item_dep.input_item_reqs))

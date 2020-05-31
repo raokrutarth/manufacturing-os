@@ -30,11 +30,12 @@ class Cluster(object):
     Represents the set of nodes interacting
     """
 
-    def __init__(self, blueprint: ClusterBlueprint, port_range_start=5000):
+    def __init__(self, metrics, blueprint, port_range_start=5000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.process_specs = None
         self.init_process_specs(port_range_start)
+        self.metrics = metrics
 
     def init_process_specs(self, port_range_start: int):
         # assign a process name and port to process
@@ -138,6 +139,7 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
     """
     Create a flow with all possible dependency paths
     """
+
     cluster_flow = ClusterWideFlow(nodes)
     # Iterate over all nodes
     for node_input in cluster_flow.nodes:
@@ -195,7 +197,5 @@ def bootstrap_shortest_path(nodes: List[SingleItemNode]):
             nodes[shortest[i+1]].node_id,
             nodes[shortest[i+1]].dependency.result_item_req
         )
-
-    log.debug("Cluster flow created: {}".format(cluster_flow_shortest))
 
     return cluster_flow_shortest

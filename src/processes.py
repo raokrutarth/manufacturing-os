@@ -3,11 +3,12 @@ import messages
 import threads
 import time
 import operations
+import cluster as ctr
 
 from queue import Queue
 from nodes import BaseNode
 from cluster import Cluster
-from raft import RaftHelper
+from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
 
@@ -49,14 +50,14 @@ class SocketBasedNodeProcess(NodeProcess):
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
         # Execution constants for the process
-        self.heartbeat_delay = 5.0
+        self.heartbeat_delay = 10.0
         self.num_unresponded_hearbeats_for_death = 5
 
         self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
         self.port = self.process_spec.port
         self.flags = flags
 
-        self.raft_helper = RaftHelper(self, self.cluster)
+        self.state_helper = FileBasedStateHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(self)
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
@@ -79,10 +80,20 @@ class SocketBasedNodeProcess(NodeProcess):
         thread.daemon = True
         thread.start()
 
-    async def start(self):
-        log.debug("Starting node %s", self.node.get_id())
+    def perform_leader_election(self):
+        # Apply for leadership
+        self.state_helper.apply_for_leadership()
+        # Wait for confirmation of new leader
 
-        await self.raft_helper.register_node()
+    def init_cluster_flow(self):
+        new_flow = ctr.bootstrap_shortest_path(self.cluster.nodes)
+        self.state_helper.update_flow(new_flow)
+
+    def start(self):
+        log.warning("Starting node %s", self.node.get_id())
+
+        # Apply for leadership
+        self.state_helper.apply_for_leadership()
 
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
@@ -91,25 +102,12 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
-        log.info("Successfully started node %s", self.node.get_id())
+        log.warning("Successfully started node %s", self.node.get_id())
 
-    async def bootstrap(self):
-        log.debug("Bootstrapping node %s", self.node.get_id())
-        await self.raft_helper.init_flow()
-        log.info("Successfully bootstrapped node %s", self.node.get_id())
-
-    def get_subscriber_address(self):
-        '''
-            returns the <ip address>:<port> formatted zmq address
-            string of the node's subscriber
-        '''
-        return "127.0.0.1:%d" % (self.port)
-
-
-    def sendMessage(self, message: 'Message'):
+    def sendMessage(self, message):
         self.msg_handler.sendMessage(message)
 
-    def onMessage(self, message: 'Message'):
+    def onMessage(self, message):
         self.msg_handler.onMessage(message)
 
     """
@@ -133,6 +131,6 @@ class SocketBasedNodeProcess(NodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_hearbeats_for_death * self.heartbeat_delay
         return [
-            n for n, lt in self.last_known_heartbeat.items() \
-                if (lt < (curr_time - margin)) and (lt >= 0)
+            n for n, lt in self.last_known_heartbeat.items()
+            if (lt < (curr_time - margin)) and (lt >= 0)
         ]

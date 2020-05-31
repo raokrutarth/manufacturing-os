@@ -77,7 +77,7 @@ class PublishThread(Thread):
 
 class HeartbeatThread(Thread):
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=5.0):
+    def __init__(self, node_process: 'SocketBasedNodeProcess', delay):
         super(HeartbeatThread, self).__init__()
 
         self.node_process = node_process
@@ -89,7 +89,7 @@ class HeartbeatThread(Thread):
         dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
         for node in dead_nodes:
             # Send message to leader to notify of death
-            log.debug('Detected death of node %s by %s', node, self.node_id)
+            log.error('Detected death of node %s by %s', node, self.node_id)
 
     def run(self):
         log.debug('node %s starting heartbeat thread', self.node_id)
@@ -99,7 +99,7 @@ class HeartbeatThread(Thread):
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )
-            log.debug("node %s sending heartbeat %s", self.node_id, message)
+            log.warning("node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)
             self.send_message_for_dead_nodes()
             sleep(self.delay)

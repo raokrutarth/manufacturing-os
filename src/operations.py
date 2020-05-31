@@ -1,5 +1,6 @@
 import enum
 import logging
+import random
 import items
 import messages
 import copy
@@ -14,6 +15,9 @@ log = logging.getLogger()
 
 
 class Op(enum.Enum):
+
+    def __repr__(self):
+        return "{}".format(self.name)
 
     # Inits a heartbeat from a node
     SendHeartbeat = 1
@@ -87,18 +91,44 @@ class OpsRunnerThread(Thread):
         self.node_id = node_process.node.get_id()
 
     def get_message_from_op(self, op):
-        log.info('node %s constructing message for operation %s', self.node_id, op)
+        log.debug('node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node, op)
 
+    def whether_to_kill_node(self):
+        # Only kills a node if they are part of the supply chain
+        leader = self.node_process.state_helper.get_leader()
+        flow = self.node_process.state_helper.get_flow()
+        if leader == self.node_id:
+            return False
+        elif flow is not None:
+            try:
+                ins = len(flow.getIncomingFlowsForNode(str(self.node_id)))
+                outs = len(flow.getOutgoingFlowsForNode(str(self.node_id)))
+                if (ins * outs) > 0:
+                    if random.random() < 0.5:
+                        log.warning("Killing node: {}".format(self.node_id))
+                        return True
+                    else:
+                        return False
+            except Exception:
+                return False
+        else:
+            return False
+
     def run(self):
-        log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
+        log.warning('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
-        sleep(3 * self.delay)
+        sleep(1 * self.delay)
 
         for op in self.ops_to_run:
             msg = self.get_message_from_op(op)
-            self.node_process.sendMessage(msg)
+            # Add hacky initial method to simulate conditional node death
+            if op == Op.BroadcastDeath:
+                if self.whether_to_kill_node():
+                    self.node_process.sendMessage(msg)
+            else:
+                self.node_process.sendMessage(msg)
             sleep(self.delay)
 
-        log.debug('node %s finished running operations %s', self.node_id, self.ops_to_run)
+        log.warning('node %s finished running operations %s', self.node_id, self.ops_to_run)
