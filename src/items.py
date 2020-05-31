@@ -15,9 +15,9 @@ class Item:
             there can only be one item per id and given type
     '''
 
-    def __init__(self, type, id):
-        self.type = type
-        self.id = id
+    def __init__(self, _type, _id):
+        self.type = _type
+        self.id = _id
 
     def __repr__(self):
         return "Item(type:{}, id:{})".format(self.type, self.id)
@@ -81,6 +81,14 @@ class ItemDependency(object):
             return True
         return False
 
+    def get_prereq(self):
+        return self.input_item_reqs
+
+    def get_result(self):
+        return self.result_item_req
+
+    def get_result_type(self):
+        return self.result_item_req.item.type
 
     def can_make_result(self, materials: Set[Item]):
         '''
@@ -98,7 +106,6 @@ class ItemDependency(object):
             if remaining_count > 0:
                 return False
         return True
-
 
     def __repr__(self):
         return "ItemDependency(in:{}, out:{})".format(self.input_item_reqs, self.result_item_req)

@@ -76,16 +76,21 @@ class Message(object):
             action: determines the purpose of the message.
         '''
         self.type = typeVal
-        self.source = source
-        self.dest = dest
         self.action = action
 
         # NOTE
         # since the source and dest are node_ids, make sure the values
         # qualify as valid node_ids. Skipping the check to verify if the id
         # is a valid id of a node in the cluster.
-        assert isinstance(self.source, int), "Invalid type of source: {}".format(self.source)
-        assert isinstance(self.dest, int), "Invalid type of dest: {}".format(self.dest)
+        if not isinstance(source, int):
+            log.warning("Invalid type of source: %s", type(source))
+            source = int(source)
+        if not isinstance(dest, int):
+            log.warning("Invalid type of dest: %s", type(dest))
+            dest = int(dest)
+
+        self.source = source
+        self.dest = dest
 
     def __repr__(self):
         return "Message(from:{}, to:{}, type:{}, action:{})" \

@@ -1,14 +1,16 @@
 import logging
 import os
+import argparse
+import sys
+from time import sleep
+
 import processes
 import operations
 import cluster
 import basecases
-import argparse
+from multiprocessing import Process
 from metrics import Metrics
 
-from time import sleep
-from multiprocessing import Process
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -29,6 +31,7 @@ Logging guidelines are provided here. Importance increases while going down
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
+    stream=sys.stdout,
     level=os.environ.get("LOGLEVEL", "DEBUG"),
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
