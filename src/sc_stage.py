@@ -148,7 +148,7 @@ class SuppyChainStage(Thread):
         '''
         if not self.item_dep.has_prereq():
             # stage requires no inbound material.
-            log.debug("Stage in node %d has no inbound materials to acquire. "
+            log.debug("Node %d has no inbound materials to acquire. "
                       "Continuing without making material request.", self.node_id)
             return True
 
@@ -187,7 +187,7 @@ class SuppyChainStage(Thread):
         log.debug("Node %d received request %s", self.node_id, request)
         # TODO verify request.source is allowed to make requests to this node
         if request.item_req.item.type != self.get_stage_result_type():
-            log.error("Stage in node %d requested to supply %s but it produces %s",
+            log.error("Node %d requested to supply %s but it produces %s",
                       self.node_id, request.item_req, self.get_stage_result_type())
             reply = BatchUnavailableResponse(
                 source=self.node_id,
@@ -257,12 +257,17 @@ class SuppyChainStage(Thread):
             )
             self.send_message(ack)
             self.inbound_material.put(material)
-            log.info("Received material %s from upstream node in node %d", response.item_req, self.node_id)
+            log.info("Node %d received %s from upstream node %d",
+                     self.node_id, response.item_req, response.source)
         else:
-            log.error("Unable to obtain %s from node %d in node %d. Request ID: %s",
-                      response.item_req, response.source, self.node_id, response.request_id)
+            log.error("Node %d unable to obtain %s from node %d. Request ID: %s",
+                      self.node_id, response.item_req, response.source, response.request_id)
 
-        del self.pending_requests[response.request_id]
+        try:
+            del self.pending_requests[response.request_id]
+        except KeyError:
+            log.warning("Node %d unable to find request id %s in pending requests but got a response for it.",
+                        self.node_id, response.request_id)
 
     def _generate_new_item_id(self):
         return ''.join(choice(ascii_uppercase) for _ in range(5)) + \
