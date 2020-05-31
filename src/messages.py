@@ -1,8 +1,7 @@
 import enum
 import logging
-import cluster as ctr
 
-from nodes import BaseNode
+import cluster as ctr
 from items import ItemDependency, ItemReq
 
 
@@ -174,12 +173,14 @@ class UpdateReq(Message):
     def __repr__(self):
         return "{}, NewDependency: {}".format(super(UpdateReq, self).__repr__(), self.dependency)
 
+
 """
     Helper classes for SC Stage related operations
     NOTE:
         - The request_id field allows the sender of the request to keep track of
           requests that have received a reply. Should be unique per request.
 """
+
 
 class BatchRequest(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
@@ -192,6 +193,7 @@ class BatchRequest(Message):
             self.source, self.dest, self.item_req, self.request_id,
         )
 
+
 class BatchStatusRequest(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
         super(BatchStatusRequest, self).__init__(source, Action.CheckBatchStatus, MsgType.Request, dest)
@@ -202,6 +204,7 @@ class BatchStatusRequest(Message):
         return "BatchStatusRequest(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
+
 
 class BatchSentResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
@@ -214,6 +217,7 @@ class BatchSentResponse(Message):
             self.source, self.dest, self.item_req, self.request_id,
         )
 
+
 class BatchUnavailableResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
         super(BatchUnavailableResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response, dest)
@@ -225,6 +229,7 @@ class BatchUnavailableResponse(Message):
             self.source, self.dest, self.item_req, self.request_id,
         )
 
+
 class WaitingForBatchResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
         super(WaitingForBatchResponse, self).__init__(source, Action.ItemBatchNotAvailable, MsgType.Response, dest)
@@ -235,6 +240,7 @@ class WaitingForBatchResponse(Message):
         return "WaitingForBatchResponse(from:{}, to: {}, batch:{}, req-id:{})".format(
             self.source, self.dest, self.item_req, self.request_id,
         )
+
 
 class BatchDeliveryConfirmResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
@@ -278,7 +284,7 @@ class MessageHandler(object):
         else:
             assert False, "Invalid action: {}".format(action.name)
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess'):
+    def __init__(self, node_process):
         super(MessageHandler, self).__init__()
 
         self.node_process = node_process

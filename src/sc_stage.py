@@ -19,11 +19,13 @@ from messages import BatchRequest, \
                     BatchUnavailableResponse
 log = logging.getLogger()
 
+
 class StageStatus():
     IN_QUEUE = "in-queue"  # ready to be consumed or sent
     DELIVERED = "delivered"  # item was delivered downstream
     CONSUMED = "consumed"  # item was consumed in present node
     IN_TRANSIT = "in-transit"
+
 
 class SuppyChainStage(Thread):
 
@@ -38,7 +40,7 @@ class SuppyChainStage(Thread):
     '''
 
 
-    def __init__(self, node_process, time_per_batch=1):
+    def __init__(self, node_process, time_per_batch=3):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -67,7 +69,7 @@ class SuppyChainStage(Thread):
 
         # hack to stop stage
         self.running = Event()
-        self.running.set() # set the stage to run by default
+        self.running.set()  # set the stage to run by default
 
         self.manufacture_count = 0
         self._attempt_log_recovery()
@@ -171,6 +173,7 @@ class SuppyChainStage(Thread):
         # TODO Chen
         # reply with right the status of the item as present in
         # the node's inbound/outbound logs.
+        assert request.action == BatchStatusRequest
 
     def process_item_waiting_response(self, message):
         log.debug("Stage at node %s is now waiting for batch %s", message.source, message.item_req)
@@ -228,7 +231,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Material %s marked in-transit from upstream node", response.item_req)
 
-            sleep(1) # HACK simulated transit time
+            sleep(self.time_per_batch)  # HACK simulated transit time
 
             self.inbound_log[material] = StageStatus.IN_QUEUE
             ack = BatchDeliveryConfirmResponse(
@@ -286,7 +289,6 @@ class SuppyChainStage(Thread):
         log.debug("Successfully manufactured item %s in stage %s", new_item, self.name)
 
         return
-
 
     def run(self):
 
