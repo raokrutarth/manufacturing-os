@@ -24,15 +24,19 @@ log = logging.getLogger()
 async def main(args):
 
     # determine nodes (of type single item node) and operations for the demo cluster
-    # TODO: Add more fine-grained control over the exact topology and number of nodes
-    if args.num_nodes == 3:
-        demo_nodes = basecases.bootstrap_dependencies_three_nodes()
-    elif args.num_nodes == 6:
-        demo_nodes = basecases.bootstrap_dependencies_six_nodes()
-    elif args.num_nodes == 7:
-        demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
-    else:
-        demo_nodes = None
+    # # TODO: Add more fine-grained control over the exact topology and number of nodes
+    # if args.num_nodes == 3:
+    #     demo_nodes = basecases.bootstrap_dependencies_three_nodes()
+    # elif args.num_nodes == 6:
+    #     demo_nodes = basecases.bootstrap_dependencies_six_nodes()
+    # elif args.num_nodes == 7:
+    #     demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
+    # else:
+    #     demo_nodes = None
+    print("Starting")
+    print(args)
+    demo_nodes = basecases.bootstrap_random_dag(args.num_nodes, args.num_edges)
+    print(demo_nodes)
 
     demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
 
@@ -83,7 +87,8 @@ def get_cluster_run_args():
     parser = argparse.ArgumentParser()
 
     # General global training parameters
-    parser.add_argument('--num_nodes', default=3, type=int)
+    parser.add_argument('--num_nodes', default=4, type=int)
+    parser.add_argument('--num_edges', default=5, type=int)
     parser.add_argument('--topology', default="simple", type=str, help='Type of graph topology to use')
 
     # Options to interact and simulate the system

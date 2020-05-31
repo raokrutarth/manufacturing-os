@@ -124,8 +124,8 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
             for node_output in cluster_flow.nodes:
                 # Iterate over their output requirements
                 result = node_output.dependency.result_item_req
-                # add flow if item id in result = item id in input
-                if result and input and result.item.id == input.item.id:
+                # add flow if item type in result = item type in input
+                if result and input and result.item.type == input.item.type:
                     cluster_flow.addFlow(node_output.node_id, node_input.node_id, result)
 
     return cluster_flow
@@ -146,14 +146,14 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
 
     if end_node:
         for input in end_node.dependency.input_item_reqs:
-            requirements.append(input.item.id)
+            requirements.append(input.item.type)
     
     # Loop over all incoming edges
     for incoming in cluster_flow.incoming_flows[end_node_id]:
         node = next((x for x in cluster_flow.nodes if x.node_id == incoming[0]), None)
 
         # Only check node out if its type is in requirements, i.e. some items have already been delivered.
-        if node and node.dependency.result_item_req.item.id in requirements:
+        if node and node.dependency.result_item_req.item.type in requirements:
             # Recursive function starts here -> end_node is changed to current node.
             new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)    
             boolean = [item for item in new_path if item[0] == start_node_id] # Check if start_node in path
@@ -167,7 +167,7 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
             # If start_node in path, the path is viable -> append it to the path + remove the item type from the requirements
             if boolean:
                 path.append((node.node_id, end_node_id))
-                requirements.remove(node.dependency.result_item_req.item.id)
+                requirements.remove(node.dependency.result_item_req.item.type)
     
     # print("Current Path at " + str(end_node_id))
     # print("Path " + str(path))
@@ -204,17 +204,17 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     log.debug("Cluster flow with one specific path created: {}".format(cluster_flow_final))
 
     return cluster_flow_final
-     
-
-
 
 # For testing purposes
-def main():
-    demo_nodes = basecases.bootstrap_dependencies_six_nodes_node_death()
-    cluster_flow_obj = bootstrap_flow(demo_nodes)
+# def main():
+#     number_nodes = 4
+#     number_edges = 5
+#     demo_nodes = basecases.bootstrap_random_dag(number_nodes, number_edges)
+#     print(demo_nodes)
+#     cluster_flow_obj = bootstrap_flow(demo_nodes)
 
-    print(cluster_flow_obj)
-    return cluster_flow_obj
+#     print(cluster_flow_obj)
+#     return cluster_flow_obj
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

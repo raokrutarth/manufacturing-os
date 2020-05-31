@@ -144,7 +144,7 @@ class SuppyChainStage(Thread):
 
             This is a blocking call since it has to wait on the inbound queue.
         '''
-        new_item_id = self.get_stage_result_type() + '-' + self._generate_new_item_id()
+        new_item_id = str(self.get_stage_result_type()) + '-' + str(self._generate_new_item_id())
 
 
         try:
