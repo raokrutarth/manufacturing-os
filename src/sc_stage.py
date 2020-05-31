@@ -39,7 +39,6 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-
     def __init__(self, node_process, time_per_batch=3):
         '''
             name: unique name of stage. Used to identify log file.
