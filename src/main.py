@@ -147,6 +147,13 @@ def get_cluster_run_args():
         type=str2list,
         help='Which ops to run on each node during test bootstrap. Seperated by "_"',
     )
+    # Execution level arguments
+    parser.add_argument(
+        '--log_level',
+        default="debug",
+        type=str,
+        help='Logging level to set'
+    )
 
     return parser
 
@@ -154,6 +161,9 @@ def get_cluster_run_args():
 if __name__ == "__main__":
     p = get_cluster_run_args()
     main_args = p.parse_args()
+
+    # Init log level according to what's specified
+    logging.getLogger().setLevel(main_args.log_level.upper())
 
     main(main_args)
 
