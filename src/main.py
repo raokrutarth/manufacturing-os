@@ -33,10 +33,10 @@ async def main(args):
     #     demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
     # else:
     #     demo_nodes = None
-    print("Starting")
-    print(args)
+    if args.num_nodes > args.num_edges+1:
+        args.num_edges = args.num_nodes-1 
     demo_nodes = basecases.bootstrap_random_dag(args.num_nodes, args.num_edges)
-    print(demo_nodes)
+    log.info("The following nodes have been created %s", demo_nodes)
 
     demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
 
