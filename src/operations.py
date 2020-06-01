@@ -22,9 +22,6 @@ class Op(enum.Enum):
     # Inits a heartbeat from a node
     SendHeartbeat = 1
 
-    # Notifies everyone of death
-    BroadcastDeath = 2
-
     # Signals to perform re-allocation; different from allocate in case we
     # use a different optimized algorithm for re-allocation
     TriggerReAllocate = 4
@@ -38,6 +35,9 @@ class Op(enum.Enum):
 
     # Signals to broadcast update dep request i.e. update its production, consumption requirements
     SendUpdateDep = 5
+
+    # Notifies everyone of death
+    BroadcastDeath = 2
 
 
 class OpHandler:
@@ -121,7 +121,9 @@ class OpsRunnerThread(Thread):
         sleep(1 * self.delay)
 
         while True:
+            print('waiting for message on:', self.node_id)
             op = self.node_process.op_queue.get()
+            print('Message received for op:', op)
             msg = self.get_message_from_op(op)
             # Add hacky initial method to simulate conditional node death
             if op == Op.BroadcastDeath:

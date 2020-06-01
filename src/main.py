@@ -9,7 +9,9 @@ import argparse
 from metrics import Metrics
 
 from time import sleep
+from operations import Op
 from multiprocessing import Process, Queue
+
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -47,19 +49,19 @@ def run_node_routine(node, cluster, queue, flags):
         sleep(60)
 
 
-def run_cluster_client():
+def run_cluster_client(queues):
     """
     Create client to interact with all clusters with simple
     """
 
-    def execute():
+    def execute(node_id, op: Op):
         """
         Executes the provided command by adding the operation to the queue
         """
-        pass
+        queues[node_id].put(op)
 
     code.interact(banner='Interactive client to perform operations on the cluster',
-                  local=locals(),
+                  local=dict(globals(), **locals()),
                   exitmsg='Performed all interactions. exiting and continuing...')
 
 
@@ -77,7 +79,7 @@ def main(args):
         demo_nodes = None
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
-    demo_ops = {n.node_id: [SU, SU, BD] for n in demo_nodes}
+    demo_ops = {n.node_id: [SU, SU] for n in demo_nodes}
 
     metrics = Metrics()
 
@@ -99,11 +101,11 @@ def main(args):
         # Add the pre-planned operations
         for op in cluster.blueprint.node_specific_ops[node.node_id]:
             queue.put(op)
-        queues[node] = queue
+        queues[node.node_id] = queue
 
     try:
         for node in cluster.nodes:
-            node_args = (node, cluster, queues[node], flags)
+            node_args = (node, cluster, queues[node.node_id], flags)
             p = Process(target=run_node_routine, args=node_args)
             p.start()
             process_list.append(p)
@@ -111,7 +113,7 @@ def main(args):
         log.critical("All nodes started")
 
         # Wait for the client thread to exit
-        run_cluster_client()
+        run_cluster_client(queues)
 
         # Stopping the queue worker
         for queue in queues.values():
