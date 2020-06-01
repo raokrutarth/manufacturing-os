@@ -4,6 +4,7 @@ import threads
 import time
 import operations
 import cluster as ctr
+import multiprocessing as mp
 
 from queue import Queue
 from nodes import BaseNode
@@ -42,7 +43,7 @@ class NodeProcess(object):
 
 class SocketBasedNodeProcess(NodeProcess):
 
-    def __init__(self, node: BaseNode, cluster: Cluster, flags=defaultdict(lambda: False)):
+    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue, flags=defaultdict(lambda: False)):
         """
             Takes node info as input
             cluster provides the state of the whole cluster, process_specs for other nodes
@@ -56,6 +57,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.process_spec = self.cluster.process_specs[self.node.node_id]
         self.port = self.process_spec.port
         self.flags = flags
+        self.op_queue = queue
 
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
@@ -72,9 +74,7 @@ class SocketBasedNodeProcess(NodeProcess):
 
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
-            self.testOpRunner = operations.OpsRunnerThread(
-                self, self.cluster.blueprint.node_specific_ops[self.node.node_id]
-            )
+            self.testOpRunner = operations.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
         thread.name = suffix + '-' + str(self.node.node_id)

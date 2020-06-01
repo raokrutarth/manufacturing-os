@@ -1,14 +1,17 @@
+import code
 import logging
 import os
 import processes
 import operations
-import cluster
+import cluster as ctr
 import basecases
 import argparse
 from metrics import Metrics
 
 from time import sleep
-from multiprocessing import Process
+from operations import Op
+from multiprocessing import Process, Queue
+
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -38,57 +41,92 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-def run_node_routine(node, demo_cluster, flags):
-    node_process = processes.SocketBasedNodeProcess(node, demo_cluster, flags)
+def run_node_routine(node, cluster, queue, flags):
+    node_process = processes.SocketBasedNodeProcess(node, cluster, queue, flags)
     node_process.start()
     log.debug("Node %d started", node.node_id)
     while 1:
         sleep(60)
 
 
+def run_cluster_client(queues):
+    """
+    Create client to interact with all clusters with simple
+    """
+
+    def execute(node_id, op: Op):
+        """
+        Executes the provided command by adding the operation to the queue
+        """
+        queues[node_id].put(op)
+
+    code.interact(banner='Interactive client to perform operations on the cluster',
+                  local=dict(globals(), **locals()),
+                  exitmsg='Performed all interactions. exiting and continuing...')
+
+
 def main(args):
 
-    # determine nodes (of type single item node) and operations for the demo cluster
+    # determine nodes (of type single item node) and operations for the cluster
     # TODO: Add more fine-grained control over the exact topology and number of nodes
     if args.num_nodes == 3:
-        demo_nodes = basecases.bootstrap_dependencies_three_nodes()
+        nodes = basecases.bootstrap_dependencies_three_nodes()
     elif args.num_nodes == 6:
-        demo_nodes = basecases.bootstrap_dependencies_six_nodes()
+        nodes = basecases.bootstrap_dependencies_six_nodes()
     elif args.num_nodes == 7:
-        demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
+        nodes = basecases.bootstrap_dependencies_seven_nodes()
     else:
-        demo_nodes = None
+        nodes = None
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
-    demo_ops = {n.node_id: [SU, SU, BD, BD, BD, BD, BD, BD] for n in demo_nodes}
+    demo_ops = {n.node_id: [SU, SU, BD] for n in nodes}
 
     metrics = Metrics()
 
     # build the cluster object
-    demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
-    demo_cluster = cluster.Cluster(metrics, demo_blueprint)
+    blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
+    cluster = ctr.Cluster(metrics, blueprint)
 
-    log.critical("Starting %s", demo_cluster)
+    log.critical("Starting %s", cluster)
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}
 
-    process_set = set()
+    process_list = list()
+    queues = {}
+
+    # Create messaging queues to interact with cluster
+    for node in cluster.nodes:
+        queue = Queue()
+        # Add the pre-planned operations
+        for op in cluster.blueprint.node_specific_ops[node.node_id]:
+            queue.put(op)
+        queues[node.node_id] = queue
+
     try:
-        for node in demo_cluster.nodes:
-            node_args = (node, demo_cluster, flags)
+        for node in cluster.nodes:
+            node_args = (node, cluster, queues[node.node_id], flags)
             p = Process(target=run_node_routine, args=node_args)
             p.start()
-            process_set.add(p)
+            process_list.append(p)
 
         log.critical("All nodes started")
 
-        while process_set:
-            for process in tuple(process_set):
+        if args.run_client:
+            # Wait for the client thread to exit
+            run_cluster_client(queues)
+
+        # Stopping the queue worker
+        for queue in queues.values():
+            queue.close()
+            queue.join_thread()
+
+        while process_list:
+            for process in tuple(process_list):
                 process.join()
-                process_set.remove(process)
+                process_list.remove(process)
     finally:
-        for process in process_set:
+        for process in process_list:
             if process.is_alive():
                 log.warning('Terminating %r', process)
                 process.terminate()
@@ -120,7 +158,7 @@ def get_cluster_run_args():
 
     # Options to interact and simulate the system
     parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
-    parser.add_argument('--run_cli', default=False, type=str2bool, help='Whether to run the interative cli')
+    parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interative cli')
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
     # Execution level arguments
