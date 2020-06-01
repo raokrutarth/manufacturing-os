@@ -99,7 +99,7 @@ class HeartbeatThread(Thread):
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )
-            log.warning("node %s sending heartbeat %s", self.node_id, message)
+            log.info("node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)
             self.send_message_for_dead_nodes()
             sleep(self.delay)
