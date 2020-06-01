@@ -4,6 +4,7 @@ import random
 import items
 import messages
 import copy
+from threading import Event
 
 from threading import Thread
 from time import sleep
@@ -89,6 +90,10 @@ class OpsRunnerThread(Thread):
         self.node = node_process.node
         self.node_id = node_process.node.get_id()
 
+        # Event to set and stop the ops thread
+        self.running = Event()
+        self.running.set()
+
     def get_message_from_op(self, op):
         log.debug('node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node, op)
@@ -120,7 +125,7 @@ class OpsRunnerThread(Thread):
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
         sleep(1 * self.delay)
 
-        while True:
+        while self.running.is_set():
             op = self.node_process.op_queue.get()
             msg = self.get_message_from_op(op)
             # Add hacky initial method to simulate conditional node death
@@ -130,5 +135,20 @@ class OpsRunnerThread(Thread):
             else:
                 self.node_process.sendMessage(msg)
             sleep(self.delay)
+            log.warning('node %s finished running operations %s', self.node_id, self.node_process.op_queue)
 
-        log.warning('node %s finished running operations %s', self.node_id, self.node_process.op_queue)
+            random_op = RandomOperations.getRandomOperation()
+            if random_op != None:
+                self.node_process.op_queue.put(random_op)
+
+class RandomOperations:
+    # random_ops to be dynamically set according to use cases
+    SU, BD = Op.SendUpdateDep, Op.BroadcastDeath
+    random_ops = [SU, SU, BD, BD, BD, BD, BD, BD]
+
+    @staticmethod
+    def getRandomOperation():
+        if random.random()>0.5:
+            return random.choice(RandomOperations.random_ops)
+        else:
+            return None
