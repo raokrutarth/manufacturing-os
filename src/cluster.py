@@ -136,7 +136,7 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
     that tries to find the start_node to validate whether a given path is valid.
     """
     #print("Next Loop with start_node: " + str(start_node_id) + " and end_node: " + str(end_node_id))
-    
+   
     # This is the return function -> when arriving at the starting node.
     if (start_node_id == end_node_id):
         return [(start_node_id, start_node_id)]
@@ -151,7 +151,7 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
     # Loop over all incoming edges
     for incoming in cluster_flow.incoming_flows[end_node_id]:
         node = next((x for x in cluster_flow.nodes if x.node_id == incoming[0]), None)
-
+        
         # Only check node out if its type is in requirements, i.e. some items have already been delivered.
         if node and node.dependency.result_item_req.item.type in requirements:
             # Recursive function starts here -> end_node is changed to current node.
@@ -186,14 +186,14 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     end_node = nodes[len(nodes)-1].node_id
 
     log.debug("Cluster flow with all possible paths created: {}".format(cluster_flow))
-
+    
     # Create a new ClusterWideFlow object containing only one possible paths.
     cluster_flow_final = ClusterWideFlow(nodes)
 
     # Output one possible path
     possible_path = output_possible_path(cluster_flow, start_node, end_node)
     possible_path_set = list(set(possible_path))
-
+    
     # Add all edges to ClusterWideFlow object
     for edge in possible_path_set:
         node = next((x for x in cluster_flow.nodes if x.node_id == edge[0]), None)
@@ -206,15 +206,16 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     return cluster_flow_final
 
 # For testing purposes
-# def main():
-#     number_nodes = 4
-#     number_edges = 5
-#     demo_nodes = basecases.bootstrap_random_dag(number_nodes, number_edges)
-#     print(demo_nodes)
-#     cluster_flow_obj = bootstrap_flow(demo_nodes)
+def main():
+    number_types = 4
+    number_edges = 12
+    multiplicator = 2
+    demo_nodes = basecases.bootstrap_random_dag(number_types, number_edges, multiplicator)
+    print(demo_nodes)
+    cluster_flow_obj = bootstrap_flow(demo_nodes)
 
-#     print(cluster_flow_obj)
-#     return cluster_flow_obj
+    print(cluster_flow_obj)
+    return cluster_flow_obj
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

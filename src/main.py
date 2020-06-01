@@ -33,9 +33,9 @@ async def main(args):
     #     demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
     # else:
     #     demo_nodes = None
-    if args.num_nodes > args.num_edges+1:
-        args.num_edges = args.num_nodes-1 
-    demo_nodes = basecases.bootstrap_random_dag(args.num_nodes, args.num_edges)
+    if args.num_types > args.num_edges+1:
+        args.num_edges = args.num_types-1 
+    demo_nodes = basecases.bootstrap_random_dag(args.num_types, args.num_edges, args.multiplicator)
     log.info("The following nodes have been created %s", demo_nodes)
 
     demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
@@ -87,8 +87,9 @@ def get_cluster_run_args():
     parser = argparse.ArgumentParser()
 
     # General global training parameters
-    parser.add_argument('--num_nodes', default=4, type=int)
+    parser.add_argument('--num_types', default=4, type=int)
     parser.add_argument('--num_edges', default=5, type=int)
+    parser.add_argument('--multiplicator', default=2, type=int)
     parser.add_argument('--topology', default="simple", type=str, help='Type of graph topology to use')
 
     # Options to interact and simulate the system

@@ -162,14 +162,14 @@ def bootstrap_dependencies_seven_nodes():
 #     return demo_nodes 
 
 # Creates Random DAG!
-def bootstrap_random_dag(nodes_num, edges_num):
+def bootstrap_random_dag(type_num, edges_num, multiplicator):
     
     # Create random dag, using helper function
-    graph = random_dag(nodes_num-2, edges_num)
+    graph = random_dag(type_num-2, edges_num)
     
     # There is one start_node (id=0) and one end_node (id = nodes_num-1)
     # Find als start & end nodes in graph and point them to the new start or end_node
-    node_list = set(range(1, nodes_num-1)) # set with all node_ids in graph
+    node_list = set(range(1, type_num-1)) # set with all node_ids in graph
     graph_list_end = set() 
     graph_list_start = set() 
     for edge in graph.edges:
@@ -178,33 +178,46 @@ def bootstrap_random_dag(nodes_num, edges_num):
     end_nodes = list(node_list.difference(graph_list_end)) # list with all node_ids without outgoing edge
     start_nodes = list(node_list.difference(graph_list_start)) # list with all node_ids without incoming_edge
 
-    # Create nodes_num demo_nodes
-    demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(nodes_num)
-    ]
+    demo_nodes = []     # Create nodes_num demo_nodes
+    id = None              # dummy_id
 
-    id = 0 # dummy_id
-    
+    for i in range(type_num):
+        if i == 0:
+            node_tmp = SingleItemNode(node_id=i, dependency=None)
+            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, id), 1))
+            demo_nodes.append(node_tmp)
+
+        elif i == type_num-1:
+            node_tmp = SingleItemNode(node_id=i*multiplicator, dependency=None)
+            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, id), 1))
+            demo_nodes.append(node_tmp)
+
+        else:
+            for j in range(1, random.randint(2, multiplicator)):
+                node_tmp = SingleItemNode(node_id=i*j, dependency=None)
+                node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, id), 1))
+                demo_nodes.append(node_tmp)
+
     for nodes in demo_nodes:
         # if node_id == 0, no incoming dependencies
         if nodes.node_id == 0:
-            nodes.dependency = items.ItemDependency([], items.ItemReq(items.Item(nodes.node_id, id), 1))
-        # if node_id in start_nodes, incoming dependency is node_id == 0   
-        elif nodes.node_id in start_nodes:
-            nodes.dependency = items.ItemDependency([items.ItemReq(items.Item(0, id), 1)], items.ItemReq(items.Item(nodes.node_id, id), 1))
-        # if node_id == nodes_num-1, incoming dependency all node_ids in end_nodes
-        elif nodes.node_id == nodes_num-1:
+            pass
+        # if node_id in start_nodes, incoming dependency is item type == 0   
+        elif nodes.dependency.result_item_req.item.type in start_nodes:
+            nodes.dependency.input_item_reqs = [items.ItemReq(items.Item(0, id), 1)]
+        # if item type == type_num-1, incoming dependency all item types in variable end_nodes
+        elif nodes.dependency.result_item_req.item.type == type_num-1:
             node_dependency = []
             for end_node in end_nodes:
                 node_dependency.append(items.ItemReq(items.Item(end_node, id), 1))
-            nodes.dependency = items.ItemDependency(node_dependency, items.ItemReq(items.Item(nodes_num-1, id), 1))
+            nodes.dependency.input_item_reqs = node_dependency
         # add all other dependencies according to the random dag that was created
         else:
             node_dependency = []
             for tup in graph.edges():
-                if tup[1] == nodes.node_id:
+                if tup[1] == nodes.dependency.result_item_req.item.type:
                     node_dependency.append(items.ItemReq(items.Item(tup[0], id), 1))
-            nodes.dependency = items.ItemDependency(node_dependency, items.ItemReq(items.Item(nodes.node_id, id), 1))
+            nodes.dependency.input_item_reqs = node_dependency
 
     return demo_nodes
 
