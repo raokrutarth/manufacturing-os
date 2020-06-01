@@ -29,4 +29,5 @@ wrapt==1.10.11
 zmq==0.0.0
 jsonpickle==1.4.1
 ujson==2.0.3
+asgiref==3.2.7
 atomicfile=1.0.1

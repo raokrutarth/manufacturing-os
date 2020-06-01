@@ -54,19 +54,17 @@ class SocketBasedNodeProcess(NodeProcess):
         self.heartbeat_delay = 10.0
         self.num_unresponded_hearbeats_for_death = 5
 
-        self.process_spec = self.cluster.process_specs[self.node.node_id]
+        self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
         self.port = self.process_spec.port
         self.flags = flags
         self.op_queue = queue
 
+        self.state_helper = FileBasedStateHelper(self.node, self.cluster)
+        self.sc_stage = SuppyChainStage(self)
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
-        self.state_helper = FileBasedStateHelper(self.node, self.cluster)
-        self.sc_stage = SuppyChainStage(
-            self.node.get_id(),
-            self.node.get_dependency(),
-        )
+
 
         # Manage heartbeats and liveness between nodes
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
@@ -74,6 +72,10 @@ class SocketBasedNodeProcess(NodeProcess):
 
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
+            ops = self.cluster.get_node_ops(self.node.node_id)
+            self.testOpRunner = operations.OpsRunnerThread(
+                self, ops,
+            )
             self.testOpRunner = operations.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
@@ -99,16 +101,16 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
         self.startThread(self.heartbeat, 'heartbeat')
-        self.startThread(self.sc_stage, 'supplyChain')
+        self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
 
         log.warning("Successfully started node %s", self.node.get_id())
 
-    def sendMessage(self, message: 'Message'):
+    def sendMessage(self, message):
         self.msg_handler.sendMessage(message)
 
-    def onMessage(self, message: 'Message'):
+    def onMessage(self, message):
         self.msg_handler.onMessage(message)
 
     """
@@ -120,7 +122,8 @@ class SocketBasedNodeProcess(NodeProcess):
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
     def update_heartbeat(self, node):
-        # NOTE: This is a VERY strong assumption; we usually don't have precise synced distributed clocks
+        # NOTE: This is a VERY strong assumption; we usually don't have
+        # precise synced distributed clocks
         curr_time = time.time()
         self.last_known_heartbeat[node] = curr_time
 
@@ -130,4 +133,7 @@ class SocketBasedNodeProcess(NodeProcess):
         """
         curr_time = time.time()
         margin = self.num_unresponded_hearbeats_for_death * self.heartbeat_delay
-        return [n for n, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)]
+        return [
+            n for n, lt in self.last_known_heartbeat.items()
+            if (lt < (curr_time - margin)) and (lt >= 0)
+        ]

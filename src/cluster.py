@@ -15,7 +15,7 @@ class ClusterBlueprint(object):
     Useful for unit tests and designing test cases we want to operate on.
     """
 
-    def __init__(self, nodes: List[BaseNode], ops=defaultdict(lambda: [])):
+    def __init__(self, nodes: List[SingleItemNode], ops=defaultdict(lambda: [])):
         # Set of nodes to be used by this cluster
         self.nodes = nodes
         # Stores any node specific operations we want to perform during execution e.g.
@@ -33,21 +33,40 @@ class Cluster(object):
     def __init__(self, metrics, blueprint, port_range_start=5000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
-        self.node_ids = [n.node_id for n in self.nodes]
         self.process_specs = None
         self.init_process_specs(port_range_start)
         self.metrics = metrics
 
-    def init_process_specs(self, port_range_start):
+    def init_process_specs(self, port_range_start: int):
         # assign a process name and port to process
-        self.process_specs = {
-            node.node_id: ProcessSpec('process-{}'.format(i), port_range_start + i) for i, node in enumerate(self.nodes)
-        }
+        self.process_specs = {}
 
-    def update_deps(self, node: SingleItemNode, new_dependency: items.ItemDependency):
-        for idx in range(len(self.nodes)):
-            if self.nodes[idx].node_id == node:
-                self.nodes[idx].dependency = new_dependency
+        for node in self.nodes:
+            self.process_specs[node.node_id] = ProcessSpec(
+                'process-{}'.format(node.node_id),
+                port_range_start + node.node_id,
+            )
+
+    def update_deps(self, node_id: int, new_dependency: items.ItemDependency):
+        self.nodes[node_id].dependency = new_dependency
+
+    def get_node(self, node_id):
+        '''
+            Given a node_id, returns the node object that contains
+        '''
+        return self.nodes[node_id]
+
+    def get_node_process_spec(self, node_id: int):
+        '''
+            returns the process metadata object for a given node ID
+        '''
+        return self.process_specs[node_id]
+
+    def get_node_ops(self, node_id):
+        '''
+            returns the process metadata object for a given node ID
+        '''
+        return self.blueprint.node_specific_ops[node_id]
 
     def __repr__(self):
         return 'Cluster:\n\tNodes: {}\n\tProcesses: {}'.format(self.nodes, self.process_specs.values())
@@ -107,8 +126,13 @@ class ClusterWideFlow(object):
         self.outgoing_flows = {}
         self.incoming_flows = {}
 
+    def get_inbound_node_ids(self):
+        return self.incoming_flows
+
     def __repr__(self):
-        return "{}".format(self.outgoing_flows)
+        return "ClusterWideFlow(in:{}, out:{})".format(
+            self.incoming_flows, self.outgoing_flows
+        )
 
 
 def bootstrap_all_paths(nodes: List[SingleItemNode]):
@@ -158,6 +182,8 @@ def bootstrap_shortest_path(nodes: List[SingleItemNode]):
     cluster_flow = bootstrap_all_paths(nodes)
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
+
+    log.debug("Cluster flow created: {}".format(cluster_flow))
 
     # Create a new ClusterWideFlow object containing only the shortest paths.
     cluster_flow_shortest = ClusterWideFlow(nodes)

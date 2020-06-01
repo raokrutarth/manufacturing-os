@@ -1,11 +1,15 @@
 import code
 import logging
 import os
+import argparse
+import sys
+from time import sleep
+
 import processes
 import operations
 import cluster as ctr
 import basecases
-import argparse
+from multiprocessing import Process
 from metrics import Metrics
 
 from time import sleep
@@ -32,6 +36,7 @@ Logging guidelines are provided here. Importance increases while going down
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
+    stream=sys.stdout,
     level=os.environ.get("LOGLEVEL", "DEBUG"),
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
@@ -76,6 +81,7 @@ def main(args):
     elif args.num_nodes == 7:
         nodes = basecases.bootstrap_dependencies_seven_nodes()
     else:
+        log.error("%d node count not supported by any demo/test scenerio", args.num_nodes)
         nodes = None
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
@@ -153,8 +159,17 @@ def get_cluster_run_args():
     parser = argparse.ArgumentParser()
 
     # General global training parameters
-    parser.add_argument('--num_nodes', default=3, type=int)
-    parser.add_argument('--topology', default="simple", type=str, help='Type of graph topology to use')
+    parser.add_argument(
+        '--num_nodes',
+        default=3,
+        type=int,
+    )
+    parser.add_argument(
+        '--topology',
+        default="simple",
+        type=str,
+        help='Type of graph topology to use',
+    )
 
     # Options to interact and simulate the system
     parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
@@ -162,17 +177,23 @@ def get_cluster_run_args():
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
     # Execution level arguments
-    parser.add_argument('--log_level', default="debug", type=str, help='Logging level to set')
+    parser.add_argument(
+        '--log_level',
+        default="debug",
+        type=str,
+        help='Logging level to set'
+    )
+
     return parser
 
 
 if __name__ == "__main__":
-    parser = get_cluster_run_args()
-    args = parser.parse_args()
+    p = get_cluster_run_args()
+    main_args = p.parse_args()
 
     # Init log level according to what's specified
-    logging.getLogger().setLevel(args.log_level.upper())
+    logging.getLogger().setLevel(main_args.log_level.upper())
 
-    main(args)
+    main(main_args)
 
     log.critical("All nodes exited")
