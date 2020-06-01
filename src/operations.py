@@ -121,9 +121,7 @@ class OpsRunnerThread(Thread):
         sleep(1 * self.delay)
 
         while True:
-            print('waiting for message on:', self.node_id)
             op = self.node_process.op_queue.get()
-            print('Message received for op:', op)
             msg = self.get_message_from_op(op)
             # Add hacky initial method to simulate conditional node death
             if op == Op.BroadcastDeath:
