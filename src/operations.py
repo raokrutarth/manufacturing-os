@@ -76,7 +76,7 @@ class OpsRunnerThread(Thread):
             be simulated.
     '''
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', ops: List, delay=1):
+    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=1):
         '''
             ops: operations the node will run when it starts.
             callback: the callback to send a message
@@ -84,7 +84,6 @@ class OpsRunnerThread(Thread):
         super(OpsRunnerThread, self).__init__()
 
         self.node_process = node_process
-        self.ops_to_run = ops
         self.delay = delay
 
         self.node = node_process.node
@@ -116,12 +115,13 @@ class OpsRunnerThread(Thread):
             return False
 
     def run(self):
-        log.warning('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
+        log.warning('node %s running operation thread with operations %s', self.node_id, self.node_process.op_queue)
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
         sleep(1 * self.delay)
 
-        for op in self.ops_to_run:
+        while True:
+            op = self.node_process.op_queue.get()
             msg = self.get_message_from_op(op)
             # Add hacky initial method to simulate conditional node death
             if op == Op.BroadcastDeath:
@@ -131,4 +131,4 @@ class OpsRunnerThread(Thread):
                 self.node_process.sendMessage(msg)
             sleep(self.delay)
 
-        log.warning('node %s finished running operations %s', self.node_id, self.ops_to_run)
+        log.warning('node %s finished running operations %s', self.node_id, self.node_process.op_queue)
