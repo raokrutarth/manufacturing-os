@@ -71,14 +71,10 @@ def run_cluster_client(queues):
 
 
 def main(args):
-
-    log.info("""Nodes are being created through bootstrap_ranodom_dag() with %s number of types, 
-    %s complexity of the graph, and max. %s nodes with the same type""", args.num_types, args.complexity, args.nodes_per_type)    
     # nodes = basecases.bootstrap_dependencies_three_nodes()
     # nodes = basecases.bootstrap_dependencies_six_nodes()
     # nodes = basecases.bootstrap_dependencies_seven_nodes()
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
-    log.info("The following nodes have been created %s", nodes)
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
     demo_ops = {n.node_id: [SU, SU, BD] for n in nodes}

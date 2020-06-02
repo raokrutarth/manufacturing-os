@@ -104,6 +104,8 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
     output: nodes that form a random DAG
     '''
+    log.info("Creating random DAG with %d types of items, with max. %d nodes per type and cluster complexity %s", type_num, nodes_per_type, complexity)
+
     if type_num < 4:
         type_num = 4
     
@@ -180,7 +182,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
                     node_dependency.append(ItemReq(Item(tup[0], None), 1))
             nodes.dependency.input_item_reqs = node_dependency
 
-    log.debug("Final nodes created:  %s", demo_nodes) 
+    log.info("Final nodes created:  %s", demo_nodes) 
     return demo_nodes
 
 def random_dag(nodes, edges):
