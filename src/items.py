@@ -15,12 +15,12 @@ class Item:
             there can only be one item per id and given type
     '''
 
-    def __init__(self, type, id):
-        self.type = type
-        self.id = id
+    def __init__(self, _type, _id):
+        self.type = _type
+        self.id = _id
 
     def __repr__(self):
-        return "{}-{}".format(self.type, self.id)
+        return "Item(type:{}, id:{})".format(self.type, self.id)
 
 
 # Item requirement - Item, Quantity
@@ -30,7 +30,7 @@ class ItemReq:
         self.quantity = quantity
 
     def __repr__(self):
-        return "{}({})".format(self.item, self.quantity)
+        return "ItemReq({} X {})".format(self.item, self.quantity)
 
 
 class ItemDependency(object):
@@ -62,7 +62,6 @@ class ItemDependency(object):
 
     def is_valid_material(self, new_item: Item):
         '''
-            TODO
             return true if new_item is a valid raw material to produce
             self.result_item_req type items
         '''
@@ -72,6 +71,24 @@ class ItemDependency(object):
                 # quantity is not being checked
                 return True
         return False
+
+    def has_prereq(self):
+        '''
+            Returns true if the Dependency requires a prerequisite.
+            i.e. if there is an incoming edge.
+        '''
+        if self.input_item_reqs and len(self.input_item_reqs) > 0:
+            return True
+        return False
+
+    def get_prereq(self):
+        return self.input_item_reqs
+
+    def get_result(self):
+        return self.result_item_req
+
+    def get_result_type(self):
+        return self.result_item_req.item.type
 
     def can_make_result(self, materials: Set[Item]):
         '''
@@ -90,6 +107,5 @@ class ItemDependency(object):
                 return False
         return True
 
-
     def __repr__(self):
-        return "{}->{}".format(self.input_item_reqs, self.result_item_req)
+        return "ItemDependency(in:{}, out:{})".format(self.input_item_reqs, self.result_item_req)
