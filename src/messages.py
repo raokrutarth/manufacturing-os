@@ -157,6 +157,13 @@ class HeartbeatResp(Message):
     def __init__(self, source, dest):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
+class DeathReq(Message):
+    """
+    Signal a Dead Node
+    """
+    def __init__(self, source):
+        super(DeathReq, self).__init__(source, Action.Death, MsgType.Request)
+
 
 """
 Helper classes for Update related operations. Current implementation assumes,
@@ -283,7 +290,7 @@ class MessageHandler(object):
         elif action == Action.Update:
             return UpdateReq(source, ItemDependency.newNullDependency())
         elif action == Action.Death:
-            return UpdateReq(source, ItemDependency.newNullDependency())
+            return DeathReq(source)
         elif action == Action.Ack:
             return AckResp(source, dest)
         else:
@@ -306,7 +313,7 @@ class MessageHandler(object):
         """
         request_callbacks = {
             Action.Heartbeat: self.on_heartbeat_req,
-            Action.Death: self.none_fn,
+            Action.Death: self.on_death_req,
             Action.ReAllocate: self.none_fn,
             Action.Allocate: self.none_fn,
             Action.Ack: self.none_fn,
@@ -460,3 +467,27 @@ class MessageHandler(object):
 
     def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)
+
+    def on_death_req(self, message):
+        assert message.action == Action.Death
+        is_leader = self.node_process.state_helper.am_i_leader()
+        if not is_leader:
+            return
+
+        dead_node_id = message.source
+        self.node_process.cluster.deactivate_node(dead_node_id)
+
+        # TODO: to use Andrej's flow algorithm
+        new_flow = ctr.bootstrap_flow(self.node_process.cluster.nodes)
+        self.node_process.state_helper.update_flow(new_flow)
+        log.debug("****** Death Node are being deactivated and flow is updated *****")
+
+        # Send an ack
+        response = MessageHandler.getMsgForAction(
+            source=self.node.node_id,
+            action=Action.Ack,
+            msg_type=MsgType.Response,
+            dest=message.source
+        )
+
+        self.sendMessage(response)

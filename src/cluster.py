@@ -4,7 +4,7 @@ import items
 from typing import List
 from collections import defaultdict
 
-from nodes import BaseNode, ProcessSpec, SingleItemNode
+from nodes import BaseNode, ProcessSpec, SingleItemNode, NodeState
 import basecases
 
 log = logging.getLogger()
@@ -50,6 +50,24 @@ class Cluster(object):
 
     def update_deps(self, node_id: int, new_dependency: items.ItemDependency):
         self.nodes[node_id].dependency = new_dependency
+
+    def deactivate_node(self, node_id: int):
+        '''
+            deactivate dead node from the graph
+        :param node_id:
+        :return:
+        '''
+        self.get_node(node_id).state = NodeState.inactive
+        log.info("Successfully deactivate node %s", node_id)
+
+    def activate_node(self, node_id: int):
+        '''
+            reactivate dead node from the graph during recovery
+        :param node_id:
+        :return:
+        '''
+        self.get_node(node_id).state = NodeState.active
+        log.info("Successfully activate node %s", node_id)
 
     def get_node(self, node_id):
         '''

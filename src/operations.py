@@ -58,7 +58,7 @@ class OpHandler:
         elif op == Op.SendUpdateDep:
             return messages.UpdateReq(source_id, items.ItemDependency.halveDependency(source.dependency))
         elif op == Op.BroadcastDeath:
-            return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
+            return messages.DeathReq(source_id)
         else:
             assert False, "Invalid op: {}".format(op.name)
 
