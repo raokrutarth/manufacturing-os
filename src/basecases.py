@@ -79,10 +79,10 @@ def bootstrap_dependencies_seven_nodes():
         SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(7)
     ]
 
-    start = ItemReq(Item('start', 0), 1)
-    wood = ItemReq(Item('wood', 1), 1) 
-    screws = ItemReq(Item('screws', 2), 1)
-    awesomeness = ItemReq(Item('awesomeness', 3), 1)
+    start = ItemReq(Item('start', None), 1)
+    wood = ItemReq(Item('wood', None), 1) 
+    screws = ItemReq(Item('screws', None), 1)
+    awesomeness = ItemReq(Item('awesomeness', None), 1)
     
     demo_nodes[0].dependency = ItemDependency([], start)
     demo_nodes[1].dependency = ItemDependency([start], wood)
@@ -123,6 +123,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
     # Create random dag, using helper function
     graph = random_dag(type_num-2, edges_num)
+    log.debug("Initial Random DAG without start and end node created: %s", graph)
     
     # There is one start_node (id=0) and one end_node (id = nodes_num-1)
     # Find als start & end nodes in graph and point them to the new start or end_node
@@ -134,6 +135,8 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
         graph_list_start.add(edge[1])
     end_nodes = list(node_list.difference(graph_list_end)) # list with all node_ids without outgoing edge
     start_nodes = list(node_list.difference(graph_list_start)) # list with all node_ids without incoming_edge
+    log.debug("The start node will point to all nodes in Random DAG without incoming edges: %s", start_nodes)
+    log.debug("All nodes in Random DAG without outgoing edges %s will point to the end node", end_nodes)
 
     demo_nodes = []     # Create nodes_num demo_nodes
 
@@ -153,6 +156,8 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
                 node_tmp = SingleItemNode(node_id=i*j, dependency=None)
                 node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
                 demo_nodes.append(node_tmp)
+    
+    log.debug("Nodes created without any input requirements:  %s", demo_nodes)
 
     for nodes in demo_nodes:
         # if node_id == 0, no incoming dependencies
@@ -175,6 +180,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
                     node_dependency.append(ItemReq(Item(tup[0], None), 1))
             nodes.dependency.input_item_reqs = node_dependency
 
+    log.debug("Final nodes created:  %s", demo_nodes) 
     return demo_nodes
 
 def random_dag(nodes, edges):
