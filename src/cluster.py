@@ -5,6 +5,7 @@ from typing import List
 from collections import defaultdict
 
 from nodes import BaseNode, ProcessSpec, SingleItemNode
+import basecases
 
 log = logging.getLogger()
 
@@ -144,58 +145,96 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
     # Iterate over all nodes
     for node_input in cluster_flow.nodes:
         # Iterate over their input requirements
-        for input in node_input.dependency.input_item_reqs:
+        for input_req in node_input.dependency.input_item_reqs:
             # Iterate over all nodes
             for node_output in cluster_flow.nodes:
                 # Iterate over their output requirements
-                result = node_output.dependency.result_item_req
-                # add flow if item id in result = item id in input
-                if result.item.id == input.item.id:
-                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result)
+                result_req = node_output.dependency.result_item_req
+                # add flow if item type in result = item type in input
+                if result_req and input_req and result_req.item.type == input_req.item.type:
+                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result_req)
 
     return cluster_flow
 
-
-def shortest_path_helper(outgoing_flows, start_node, end_node, path=[]):
-    '''
-    Helper function that finds the shortest path in a graph.
-    Output in the form of e.g. [0, 2, 4], i.e. node_id= 0 -> 2 -> 4
-    '''
-    path = path + [start_node]
-    if start_node == end_node:
-        return path
-    shortest = []
-    for node in outgoing_flows[start_node]:
-        if node[0] not in path:
-            newpath = shortest_path_helper(outgoing_flows, node[0], end_node, path)
-            if newpath:
-                if not shortest or len(newpath) < len(shortest):
-                    shortest = newpath
-    return shortest
-
-
-def bootstrap_shortest_path(nodes: List[SingleItemNode]):
+def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_id, path=[]):
     """
-    Create a flow with the shortest path
+    Find one possible path for a given ClusterWideFlow. It is a recursive depth-first algorithm 
+    that tries to find the start_node to validate whether a given path is valid.
+    """
+    #print("Next Loop with start_node: " + str(start_node_id) + " and end_node: " + str(end_node_id))
+   
+    # This is the return function -> when arriving at the starting node.
+    if (start_node_id == end_node_id):
+        return [(start_node_id, start_node_id)]
+    
+    requirements = [] # Stores only ids of the required item types. 
+    end_node = next((x for x in cluster_flow.nodes if x.node_id == end_node_id), None) # find the end node based off of its id
+
+    if end_node:
+        for input in end_node.dependency.input_item_reqs:
+            requirements.append(input.item.type)
+    
+    # Loop over all incoming edges
+    for incoming in cluster_flow.incoming_flows[end_node_id]:
+        node = next((x for x in cluster_flow.nodes if x.node_id == incoming[0]), None)
+        
+        # Only check node out if its type is in requirements, i.e. some items have already been delivered.
+        if node and node.dependency.result_item_req.item.type in requirements:
+            # Recursive function starts here -> end_node is changed to current node.
+            new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)    
+            boolean = [item for item in new_path if item[0] == start_node_id] # Check if start_node in path
+
+            # If start_node in path, the path is viable -> append it to the path + remove the item type from the requirements
+            if boolean:
+                path.append((node.node_id, end_node_id))
+                requirements.remove(node.dependency.result_item_req.item.type)
+    
+    if requirements: # If still some item types in the requirements, path is not viable
+        path = []
+    return path
+
+def bootstrap_flow(nodes: List[SingleItemNode]):
+    """
+    Create a flow with a possible path
     """
     # Create a cluster_flow with all possible paths first
+    log.debug("Bootstrapping flow has started.")
     cluster_flow = bootstrap_all_paths(nodes)
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
 
-    log.debug("Cluster flow created: {}".format(cluster_flow))
+    log.info("Cluster flow with all possible paths created: {}".format(cluster_flow))
+    
+    # Create a new ClusterWideFlow object containing only one possible paths.
+    cluster_flow_final = ClusterWideFlow(nodes)
 
-    # Create a new ClusterWideFlow object containing only the shortest paths.
-    cluster_flow_shortest = ClusterWideFlow(nodes)
-
-    # Output the shortest path
-    shortest = shortest_path_helper(cluster_flow.outgoing_flows, start_node, end_node)
-
-    for i in range(len(shortest)-1):
-        cluster_flow_shortest.addFlow(
-            nodes[shortest[i]].node_id,
-            nodes[shortest[i+1]].node_id,
-            nodes[shortest[i+1]].dependency.result_item_req
+    # Output one possible path
+    possible_path = output_possible_path(cluster_flow, start_node, end_node)
+    possible_path_set = list(set(possible_path))
+    
+    # Add all edges to ClusterWideFlow object
+    for edge in possible_path_set:
+        node = next((x for x in cluster_flow.nodes if x.node_id == edge[0]), None)
+        cluster_flow_final.addFlow(
+            edge[0], edge[1], node.dependency.result_item_req
         )
 
-    return cluster_flow_shortest
+    log.info("Cluster flow with one specific path created: {}".format(cluster_flow_final))
+
+    return cluster_flow_final
+
+# for testing purposes
+def _test():
+    number_types = 4
+    complexity = "medium"
+    nodes_per_type = 2
+    demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
+    print("Nodes have been created.")
+    print(demo_nodes)
+    cluster_flow_obj = bootstrap_flow(demo_nodes)
+    print("ClusterWideFlow Object has created.")
+    print(cluster_flow_obj)
+    return cluster_flow_obj
+
+if __name__ == "__main__":
+    _test()

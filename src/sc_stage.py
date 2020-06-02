@@ -290,7 +290,7 @@ class SuppyChainStage(Thread):
 
             This is a blocking call since it has to wait on the inbound queue.
         '''
-
+        
         if self.item_dep.has_prereq():
             try:
                 # TODO add support of multiple inbound item types to produce single result
@@ -305,7 +305,7 @@ class SuppyChainStage(Thread):
                           self.node_id, self.get_stage_result_type())
                 return
 
-        new_item_id = self.get_stage_result_type() + '-' + self._generate_new_item_id()
+        new_item_id = str(self.get_stage_result_type()) + '-' + str(self._generate_new_item_id())
         new_item = Item(_type=self.get_stage_result_type(), _id=new_item_id)
         self.outbound_log[new_item] = StageStatus.IN_QUEUE
         self.outbound_material.put(new_item)
