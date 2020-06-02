@@ -91,7 +91,7 @@ class RaftHelper(object):
         '''
         is_leader = await self.am_i_leader()
         if is_leader:
-            cluster_flow_obj = ctr.bootstrap_shortest_path(self.nodes)
+            cluster_flow_obj = ctr.bootstrap_flow(self.nodes)            
             log.debug("Starting to init cluster flow: {} on leader: {}".format(self.node_address, cluster_flow_obj))
             self.cluster_flow = raftos.Replicated(name='cluster_flow')
             await self.cluster_flow.set(cluster_flow_obj)

@@ -58,7 +58,7 @@ def run_cluster_client(queues):
     """
     Create client to interact with all clusters with simple
     """
-
+    
     def execute(node_id, op: Op):
         """
         Executes the provided command by adding the operation to the queue
@@ -71,18 +71,10 @@ def run_cluster_client(queues):
 
 
 def main(args):
-
-    # determine nodes (of type single item node) and operations for the cluster
-    # TODO: Add more fine-grained control over the exact topology and number of nodes
-    if args.num_nodes == 3:
-        nodes = basecases.bootstrap_dependencies_three_nodes()
-    elif args.num_nodes == 6:
-        nodes = basecases.bootstrap_dependencies_six_nodes()
-    elif args.num_nodes == 7:
-        nodes = basecases.bootstrap_dependencies_seven_nodes()
-    else:
-        log.error("%d node count not supported by any demo/test scenerio", args.num_nodes)
-        nodes = None
+    # nodes = basecases.bootstrap_dependencies_three_nodes()
+    # nodes = basecases.bootstrap_dependencies_six_nodes()
+    # nodes = basecases.bootstrap_dependencies_seven_nodes()
+    nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
     demo_ops = {n.node_id: [SU, SU, BD] for n in nodes}
@@ -160,9 +152,19 @@ def get_cluster_run_args():
 
     # General global training parameters
     parser.add_argument(
-        '--num_nodes',
-        default=3,
+        '--num_types',
+        default=4,
         type=int,
+    )
+    parser.add_argument(
+        '--complexity', 
+        default="medium", 
+        type=str
+    )
+    parser.add_argument(
+        '--nodes_per_type', 
+        default=2, 
+        type=int
     )
     parser.add_argument(
         '--topology',
