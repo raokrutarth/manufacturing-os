@@ -72,9 +72,9 @@ def run_cluster_client(queues):
 
 def main(args):
 
-    if args.num_types > args.num_edges+1:
-        args.num_edges = args.num_types-1 
-    nodes = basecases.bootstrap_random_dag(args.num_types, args.num_edges, args.multiplicator)
+    log.info("""Nodes are being created through bootstrap_ranodom_dag() with %s number of types, 
+    %s complexity of the graph, and max. %s nodes with the same type""", args.num_types, args.complexity, args.nodes_per_type)    
+    nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
     log.info("The following nodes have been created %s", nodes)
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
@@ -158,12 +158,12 @@ def get_cluster_run_args():
         type=int,
     )
     parser.add_argument(
-        '--num_edges', 
-        default=5, 
-        type=int
+        '--complexity', 
+        default="medium", 
+        type=str
     )
     parser.add_argument(
-        '--multiplicator', 
+        '--nodes_per_type', 
         default=2, 
         type=int
     )

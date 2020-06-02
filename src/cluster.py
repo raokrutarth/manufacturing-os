@@ -145,14 +145,14 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
     # Iterate over all nodes
     for node_input in cluster_flow.nodes:
         # Iterate over their input requirements
-        for input in node_input.dependency.input_item_reqs:
+        for input_req in node_input.dependency.input_item_reqs:
             # Iterate over all nodes
             for node_output in cluster_flow.nodes:
                 # Iterate over their output requirements
-                result = node_output.dependency.result_item_req
+                result_req = node_output.dependency.result_item_req
                 # add flow if item type in result = item type in input
-                if result and input and result.item.type == input.item.type:
-                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result)
+                if result_req and input_req and result_req.item.type == input_req.item.type:
+                    cluster_flow.addFlow(node_output.node_id, node_input.node_id, result_req)
 
     return cluster_flow
 
@@ -198,11 +198,12 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     Create a flow with a possible path
     """
     # Create a cluster_flow with all possible paths first
+    log.debug("Bootstrapping flow has started.")
     cluster_flow = bootstrap_all_paths(nodes)
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
 
-    log.debug("Cluster flow with all possible paths created: {}".format(cluster_flow))
+    log.info("Cluster flow with all possible paths created: {}".format(cluster_flow))
     
     # Create a new ClusterWideFlow object containing only one possible paths.
     cluster_flow_final = ClusterWideFlow(nodes)
@@ -218,19 +219,20 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
             edge[0], edge[1], node.dependency.result_item_req
         )
 
-    log.debug("Cluster flow with one specific path created: {}".format(cluster_flow_final))
+    log.info("Cluster flow with one specific path created: {}".format(cluster_flow_final))
 
     return cluster_flow_final
 
 # for testing purposes
 def _test():
     number_types = 4
-    number_edges = 12
-    multiplicator = 4
-    demo_nodes = basecases.bootstrap_random_dag(number_types, number_edges, multiplicator)
+    complexity = "medium"
+    nodes_per_type = 2
+    demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
+    print("Nodes have been created.")
     print(demo_nodes)
     cluster_flow_obj = bootstrap_flow(demo_nodes)
-
+    print("ClusterWideFlow Object has created.")
     print(cluster_flow_obj)
     return cluster_flow_obj
 

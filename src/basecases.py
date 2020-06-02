@@ -95,14 +95,32 @@ def bootstrap_dependencies_seven_nodes():
     return demo_nodes
 
 # Creates Random DAG!
-def bootstrap_random_dag(type_num, edges_num, multiplicator):
+def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
     '''
+    input:
     type_num        = number of different item types that the whole cluster has
-    edge_num        = number of randomly created edges between initial nodes
-    multiplicator   =  
+    complexity      = "low", "medium" or "high" indiciating how complex the DAG, i.e. how many edges it has!
+    nodes_per_type  = maximum number of nodes one type can have  
 
-    The type_nums > 3.
+    output: nodes that form a random DAG
     '''
+    if type_num < 4:
+        type_num = 4
+    
+    edges_num = 0
+
+    if complexity == "low":
+        edges_num = type_num - 2
+
+    elif complexity == "medium":
+        edges_num = int((type_num - 2) * ((type_num - 3) / 2) / 2 )
+        if edges_num < 1:
+            edges_num = 1
+
+    elif complexity == "high":
+        edges_num = int((type_num - 2) * (type_num - 3) / 2)
+
+
     # Create random dag, using helper function
     graph = random_dag(type_num-2, edges_num)
     
@@ -126,12 +144,12 @@ def bootstrap_random_dag(type_num, edges_num, multiplicator):
             demo_nodes.append(node_tmp)
 
         elif i == type_num-1:
-            node_tmp = SingleItemNode(node_id=i*multiplicator, dependency=None)
+            node_tmp = SingleItemNode(node_id=i*nodes_per_type, dependency=None)
             node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         else:
-            for j in range(1, random.randint(2, multiplicator)):
+            for j in range(1, random.randint(2, nodes_per_type)):
                 node_tmp = SingleItemNode(node_id=i*j, dependency=None)
                 node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
                 demo_nodes.append(node_tmp)
