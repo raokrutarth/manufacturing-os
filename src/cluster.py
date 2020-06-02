@@ -205,11 +205,11 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
 
     return cluster_flow_final
 
-# For testing purposes
+# for testing purposes
 def main():
     number_types = 4
     number_edges = 12
-    multiplicator = 2
+    multiplicator = 4
     demo_nodes = basecases.bootstrap_random_dag(number_types, number_edges, multiplicator)
     print(demo_nodes)
     cluster_flow_obj = bootstrap_flow(demo_nodes)

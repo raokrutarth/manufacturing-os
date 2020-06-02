@@ -163,7 +163,13 @@ def bootstrap_dependencies_seven_nodes():
 
 # Creates Random DAG!
 def bootstrap_random_dag(type_num, edges_num, multiplicator):
-    
+    '''
+    type_num        = number of different item types that the whole cluster has
+    edge_num        = number of randomly created edges between initial nodes
+    multiplicator   =  
+
+    The type_nums > 3.
+    '''
     # Create random dag, using helper function
     graph = random_dag(type_num-2, edges_num)
     
@@ -179,23 +185,22 @@ def bootstrap_random_dag(type_num, edges_num, multiplicator):
     start_nodes = list(node_list.difference(graph_list_start)) # list with all node_ids without incoming_edge
 
     demo_nodes = []     # Create nodes_num demo_nodes
-    id = None              # dummy_id
 
     for i in range(type_num):
         if i == 0:
             node_tmp = SingleItemNode(node_id=i, dependency=None)
-            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, id), 1))
+            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         elif i == type_num-1:
             node_tmp = SingleItemNode(node_id=i*multiplicator, dependency=None)
-            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, id), 1))
+            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         else:
             for j in range(1, random.randint(2, multiplicator)):
                 node_tmp = SingleItemNode(node_id=i*j, dependency=None)
-                node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, id), 1))
+                node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, None), 1))
                 demo_nodes.append(node_tmp)
 
     for nodes in demo_nodes:
@@ -204,19 +209,19 @@ def bootstrap_random_dag(type_num, edges_num, multiplicator):
             pass
         # if node_id in start_nodes, incoming dependency is item type == 0   
         elif nodes.dependency.result_item_req.item.type in start_nodes:
-            nodes.dependency.input_item_reqs = [items.ItemReq(items.Item(0, id), 1)]
+            nodes.dependency.input_item_reqs = [items.ItemReq(items.Item(0, None), 1)]
         # if item type == type_num-1, incoming dependency all item types in variable end_nodes
         elif nodes.dependency.result_item_req.item.type == type_num-1:
             node_dependency = []
             for end_node in end_nodes:
-                node_dependency.append(items.ItemReq(items.Item(end_node, id), 1))
+                node_dependency.append(items.ItemReq(items.Item(end_node, None), 1))
             nodes.dependency.input_item_reqs = node_dependency
         # add all other dependencies according to the random dag that was created
         else:
             node_dependency = []
             for tup in graph.edges():
                 if tup[1] == nodes.dependency.result_item_req.item.type:
-                    node_dependency.append(items.ItemReq(items.Item(tup[0], id), 1))
+                    node_dependency.append(items.ItemReq(items.Item(tup[0], None), 1))
             nodes.dependency.input_item_reqs = node_dependency
 
     return demo_nodes
