@@ -1,5 +1,6 @@
 import enum
 import logging
+import random
 import items
 import messages
 import copy
@@ -15,11 +16,11 @@ log = logging.getLogger()
 
 class Op(enum.Enum):
 
+    def __repr__(self):
+        return "{}".format(self.name)
+
     # Inits a heartbeat from a node
     SendHeartbeat = 1
-
-    # Notifies everyone of death
-    BroadcastDeath = 2
 
     # Signals to perform re-allocation; different from allocate in case we
     # use a different optimized algorithm for re-allocation
@@ -34,6 +35,9 @@ class Op(enum.Enum):
 
     # Signals to broadcast update dep request i.e. update its production, consumption requirements
     SendUpdateDep = 5
+
+    # Notifies everyone of death
+    BroadcastDeath = 2
 
 
 class OpHandler:
@@ -72,7 +76,7 @@ class OpsRunnerThread(Thread):
             be simulated.
     '''
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', ops: List, delay=1):
+    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=1):
         '''
             ops: operations the node will run when it starts.
             callback: the callback to send a message
@@ -80,25 +84,51 @@ class OpsRunnerThread(Thread):
         super(OpsRunnerThread, self).__init__()
 
         self.node_process = node_process
-        self.ops_to_run = ops
         self.delay = delay
 
         self.node = node_process.node
-        self.node_id = node_process.node.get_name()
+        self.node_id = node_process.node.get_id()
 
     def get_message_from_op(self, op):
-        log.info('node %s constructing message for operation %s', self.node_id, op)
+        log.debug('node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node, op)
 
+    def whether_to_kill_node(self):
+        # Only kills a node if they are part of the supply chain
+        leader = self.node_process.state_helper.get_leader()
+        flow = self.node_process.state_helper.get_flow()
+        if leader == self.node_id:
+            return False
+        elif flow is not None:
+            try:
+                ins = len(flow.getIncomingFlowsForNode(str(self.node_id)))
+                outs = len(flow.getOutgoingFlowsForNode(str(self.node_id)))
+                if (ins * outs) > 0:
+                    if random.random() < 0.5:
+                        log.warning("Killing node: {}".format(self.node_id))
+                        return True
+                    else:
+                        return False
+            except Exception:
+                return False
+        else:
+            return False
+
     def run(self):
-        log.debug('node %s running operation thread with operations %s', self.node_id, self.ops_to_run)
+        log.warning('node %s running operation thread with operations %s', self.node_id, self.node_process.op_queue)
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
-        sleep(3 * self.delay)
+        sleep(1 * self.delay)
 
-        for op in self.ops_to_run:
+        while True:
+            op = self.node_process.op_queue.get()
             msg = self.get_message_from_op(op)
-            self.node_process.sendMessage(msg)
+            # Add hacky initial method to simulate conditional node death
+            if op == Op.BroadcastDeath:
+                if self.whether_to_kill_node():
+                    self.node_process.sendMessage(msg)
+            else:
+                self.node_process.sendMessage(msg)
             sleep(self.delay)
 
-        log.debug('node %s finished running operations %s', self.node_id, self.ops_to_run)
+        log.warning('node %s finished running operations %s', self.node_id, self.node_process.op_queue)

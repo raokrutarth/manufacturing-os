@@ -1,10 +1,11 @@
 import raftos
 import logging
 import jsonpickle
-import cluster as ctr
-
+from asgiref.sync import async_to_sync
 from os.path import abspath
+import asyncio
 
+import cluster as ctr
 
 log = logging.getLogger()
 
@@ -106,8 +107,16 @@ class RaftHelper(object):
             return True
         return False
 
-    async def get_flow(self):
-        flow = await self.cluster_flow.get()
+    def get_flow(self):
+        # FIXME
+        # Need to get the result of this function in a
+        # non-async way in multiple workflows. The code below gives
+        # python3.5/asyncio/base_events.py:176]> got Future <Future pending> attached to a different loop
+
+        # loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        flow = loop.run_until_complete(self.cluster_flow.get())
         return flow
 
     def __repr__(self):

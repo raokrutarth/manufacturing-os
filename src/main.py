@@ -1,17 +1,42 @@
-import asyncio
+import code
 import logging
 import os
-import processes
-import operations
-import cluster
-import basecases
 import argparse
-
+import sys
 from time import sleep
 
+import processes
+import operations
+import cluster as ctr
+import basecases
+from multiprocessing import Process
+from metrics import Metrics
+
+from time import sleep
+from operations import Op
+from multiprocessing import Process, Queue
+
+
+"""
+Logging guidelines are provided here. Importance increases while going down
+@ DEBUG
+    - Every log e.g. ops inside nodes, debug statements, etc
+@ INFO
+    - Every informative log e.g. connection established, message received, etc
+    - Messages sent and received by nodes
+    - New operations being run
+@ WARNING
+    - Missed heartbeats
+    - Cluster Flow changes
+@ ERROR
+    - Node deaths
+@ CRITICAL
+    - N/A
+"""
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
+    stream=sys.stdout,
     level=os.environ.get("LOGLEVEL", "DEBUG"),
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
@@ -21,49 +46,89 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-async def main(args):
+def run_node_routine(node, cluster, queue, flags):
+    node_process = processes.SocketBasedNodeProcess(node, cluster, queue, flags)
+    node_process.start()
+    log.debug("Node %d started", node.node_id)
+    while 1:
+        sleep(60)
 
-    # determine nodes (of type single item node) and operations for the demo cluster
-    # # TODO: Add more fine-grained control over the exact topology and number of nodes
-    # if args.num_nodes == 3:
-    #     demo_nodes = basecases.bootstrap_dependencies_three_nodes()
-    # elif args.num_nodes == 6:
-    #     demo_nodes = basecases.bootstrap_dependencies_six_nodes()
-    # elif args.num_nodes == 7:
-    #     demo_nodes = basecases.bootstrap_dependencies_seven_nodes()
-    # else:
-    #     demo_nodes = None
+
+def run_cluster_client(queues):
+    """
+    Create client to interact with all clusters with simple
+    """
+    
+    def execute(node_id, op: Op):
+        """
+        Executes the provided command by adding the operation to the queue
+        """
+        queues[node_id].put(op)
+
+    code.interact(banner='Interactive client to perform operations on the cluster',
+                  local=dict(globals(), **locals()),
+                  exitmsg='Performed all interactions. exiting and continuing...')
+
+
+def main(args):
+
     if args.num_types > args.num_edges+1:
         args.num_edges = args.num_types-1 
-    demo_nodes = basecases.bootstrap_random_dag(args.num_types, args.num_edges, args.multiplicator)
-    log.info("The following nodes have been created %s", demo_nodes)
+    nodes = basecases.bootstrap_random_dag(args.num_types, args.num_edges, args.multiplicator)
+    log.info("The following nodes have been created %s", nodes)
 
-    demo_ops = {n.node_id: [operations.Op.SendUpdateDep] for n in demo_nodes}
+    SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
+    demo_ops = {n.node_id: [SU, SU, BD] for n in nodes}
+
+    metrics = Metrics()
 
     # build the cluster object
-    demo_blueprint = cluster.ClusterBlueprint(demo_nodes, demo_ops)
-    demo_cluster = cluster.Cluster(demo_blueprint)
+    blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
+    cluster = ctr.Cluster(metrics, blueprint)
 
-    log.info("Starting %s", demo_cluster)
+    log.critical("Starting %s", cluster)
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops}
 
-    # TODO (Krutarth): Change the asyncio paradigm to allow truly parallelized code. Barriers add a bottleneck to the
-    #  execution. Also see MessageHandler.on_update_req for another major blocker.
-    for node in demo_cluster.nodes:
-        # since start() for the node is an async, non-blocking method, use await
-        # to make sure the node is started successfully.
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).start()
-        log.debug("Node %d started", node.node_id)
+    process_list = list()
+    queues = {}
 
-    for node in demo_cluster.nodes:
-        await processes.SocketBasedNodeProcess(node, demo_cluster, flags).bootstrap()
-        log.debug("Node %d started", node.node_id)
+    # Create messaging queues to interact with cluster
+    for node in cluster.nodes:
+        queue = Queue()
+        # Add the pre-planned operations
+        for op in cluster.blueprint.node_specific_ops[node.node_id]:
+            queue.put(op)
+        queues[node.node_id] = queue
 
-    log.info("All nodes started")
-    while 1:
-        sleep(60)
+    try:
+        for node in cluster.nodes:
+            node_args = (node, cluster, queues[node.node_id], flags)
+            p = Process(target=run_node_routine, args=node_args)
+            p.start()
+            process_list.append(p)
+
+        log.critical("All nodes started")
+
+        if args.run_client:
+            # Wait for the client thread to exit
+            run_cluster_client(queues)
+
+        # Stopping the queue worker
+        for queue in queues.values():
+            queue.close()
+            queue.join_thread()
+
+        while process_list:
+            for process in tuple(process_list):
+                process.join()
+                process_list.remove(process)
+    finally:
+        for process in process_list:
+            if process.is_alive():
+                log.warning('Terminating %r', process)
+                process.terminate()
 
 
 """
@@ -87,28 +152,51 @@ def get_cluster_run_args():
     parser = argparse.ArgumentParser()
 
     # General global training parameters
-    parser.add_argument('--num_types', default=4, type=int)
-    parser.add_argument('--num_edges', default=5, type=int)
-    parser.add_argument('--multiplicator', default=2, type=int)
-    parser.add_argument('--topology', default="simple", type=str, help='Type of graph topology to use')
+    parser.add_argument(
+        '--num_types',
+        default=4,
+        type=int,
+    )
+    parser.add_argument(
+        '--num_edges', 
+        default=5, 
+        type=int
+    )
+    parser.add_argument(
+        '--multiplicator', 
+        default=2, 
+        type=int
+    )
+    parser.add_argument(
+        '--topology',
+        default="simple",
+        type=str,
+        help='Type of graph topology to use',
+    )
 
     # Options to interact and simulate the system
     parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
-    parser.add_argument('--run_cli', default=False, type=str2bool, help='Whether to run the interative cli')
+    parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interative cli')
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
     # Execution level arguments
-    parser.add_argument('--log_level', default="debug", type=str, help='Logging level to set')
+    parser.add_argument(
+        '--log_level',
+        default="debug",
+        type=str,
+        help='Logging level to set'
+    )
+
     return parser
 
 
 if __name__ == "__main__":
-    parser = get_cluster_run_args()
-    args = parser.parse_args()
+    p = get_cluster_run_args()
+    main_args = p.parse_args()
 
     # Init log level according to what's specified
-    logging.getLogger().setLevel(args.log_level.upper())
+    logging.getLogger().setLevel(main_args.log_level.upper())
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(args))
+    main(main_args)
+
     log.critical("All nodes exited")

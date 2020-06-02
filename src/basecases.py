@@ -1,5 +1,5 @@
 import operations
-import items
+from items import Item, ItemReq, ItemDependency
 from collections import defaultdict 
 import random 
 import networkx as nx
@@ -24,16 +24,16 @@ def bootstrap_dependencies_three_nodes():
     0 -> 1 -> 2
     """
     demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(3)
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(3)
     ]
 
-    wood = items.ItemReq(items.Item('wood', 0), 1)
-    door = items.ItemReq(items.Item('door', 1), 1)
-    house = items.ItemReq(items.Item('house', 2), 1)
+    wood = ItemReq(Item('wood', None), 1)
+    door = ItemReq(Item('door', None), 1)
+    house = ItemReq(Item('house', None), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], wood)
-    demo_nodes[1].dependency = items.ItemDependency([wood], door)
-    demo_nodes[2].dependency = items.ItemDependency([door], house)
+    demo_nodes[0].dependency = ItemDependency([], wood)
+    demo_nodes[1].dependency = ItemDependency([wood], door)
+    demo_nodes[2].dependency = ItemDependency([door], house)
 
     return demo_nodes
 
@@ -46,49 +46,22 @@ def bootstrap_dependencies_six_nodes():
                  -> |-----------> |
     """
     demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(6)
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(6)
     ]
 
-    start = items.ItemReq(items.Item('start', 0), 1)
-    wood = items.ItemReq(items.Item('wood', 1), 1)  # There is always only one node starting the whole graph!
-    timber = items.ItemReq(items.Item('timber', 2), 1)
-    premium_timber = items.ItemReq(items.Item('premium_timber', 3), 1)
-    door = items.ItemReq(items.Item('door', 4), 1)
-    house = items.ItemReq(items.Item('house', 5), 1)
+    start = ItemReq(Item('start', None), 1)
+    wood = ItemReq(Item('wood', None), 1)  # There is always only one node starting the whole graph!
+    timber = ItemReq(Item('timber', None), 1)
+    premium_timber = ItemReq(Item('premium_timber', None), 1)
+    door = ItemReq(Item('door', None), 1)
+    house = ItemReq(Item('house', None), 1)
 
-    demo_nodes[0].dependency = items.ItemDependency([], start)
-    demo_nodes[1].dependency = items.ItemDependency([start], wood)
-    demo_nodes[2].dependency = items.ItemDependency([start], timber)
-    demo_nodes[3].dependency = items.ItemDependency([wood, timber], premium_timber)
-    demo_nodes[4].dependency = items.ItemDependency([timber, premium_timber], door)
-    demo_nodes[5].dependency = items.ItemDependency([door], house)
-
-    return demo_nodes
-
-def bootstrap_dependencies_six_nodes_node_death():
-    """
-    initialize demo_node with the following dependencies
-    0 -> | ->  1 -----> | -> 3 -> | -> 4 -> | -> 5
-           ->  2 -> |-> |         |
-                 -> |-----------> |
-    """
-    demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(6)
-    ]
-
-    start = items.ItemReq(items.Item('start', 0), 1)
-    wood = items.ItemReq(items.Item('wood', 1), 1)  # There is always only one node starting the whole graph!
-    timber = items.ItemReq(items.Item('timber', 2), 1)
-    premium_timber = items.ItemReq(items.Item('premium_timber', 3), 1)
-    door = items.ItemReq(items.Item('door', 4), 1)
-    house = items.ItemReq(items.Item('house', 5), 1)
-
-    demo_nodes[0].dependency = items.ItemDependency([], start)
-    demo_nodes[1].dependency = items.ItemDependency([start], wood)
-    #demo_nodes[2].dependency = items.ItemDependency([start], timber)
-    demo_nodes[3].dependency = items.ItemDependency([wood, timber], premium_timber)
-    demo_nodes[4].dependency = items.ItemDependency([timber, premium_timber], door)
-    demo_nodes[5].dependency = items.ItemDependency([door], house)
+    demo_nodes[0].dependency = ItemDependency([], start)
+    demo_nodes[1].dependency = ItemDependency([start], wood)
+    demo_nodes[2].dependency = ItemDependency([start], timber)
+    demo_nodes[3].dependency = ItemDependency([wood, timber], premium_timber)
+    demo_nodes[4].dependency = ItemDependency([timber, premium_timber], door)
+    demo_nodes[5].dependency = ItemDependency([door], house)
 
     return demo_nodes
 
@@ -103,63 +76,23 @@ def bootstrap_dependencies_seven_nodes():
     # All item reqs here involve 1 unit of product. So we have redundant sources of materials.
 
     demo_nodes = [
-        SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(7)
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(7)
     ]
 
-    start = items.ItemReq(items.Item('start', 0), 1)
-    wood = items.ItemReq(items.Item('wood', 1), 1) 
-    screws = items.ItemReq(items.Item('screws', 2), 1)
-    awesomeness = items.ItemReq(items.Item('awesomeness', 3), 1)
+    start = ItemReq(Item('start', 0), 1)
+    wood = ItemReq(Item('wood', 1), 1) 
+    screws = ItemReq(Item('screws', 2), 1)
+    awesomeness = ItemReq(Item('awesomeness', 3), 1)
     
-    demo_nodes[0].dependency = items.ItemDependency([], start)
-    demo_nodes[1].dependency = items.ItemDependency([start], wood)
-    demo_nodes[2].dependency = items.ItemDependency([start], wood)
-    demo_nodes[3].dependency = items.ItemDependency([start], wood)
-    demo_nodes[4].dependency = items.ItemDependency([wood], screws)
-    demo_nodes[5].dependency = items.ItemDependency([wood], screws)
-    demo_nodes[6].dependency = items.ItemDependency([screws], awesomeness)
+    demo_nodes[0].dependency = ItemDependency([], start)
+    demo_nodes[1].dependency = ItemDependency([start], wood)
+    demo_nodes[2].dependency = ItemDependency([start], wood)
+    demo_nodes[3].dependency = ItemDependency([start], wood)
+    demo_nodes[4].dependency = ItemDependency([wood], screws)
+    demo_nodes[5].dependency = ItemDependency([wood], screws)
+    demo_nodes[6].dependency = ItemDependency([screws], awesomeness)
 
     return demo_nodes
-
-# Problems with the algorithm -> very sparse because only one path
-# def bootstrap_random(nodes, edges, max, number_dependencies):
-#     graph = random_dag(nodes, edges)
-#     print(graph.edges())
-#     demo_nodes = [
-#         SingleItemNode(node_id=i, dependency=items.ItemDependency([], "")) for i in range(nodes)
-#     ]
-
-#     id = ""
-
-#     demo_nodes[0].dependency = items.ItemDependency([], items.ItemReq(items.Item(0, id), 1))
-#     demo_nodes[1].dependency = items.ItemDependency([items.ItemReq(items.Item(0, id), 1)], items.ItemReq(items.Item(1, id), 1))
-#     demo_nodes[2].dependency = items.ItemDependency([items.ItemReq(items.Item(0, id), 1)], items.ItemReq(items.Item(2, id), 1))
-
-#     end_node_dependency = []
-#     for i in range(number_dependencies):
-#         end_node_dependency.append(items.ItemReq(items.Item(max-2-i, id), 1))
-
-#     demo_nodes[nodes-1].dependency = items.ItemDependency(end_node_dependency, items.ItemReq(items.Item(max-1, id), 1))
-
-#     for i in range(3, nodes-1):
-#         rdm_start = []
-#         rdm_start_type = []
-
-#         for j in range(random.randint(1, number_dependencies)):
-#             rdm_i = random.randint(1, max-2)
-#             # Make sure all types in rdm_start are distinct
-#             while rdm_i in rdm_start_type:
-#                 rdm_i = random.randint(1, max-2)
-#             rdm_start_type.append(rdm_i)
-#             rdm_start.append(items.ItemReq(items.Item(rdm_i, id), 1))
-
-#         rdm_end = random.randint(1, max-1) 
-#         # Make sure type in output is different from each input        
-#         while rdm_end in rdm_start_type:
-#                 rdm_end = random.randint(1, max-2)
-#         demo_nodes[i].dependency = items.ItemDependency(rdm_start, items.ItemReq(items.Item(rdm_end, id), 1))
-
-#     return demo_nodes 
 
 # Creates Random DAG!
 def bootstrap_random_dag(type_num, edges_num, multiplicator):
@@ -189,18 +122,18 @@ def bootstrap_random_dag(type_num, edges_num, multiplicator):
     for i in range(type_num):
         if i == 0:
             node_tmp = SingleItemNode(node_id=i, dependency=None)
-            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, None), 1))
+            node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         elif i == type_num-1:
             node_tmp = SingleItemNode(node_id=i*multiplicator, dependency=None)
-            node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, None), 1))
+            node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         else:
             for j in range(1, random.randint(2, multiplicator)):
                 node_tmp = SingleItemNode(node_id=i*j, dependency=None)
-                node_tmp.dependency = items.ItemDependency([], items.ItemReq(items.Item(i, None), 1))
+                node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
                 demo_nodes.append(node_tmp)
 
     for nodes in demo_nodes:
@@ -209,19 +142,19 @@ def bootstrap_random_dag(type_num, edges_num, multiplicator):
             pass
         # if node_id in start_nodes, incoming dependency is item type == 0   
         elif nodes.dependency.result_item_req.item.type in start_nodes:
-            nodes.dependency.input_item_reqs = [items.ItemReq(items.Item(0, None), 1)]
+            nodes.dependency.input_item_reqs = [ItemReq(Item(0, None), 1)]
         # if item type == type_num-1, incoming dependency all item types in variable end_nodes
         elif nodes.dependency.result_item_req.item.type == type_num-1:
             node_dependency = []
             for end_node in end_nodes:
-                node_dependency.append(items.ItemReq(items.Item(end_node, None), 1))
+                node_dependency.append(ItemReq(Item(end_node, None), 1))
             nodes.dependency.input_item_reqs = node_dependency
         # add all other dependencies according to the random dag that was created
         else:
             node_dependency = []
             for tup in graph.edges():
                 if tup[1] == nodes.dependency.result_item_req.item.type:
-                    node_dependency.append(items.ItemReq(items.Item(tup[0], None), 1))
+                    node_dependency.append(ItemReq(Item(tup[0], None), 1))
             nodes.dependency.input_item_reqs = node_dependency
 
     return demo_nodes
