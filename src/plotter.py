@@ -28,7 +28,7 @@ class ClusterPlotter(object):
 
     def render_pydot_graph_to_console(self, graph):
         # render pydot by calling dot, no file saved to disk
-        png_str = graph.create_png(prog='dot')
+        png_str = graph.create(prog='dot', format='png')
         # treat the dot output string as an image file
         sio = io.BytesIO()
         sio.write(png_str)
