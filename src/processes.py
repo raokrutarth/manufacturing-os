@@ -58,6 +58,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.port = self.process_spec.port
         self.flags = flags
         self.op_queue = queue
+        self.metrics = self.cluster.metrics
 
         self.state_helper = FileBasedStateHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(self)
@@ -108,9 +109,11 @@ class SocketBasedNodeProcess(NodeProcess):
         log.warning("Successfully started node %s", self.node.get_id())
 
     def sendMessage(self, message):
+        self.metrics.increase_metric(self.node.node_id, "sent_messages")
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
+        self.metrics.increase_metric(self.node.node_id, "received_messages")
         self.msg_handler.onMessage(message)
 
     """
