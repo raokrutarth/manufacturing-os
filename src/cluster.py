@@ -49,7 +49,9 @@ class Cluster(object):
             )
 
     def update_deps(self, node_id: int, new_dependency: items.ItemDependency):
-        self.nodes[node_id].dependency = new_dependency
+        for idx in range(len(self.nodes)):
+            if self.nodes[idx].node_id == node_id:
+                self.nodes[idx].dependency = new_dependency
 
     def get_node(self, node_id):
         '''
@@ -158,37 +160,37 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
 
 def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_id, path=[]):
     """
-    Find one possible path for a given ClusterWideFlow. It is a recursive depth-first algorithm 
+    Find one possible path for a given ClusterWideFlow. It is a recursive depth-first algorithm
     that tries to find the start_node to validate whether a given path is valid.
     """
     #print("Next Loop with start_node: " + str(start_node_id) + " and end_node: " + str(end_node_id))
-   
+
     # This is the return function -> when arriving at the starting node.
     if (start_node_id == end_node_id):
         return [(start_node_id, start_node_id)]
-    
-    requirements = [] # Stores only ids of the required item types. 
+
+    requirements = [] # Stores only ids of the required item types.
     end_node = next((x for x in cluster_flow.nodes if x.node_id == end_node_id), None) # find the end node based off of its id
 
     if end_node:
         for input in end_node.dependency.input_item_reqs:
             requirements.append(input.item.type)
-    
+
     # Loop over all incoming edges
     for incoming in cluster_flow.incoming_flows[end_node_id]:
         node = next((x for x in cluster_flow.nodes if x.node_id == incoming[0]), None)
-        
+
         # Only check node out if its type is in requirements, i.e. some items have already been delivered.
         if node and node.dependency.result_item_req.item.type in requirements:
             # Recursive function starts here -> end_node is changed to current node.
-            new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)    
+            new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)
             boolean = [item for item in new_path if item[0] == start_node_id] # Check if start_node in path
 
             # If start_node in path, the path is viable -> append it to the path + remove the item type from the requirements
             if boolean:
                 path.append((node.node_id, end_node_id))
                 requirements.remove(node.dependency.result_item_req.item.type)
-    
+
     if requirements: # If still some item types in the requirements, path is not viable
         path = []
     return path
@@ -204,14 +206,14 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     end_node = nodes[len(nodes)-1].node_id
 
     log.info("Cluster flow with all possible paths created: {}".format(cluster_flow))
-    
+
     # Create a new ClusterWideFlow object containing only one possible paths.
     cluster_flow_final = ClusterWideFlow(nodes)
 
     # Output one possible path
     possible_path = output_possible_path(cluster_flow, start_node, end_node)
     possible_path_set = list(set(possible_path))
-    
+
     # Add all edges to ClusterWideFlow object
     for edge in possible_path_set:
         node = next((x for x in cluster_flow.nodes if x.node_id == edge[0]), None)
