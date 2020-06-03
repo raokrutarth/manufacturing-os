@@ -58,7 +58,7 @@ def run_cluster_client(queues):
     """
     Create client to interact with all clusters with simple
     """
-    
+
     def execute(node_id, op: Op):
         """
         Executes the provided command by adding the operation to the queue
@@ -77,7 +77,7 @@ def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
-    demo_ops = {n.node_id: [SU, SU, BD] for n in nodes}
+    demo_ops = {n.node_id: [SU] for n in nodes}
 
     metrics = Metrics()
 
@@ -157,13 +157,13 @@ def get_cluster_run_args():
         type=int,
     )
     parser.add_argument(
-        '--complexity', 
-        default="medium", 
+        '--complexity',
+        default="medium",
         type=str
     )
     parser.add_argument(
-        '--nodes_per_type', 
-        default=2, 
+        '--nodes_per_type',
+        default=2,
         type=int
     )
     parser.add_argument(
