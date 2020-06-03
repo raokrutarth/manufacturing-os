@@ -90,7 +90,7 @@ class SocketBasedNodeProcess(NodeProcess):
         # Wait for confirmation of new leader
 
     def init_cluster_flow(self):
-        new_flow = ctr.bootstrap_shortest_path(self.cluster.nodes)
+        new_flow = ctr.bootstrap_flow(self.cluster.nodes)
         self.state_helper.update_flow(new_flow)
 
     def start(self):
@@ -105,6 +105,13 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
+
+        # Wait for leader to be elected
+        while self.state_helper.get_leader():
+            time.sleep(0.1)
+        # Initialize the flow if this node is the leader
+        if self.state_helper.am_i_leader():
+            self.init_cluster_flow()
 
         log.warning("Successfully started node %s", self.node.get_id())
 

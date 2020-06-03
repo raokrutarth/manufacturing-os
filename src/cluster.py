@@ -228,7 +228,7 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
 
-    log.info("Cluster flow with all possible paths created: {}".format(cluster_flow))
+    log.debug("Cluster flow with all possible paths created: {}".format(cluster_flow))
 
     # Create a new ClusterWideFlow object containing only one possible paths.
     cluster_flow_final = ClusterWideFlow(nodes)
@@ -244,7 +244,7 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
             edge[0], edge[1], node.dependency.result_item_req
         )
 
-    log.info("Cluster flow with one specific path created: {}".format(cluster_flow_final))
+    log.debug("Cluster flow with one specific path created: {}".format(cluster_flow_final))
 
     return cluster_flow_final
 
