@@ -40,7 +40,10 @@ class Cluster(object):
         self.init_process_specs(port_range_start)
         self.metrics = metrics
 
-    def distinct_item_types(self):
+    def get_distinct_item_types_mapping(self):
+        item_types = set([node.dependency.get_result_item_type() for node in self.nodes])
+        item_type_to_id = {item_type: idx for idx, item_type in enumerate(item_types)}
+        return item_type_to_id
 
     def init_process_specs(self, port_range_start: int):
         # assign a process name and port to process
@@ -147,11 +150,12 @@ class ClusterWideFlow(object):
     def get_networkx_graph_repr(self):
         """
         Returns a representation of self in the form of a networkx graph object
+        Each graph represents the outgoing flow of the node
         """
         graph = nx.DiGraph()
         graph.add_nodes_from(self.node_ids)
         for n0 in self.node_ids:
-            for edge in self.incoming_flows[n0]:
+            for edge in self.outgoing_flows[n0]:
                 n1, item_req = edge
                 graph.add_edge(n0, n1, item_req=item_req)
         return graph
