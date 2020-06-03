@@ -1,4 +1,5 @@
 import pydot
+import io
 import randomcolor
 
 import basecases as bcs
@@ -8,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 from metrics import Metrics
-from io import StringIO
 
 
 class ClusterPlotter(object):
@@ -21,20 +21,21 @@ class ClusterPlotter(object):
         self.colors = self.rand_color.generate(hue="blue", count=len(self.item_type_to_id))
 
     def get_item_type(self, node_id):
-        return self.cluster.nodes.node_ids_to_nodes[node_id].dependency.get_result_item_type()
+        return self.cluster.node_ids_to_nodes[node_id].dependency.get_result_item_type()
 
     def get_color_for_node_id(self, node_id):
         return self.colors[self.item_type_to_id[self.get_item_type(node_id)]]
 
     def render_pydot_graph_to_console(self, graph):
         # render pydot by calling dot, no file saved to disk
-        png_str = graph.create(prog='dot')
+        png_str = graph.create_png(prog='dot')
         # treat the dot output string as an image file
-        sio = StringIO()
+        sio = io.BytesIO()
         sio.write(png_str)
         sio.seek(0)
         plt.axis('off')
         plt.imshow(plt.imread(sio), aspect="equal")
+        plt.show()
 
     def get_pydot_graph_from_nx_graph(self, nx_graph: nx.Graph):
 
@@ -49,7 +50,7 @@ class ClusterPlotter(object):
 
         pydot_nodes = {}
         for n in nx_graph.nodes:
-            node = get_pydot_node(n.node_id)
+            node = get_pydot_node(n)
             graph.add_node(node)
             pydot_nodes[n] = node
 
@@ -72,8 +73,6 @@ class ClusterPlotter(object):
 
     def plot_current_state(self, flow: ctr.ClusterWideFlow):
         graph = flow.get_networkx_graph_repr()
-        nx.draw(graph)
-        plt.show()
         pydot_graph = self.get_pydot_graph_from_nx_graph(graph)
         self.render_pydot_graph_to_console(pydot_graph)
 
