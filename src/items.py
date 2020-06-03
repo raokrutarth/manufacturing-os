@@ -32,7 +32,7 @@ class ItemReq:
         self.quantity = quantity
 
     def __repr__(self):
-        return "ItemReq({}, quantity:{})".format(self.item, self.quantity)
+        return "ItemReq({}, qty:{})".format(self.item, self.quantity)
 
 
 class ItemDependency(object):
@@ -61,6 +61,9 @@ class ItemDependency(object):
         """
         self.result_item_req = result_item_req
         self.input_item_reqs = input_item_reqs
+
+    def get_result_item_type(self):
+        return self.result_item_req.item.type
 
     def is_valid_material(self, new_req: ItemReq):
         '''

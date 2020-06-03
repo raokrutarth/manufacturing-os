@@ -35,9 +35,12 @@ class Cluster(object):
     def __init__(self, metrics, blueprint, port_range_start=40000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
+        self.node_ids_to_nodes = {node.node_id: node for node in self.nodes}
         self.process_specs = None
         self.init_process_specs(port_range_start)
         self.metrics = metrics
+
+    def distinct_item_types(self):
 
     def init_process_specs(self, port_range_start: int):
         # assign a process name and port to process
