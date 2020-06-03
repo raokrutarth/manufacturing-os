@@ -65,6 +65,7 @@ def bootstrap_dependencies_six_nodes():
 
     return demo_nodes
 
+
 def bootstrap_dependencies_seven_nodes():
     """
     initialize demo_node with the following dependencies

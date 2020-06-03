@@ -1,5 +1,6 @@
 import logging
 import items
+import networkx as nx
 
 from typing import List
 from collections import defaultdict
@@ -139,6 +140,18 @@ class ClusterWideFlow(object):
         return "ClusterWideFlow(\n\tincoming edges:{}\n\toutgoing edges:{}\n\tnode IDs: {}\n)".format(
             self.incoming_flows, self.outgoing_flows, self.node_ids,
         )
+
+    def get_networkx_graph_repr(self):
+        """
+        Returns a representation of self in the form of a networkx graph object
+        """
+        graph = nx.DiGraph()
+        graph.add_nodes_from(self.node_ids)
+        for n0 in self.node_ids:
+            for edge in self.incoming_flows[n0]:
+                n1, item_req = edge
+                graph.add_edge(n0, n1, item_req=item_req)
+        return graph
 
 
 def bootstrap_all_paths(nodes: List[SingleItemNode]):
