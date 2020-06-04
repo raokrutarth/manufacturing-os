@@ -1,4 +1,3 @@
-import enum
 import logging
 import random
 import items
@@ -9,36 +8,10 @@ from threading import Thread
 from time import sleep
 from typing import List
 from nodes import SingleItemNode
-
+from op import Op
+from OpsGenerator import OpsGenerator
 
 log = logging.getLogger()
-
-
-class Op(enum.Enum):
-
-    def __repr__(self):
-        return "{}".format(self.name)
-
-    # Inits a heartbeat from a node
-    SendHeartbeat = 1
-
-    # Signals to perform re-allocation; different from allocate in case we
-    # use a different optimized algorithm for re-allocation
-    TriggerReAllocate = 4
-
-    """
-    Operations which are supported right now
-    """
-
-    # Signals to initiate initial flow allocation consensus
-    TriggerAllocate = 3
-
-    # Signals to broadcast update dep request i.e. update its production, consumption requirements
-    SendUpdateDep = 5
-
-    # Notifies everyone of death
-    BroadcastDeath = 2
-
 
 class OpHandler:
 
@@ -57,7 +30,9 @@ class OpHandler:
                return messages.HeartbeatResp(source_id, dest)
         elif op == Op.SendUpdateDep:
             return messages.UpdateReq(source_id, items.ItemDependency.halveDependency(source.dependency))
-        elif op == Op.BroadcastDeath:
+        elif op == Op.Kill:
+            return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
+        elif op == Op.Recover:
             return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
         else:
             assert False, "Invalid op: {}".format(op.name)
@@ -93,27 +68,6 @@ class OpsRunnerThread(Thread):
         log.debug('node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node, op)
 
-    def whether_to_kill_node(self):
-        # Only kills a node if they are part of the supply chain
-        leader = self.node_process.state_helper.get_leader()
-        flow = self.node_process.state_helper.get_flow()
-        if leader == self.node_id:
-            return False
-        elif flow is not None:
-            try:
-                ins = len(flow.getIncomingFlowsForNode(str(self.node_id)))
-                outs = len(flow.getOutgoingFlowsForNode(str(self.node_id)))
-                if (ins * outs) > 0:
-                    if random.random() < 0.5:
-                        log.warning("Killing node: {}".format(self.node_id))
-                        return True
-                    else:
-                        return False
-            except Exception:
-                return False
-        else:
-            return False
-
     def run(self):
         log.warning('node %s running operation thread with operations %s', self.node_id, self.node_process.op_queue)
 
@@ -124,9 +78,10 @@ class OpsRunnerThread(Thread):
             op = self.node_process.op_queue.get()
             msg = self.get_message_from_op(op)
             # Add hacky initial method to simulate conditional node death
-            if op == Op.BroadcastDeath:
-                if self.whether_to_kill_node():
-                    self.node_process.sendMessage(msg)
+            if op == Op.Kill:
+                self.node_process.onKill()
+            elif op == Op.Recover:
+                self.node_process.onRecover()
             else:
                 self.node_process.sendMessage(msg)
             sleep(self.delay)

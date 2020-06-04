@@ -6,7 +6,7 @@ import operations
 import cluster as ctr
 import multiprocessing as mp
 
-from queue import Queue
+from multiprocessing import Queue
 from nodes import BaseNode
 from cluster import Cluster
 from state import FileBasedStateHelper
@@ -140,3 +140,11 @@ class SocketBasedNodeProcess(NodeProcess):
             n for n, lt in self.last_known_heartbeat.items()
             if (lt < (curr_time - margin)) and (lt >= 0)
         ]
+
+    def onKill(self):
+        log.warning("Killing node %s", self.node.get_id())
+        pass
+
+    def onRecover(self):
+        log.warning("Recovering node %s", self.node.get_id())
+        pass

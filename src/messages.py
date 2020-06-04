@@ -59,6 +59,7 @@ class Action(enum.Enum):
     #  - B replies with a BatchDeliveryConfirm, WaitingForMaterialBatch or
     #    ItemBatchNotAvailable by looking at it's log.
     CheckBatchStatus = 12
+    Recover = 13
 
 
 class Message(object):
@@ -283,6 +284,8 @@ class MessageHandler(object):
         elif action == Action.Update:
             return UpdateReq(source, ItemDependency.newNullDependency())
         elif action == Action.Death:
+            return UpdateReq(source, ItemDependency.newNullDependency())
+        elif action == Action.Recover:
             return UpdateReq(source, ItemDependency.newNullDependency())
         elif action == Action.Ack:
             return AckResp(source, dest)

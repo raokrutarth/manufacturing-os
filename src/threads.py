@@ -5,8 +5,7 @@ import messages
 
 from time import sleep
 from threading import Thread
-from queue import Queue
-
+from multiprocessing import Queue
 
 log = logging.getLogger()
 

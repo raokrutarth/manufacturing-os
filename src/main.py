@@ -9,13 +9,13 @@ import processes
 import operations
 import cluster as ctr
 import basecases
-from multiprocessing import Process
 from metrics import Metrics
 
 from time import sleep
 from operations import Op
 from multiprocessing import Process, Queue
 
+from OpsGenerator import OpsGenerator
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -76,8 +76,8 @@ def main(args):
     # nodes = basecases.bootstrap_dependencies_seven_nodes()
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
-    SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
-    demo_ops = {n.node_id: [SU] for n in nodes}
+    SU, BD, RC = operations.Op.SendUpdateDep, operations.Op.Kill, operations.Op.Recover
+    demo_ops = {n.node_id: [SU, BD, RC] for n in nodes}
 
     metrics = Metrics()
 
@@ -101,6 +101,8 @@ def main(args):
             queue.put(op)
         queues[node.node_id] = queue
 
+    ops_generator = None
+
     try:
         for node in cluster.nodes:
             node_args = (node, cluster, queues[node.node_id], flags)
@@ -109,6 +111,11 @@ def main(args):
             process_list.append(p)
 
         log.critical("All nodes started")
+
+        ops_generator = OpsGenerator(cluster, queues)
+        ops_generator.name = "Operation Generator"
+        ops_generator.daemon = True
+        ops_generator.start()
 
         if args.run_client:
             # Wait for the client thread to exit
