@@ -31,23 +31,26 @@ Logging guidelines are provided here. Importance increases while going down
 @ CRITICAL
     - N/A
 """
-shutil.rmtree(os.path.abspath("./tmp"))  # Remove tmp to remove old WALs
+TMP_PATH = os.path.abspath("./tmp")
+shutil.rmtree(TMP_PATH, ignore_errors=True)  # Remove tmp to remove old WALs
+os.makedirs(TMP_PATH, exist_ok=True)
 
 # configure logging with filename, function name and line numbers
-logging.basicConfig(
-    stream=sys.stdout,
-    level=os.environ.get("LOGLEVEL", "DEBUG"),
+logFormatter = logging.Formatter(
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
-    format='%(levelname)-6s  %(asctime)s %(threadName)-12s %(filename)s:%(lineno)s::'
-           '%(funcName)-20s | %(message)s',
+    fmt='%(levelname)-6s  %(asctime)s %(threadName)-12s %(filename)s:%(lineno)s::'
+        '%(funcName)-20s | %(message)s',
 )
-log_file = "./tmp/manufacturing-os.log"
-os.makedirs(os.path.dirname(log_file), exist_ok=True)
-fileHandler = logging.FileHandler(log_file, mode="w+")
-logging.getLogger().addHandler(fileHandler)
+fileHandler = logging.FileHandler(TMP_PATH + "/manufacturing-os.log", mode="w+")
+fileHandler.setFormatter(logFormatter)
+consoleHandler = logging.StreamHandler(sys.stdout)
+consoleHandler.setFormatter(logFormatter)
 
 log = logging.getLogger()
+log.setLevel(logging.DEBUG)
+log.addHandler(fileHandler)
+log.addHandler(consoleHandler)
 
 
 def run_node_routine(node, cluster, queue, flags):
@@ -154,7 +157,7 @@ def get_cluster_run_args():
     # General global training parameters
     parser.add_argument(
         '--num_types',
-        default=10,
+        default=4,
         type=int,
     )
     parser.add_argument(
@@ -164,7 +167,7 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=5,
+        default=2,
         type=int
     )
     parser.add_argument(
