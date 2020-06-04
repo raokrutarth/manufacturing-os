@@ -31,7 +31,7 @@ class Cluster(object):
     Represents the set of nodes interacting
     """
 
-    def __init__(self, metrics, blueprint, port_range_start=5000):
+    def __init__(self, metrics, blueprint, port_range_start=40000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.process_specs = None
@@ -116,12 +116,18 @@ class ClusterWideFlow(object):
         """
         Outgoing flows i.e. nodes to which node_id is supposed to give items
         """
+        if node_id not in self.outgoing_flows:
+            log.error("Node %d's outgoing edges not found in cluster flow", node_id)
+            return {}
         return self.outgoing_flows[node_id]
 
     def getIncomingFlowsForNode(self, node_id):
         """
         Incoming flows i.e. nodes from which node_id is supposed to recieve items
         """
+        if node_id not in self.incoming_flows:
+            log.error("Node %d's incoming edges not found in cluster flow", node_id)
+            return {}
         return self.incoming_flows[node_id]
 
     def clearAll(self):
@@ -129,12 +135,9 @@ class ClusterWideFlow(object):
         self.outgoing_flows = {}
         self.incoming_flows = {}
 
-    def get_inbound_node_ids(self):
-        return self.incoming_flows
-
     def __repr__(self):
-        return "ClusterWideFlow(in:{}, out:{})".format(
-            self.incoming_flows, self.outgoing_flows
+        return "ClusterWideFlow(\n\tincoming edges:{}\n\toutgoing edges:{}\n\tnode IDs: {}\n)".format(
+            self.incoming_flows, self.outgoing_flows, self.node_ids,
         )
 
 
@@ -158,19 +161,18 @@ def bootstrap_all_paths(nodes: List[SingleItemNode]):
 
     return cluster_flow
 
+
 def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_id, path=[]):
     """
     Find one possible path for a given ClusterWideFlow. It is a recursive depth-first algorithm
     that tries to find the start_node to validate whether a given path is valid.
     """
-    #print("Next Loop with start_node: " + str(start_node_id) + " and end_node: " + str(end_node_id))
-
     # This is the return function -> when arriving at the starting node.
     if (start_node_id == end_node_id):
         return [(start_node_id, start_node_id)]
 
-    requirements = [] # Stores only ids of the required item types.
-    end_node = next((x for x in cluster_flow.nodes if x.node_id == end_node_id), None) # find the end node based off of its id
+    requirements = []  # Stores only ids of the required item types.
+    end_node = next((x for x in cluster_flow.nodes if x.node_id == end_node_id), None)  # find the end node based off of its id
 
     if end_node:
         for input in end_node.dependency.input_item_reqs:
@@ -191,9 +193,10 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
                 path.append((node.node_id, end_node_id))
                 requirements.remove(node.dependency.result_item_req.item.type)
 
-    if requirements: # If still some item types in the requirements, path is not viable
+    if requirements:  # If still some item types in the requirements, path is not viable
         path = []
     return path
+
 
 def bootstrap_flow(nodes: List[SingleItemNode]):
     """
@@ -225,6 +228,7 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
 
     return cluster_flow_final
 
+
 # for testing purposes
 def _test():
     number_types = 4
@@ -237,6 +241,7 @@ def _test():
     print("ClusterWideFlow Object has created.")
     print(cluster_flow_obj)
     return cluster_flow_obj
+
 
 if __name__ == "__main__":
     _test()

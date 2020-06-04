@@ -50,23 +50,19 @@ class FileBasedStateHelper(object):
         is_leader = self.am_i_leader()
         if is_leader:
             self.consensus_file[self.flow_key] = new_cluster_flow
-            log.warning("Updated cluster flow on leader: {} with flow:{}".format(self.node_id, new_cluster_flow))
+            log.info("Node {} (leader) updated flow to: {}".format(self.node_id, new_cluster_flow))
             return True
         return False
 
     def get_flow(self):
         try:
             flow = self.consensus_file[self.flow_key]
-        except:
+        except Exception as e:
+            log.error("Unable to fetch cluster flow in node %d with exception %s", self.node_id, e)
             return None
         else:
+            # HACK convert the flow key types to bypass the implicit int to str conversion
+            # that occurs during file persistance of the flow object
+            flow.outgoing_flows = {int(k): v for k, v in flow.outgoing_flows.items()}
+            flow.incoming_flows = {int(k): v for k, v in flow.incoming_flows.items()}
             return flow
-
-    def __repr__(self):
-        return str({
-            'RaftHelper': {
-                "node ID": self.node_id,
-                "cluster": self.cluster,
-                # TODO add flow and nodes if necessary
-            }
-        })

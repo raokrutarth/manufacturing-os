@@ -30,4 +30,6 @@ zmq==0.0.0
 jsonpickle==1.4.1
 ujson==2.0.3
 asgiref==3.2.7
-atomicfile=1.0.1
+atomicfile==1.0.1
+networkx==2.4
+pandas==0.23.4
