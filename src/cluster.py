@@ -31,7 +31,7 @@ class Cluster(object):
     Represents the set of nodes interacting
     """
 
-    def __init__(self, metrics, blueprint, port_range_start=5000):
+    def __init__(self, metrics, blueprint, port_range_start=40000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.process_specs = None

@@ -20,7 +20,9 @@ class Item:
         self.id = _id
 
     def __repr__(self):
-        return "Item(type:{}, id:{})".format(self.type, self.id)
+        if self.id:
+            return "Item(type:{}, id:{})".format(self.type, self.id)
+        return "Item(type:{})".format(self.type)
 
 
 # Item requirement - Item, Quantity
@@ -30,7 +32,7 @@ class ItemReq:
         self.quantity = quantity
 
     def __repr__(self):
-        return "ItemReq({} X {})".format(self.item, self.quantity)
+        return "ItemReq({}, quantity:{})".format(self.item, self.quantity)
 
 
 class ItemDependency(object):

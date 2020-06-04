@@ -4,17 +4,15 @@ import os
 import argparse
 import sys
 from time import sleep
+from multiprocessing import Process, Queue
+import shutil
 
 import processes
 import operations
 import cluster as ctr
 import basecases
-from multiprocessing import Process
 from metrics import Metrics
-
-from time import sleep
 from operations import Op
-from multiprocessing import Process, Queue
 
 
 """
@@ -33,6 +31,7 @@ Logging guidelines are provided here. Importance increases while going down
 @ CRITICAL
     - N/A
 """
+shutil.rmtree(os.path.abspath("./tmp"))  # Remove tmp to remove old WALs
 
 # configure logging with filename, function name and line numbers
 logging.basicConfig(
@@ -43,6 +42,11 @@ logging.basicConfig(
     format='%(levelname)-6s  %(asctime)s %(threadName)-12s %(filename)s:%(lineno)s::'
            '%(funcName)-20s | %(message)s',
 )
+log_file = "./tmp/manufacturing-os.log"
+os.makedirs(os.path.dirname(log_file), exist_ok=True)
+fileHandler = logging.FileHandler(log_file, mode="w+")
+logging.getLogger().addHandler(fileHandler)
+
 log = logging.getLogger()
 
 
@@ -150,7 +154,7 @@ def get_cluster_run_args():
     # General global training parameters
     parser.add_argument(
         '--num_types',
-        default=4,
+        default=10,
         type=int,
     )
     parser.add_argument(
@@ -160,7 +164,7 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=2,
+        default=5,
         type=int
     )
     parser.add_argument(

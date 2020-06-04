@@ -50,7 +50,7 @@ class FileBasedStateHelper(object):
         is_leader = self.am_i_leader()
         if is_leader:
             self.consensus_file[self.flow_key] = new_cluster_flow
-            log.warning("Updated cluster flow on node {} (leader) with flow:{}".format(self.node_id, new_cluster_flow))
+            log.info("Node {} (leader) updated flow to: {}".format(self.node_id, new_cluster_flow))
             return True
         return False
 
