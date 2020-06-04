@@ -83,10 +83,8 @@ class Message(object):
         # qualify as valid node_ids. Skipping the check to verify if the id
         # is a valid id of a node in the cluster.
         if not isinstance(source, int):
-            log.warning("Invalid type of source: %s", type(source))
             source = int(source)
         if not isinstance(dest, int):
-            log.warning("Invalid type of dest: %s", type(dest))
             dest = int(dest)
 
         self.source = source

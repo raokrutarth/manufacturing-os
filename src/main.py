@@ -71,12 +71,9 @@ def run_cluster_client(queues):
 
 
 def main(args):
-    # nodes = basecases.bootstrap_dependencies_three_nodes()
-    # nodes = basecases.bootstrap_dependencies_six_nodes()
-    # nodes = basecases.bootstrap_dependencies_seven_nodes()
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
-    SU, BD = operations.Op.SendUpdateDep, operations.Op.BroadcastDeath
+    SU = operations.Op.SendUpdateDep
     demo_ops = {n.node_id: [SU] for n in nodes}
 
     metrics = Metrics()
