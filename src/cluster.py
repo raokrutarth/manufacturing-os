@@ -231,9 +231,9 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
 
 # for testing purposes
 def _test():
-    number_types = 4
+    number_types = 10
     complexity = "medium"
-    nodes_per_type = 2
+    nodes_per_type = 10
     demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
     print("Nodes have been created.")
     print(demo_nodes)

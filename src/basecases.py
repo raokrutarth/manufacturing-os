@@ -141,21 +141,22 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
     log.debug("All nodes in Random DAG without outgoing edges %s will point to the end node", end_nodes)
 
     demo_nodes = []     # Create nodes_num demo_nodes
+    node_ids = list(range(0, type_num * nodes_per_type))
 
     for i in range(type_num):
         if i == 0:
-            node_tmp = SingleItemNode(node_id=i, dependency=None)
+            node_tmp = SingleItemNode(node_id=node_ids.pop(0), dependency=None)
             node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         elif i == type_num-1:
-            node_tmp = SingleItemNode(node_id=i*nodes_per_type, dependency=None)
+            node_tmp = SingleItemNode(node_id=node_ids.pop(0), dependency=None)
             node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
             demo_nodes.append(node_tmp)
 
         else:
             for j in range(1, random.randint(2, nodes_per_type)):
-                node_tmp = SingleItemNode(node_id=i*j, dependency=None)
+                node_tmp = SingleItemNode(node_id=node_ids.pop(0), dependency=None)
                 node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
                 demo_nodes.append(node_tmp)
     
@@ -163,7 +164,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
     for nodes in demo_nodes:
         # if node_id == 0, no incoming dependencies
-        if nodes.node_id == 0:
+        if nodes.dependency.result_item_req.item.type == 0:
             pass
         # if node_id in start_nodes, incoming dependency is item type == 0   
         elif nodes.dependency.result_item_req.item.type in start_nodes:
