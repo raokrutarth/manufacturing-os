@@ -40,7 +40,7 @@ class Metrics:
             elif mode == DFOperation.Set:
                 self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] = value
 
-            self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name)].timestamp = datetime.now()
+            self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "timestamp"] = datetime.now()
         else:
             self._df = self._df.append({
                 "timestamp": datetime.now(),

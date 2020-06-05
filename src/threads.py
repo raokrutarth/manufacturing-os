@@ -63,7 +63,13 @@ class PublishThread(Thread):
 
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
-        socket.bind("tcp://127.0.0.1:%d" % self.node_process.port)
+        binded = False
+        while not binded:
+            try:
+                socket.bind("tcp://127.0.0.1:%d" % self.node_process.port)
+                binded = True
+            except Exception:
+                self.node_process.port += 1
 
         while True:
             if not self.node_process.message_queue.empty():

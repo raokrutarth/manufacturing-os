@@ -4,17 +4,15 @@ import os
 import argparse
 import sys
 from time import sleep
+from multiprocessing import Process, Queue
+import shutil
 
 import processes
 import operations
 import cluster as ctr
 import basecases
-from multiprocessing import Process
 from metrics import Metrics
-
-from time import sleep
 from operations import Op
-from multiprocessing import Process, Queue
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -32,17 +30,26 @@ Logging guidelines are provided here. Importance increases while going down
 @ CRITICAL
     - N/A
 """
+TMP_PATH = os.path.abspath("./tmp")
+shutil.rmtree(TMP_PATH, ignore_errors=True)  # Remove tmp to remove old WALs
+os.makedirs(TMP_PATH, exist_ok=True)
 
 # configure logging with filename, function name and line numbers
-logging.basicConfig(
-    stream=sys.stdout,
-    level=os.environ.get("LOGLEVEL", "DEBUG"),
+logFormatter = logging.Formatter(
     datefmt='%H:%M:%S',
     # add %(process)s to the formatter to see PIDs
-    format='%(levelname)-6s  %(asctime)s %(threadName)-12s %(filename)s:%(lineno)s::'
-           '%(funcName)-20s | %(message)s',
+    fmt='%(levelname)-6s  %(asctime)s %(threadName)-12s %(filename)s:%(lineno)s::'
+        '%(funcName)-20s | %(message)s',
 )
+fileHandler = logging.FileHandler(TMP_PATH + "/manufacturing-os.log", mode="w+")
+fileHandler.setFormatter(logFormatter)
+consoleHandler = logging.StreamHandler(sys.stdout)
+consoleHandler.setFormatter(logFormatter)
+
 log = logging.getLogger()
+log.setLevel(logging.DEBUG)
+log.addHandler(fileHandler)
+log.addHandler(consoleHandler)
 
 
 def run_node_routine(node, cluster, queue, flags):
@@ -70,9 +77,6 @@ def run_cluster_client(queues):
 
 
 def main(args):
-    # nodes = basecases.bootstrap_dependencies_three_nodes()
-    # nodes = basecases.bootstrap_dependencies_six_nodes()
-    # nodes = basecases.bootstrap_dependencies_seven_nodes()
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     SU, BD, RC = operations.Op.SendUpdateDep, operations.Op.Kill, operations.Op.Recover

@@ -20,7 +20,9 @@ class Item:
         self.id = _id
 
     def __repr__(self):
-        return "Item(type:{}, id:{})".format(self.type, self.id)
+        if self.id:
+            return "Item(type:{}, id:{})".format(self.type, self.id)
+        return "Item(type:{})".format(self.type)
 
 
 # Item requirement - Item, Quantity
@@ -30,7 +32,7 @@ class ItemReq:
         self.quantity = quantity
 
     def __repr__(self):
-        return "ItemReq({} X {})".format(self.item, self.quantity)
+        return "ItemReq({}, quantity:{})".format(self.item, self.quantity)
 
 
 class ItemDependency(object):
@@ -60,13 +62,13 @@ class ItemDependency(object):
         self.result_item_req = result_item_req
         self.input_item_reqs = input_item_reqs
 
-    def is_valid_material(self, new_item: Item):
+    def is_valid_material(self, new_req: ItemReq):
         '''
             return true if new_item is a valid raw material to produce
             self.result_item_req type items
         '''
         for item_req in self.input_item_reqs:
-            if new_item.type == item_req.item.type:
+            if new_req.item.type == item_req.item.type:
                 # NOTE:
                 # quantity is not being checked
                 return True
