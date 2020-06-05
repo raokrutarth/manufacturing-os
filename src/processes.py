@@ -158,10 +158,10 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def on_recover(self):
         self.node.state = NodeState.active
-        self.update_flow(self.node)
+        self.update_flow(self.node.get_id())
         log.warning("Recovering node %s", self.node.get_id())
 
-    def update_flow(self, node):
+    def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
         self.state_helper.update_flow(new_flow)
-        log.info("Node %d updating flow due to %d", self.node.node_id, node.node_id)
+        log.info("Node %s updating flow due to %s", str(self.node.node_id), node_id)

@@ -6,6 +6,7 @@ import sys
 from time import sleep
 from multiprocessing import Process, Queue
 import shutil
+import random
 
 import processes
 import operations
@@ -13,6 +14,7 @@ import cluster as ctr
 import basecases
 from metrics import Metrics
 from operations import Op
+from ops_generator import generator
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -75,7 +77,6 @@ def run_cluster_client(queues):
                   local=dict(globals(), **locals()),
                   exitmsg='Performed all interactions. exiting and continuing...')
 
-
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
@@ -106,8 +107,6 @@ def main(args):
             queue.put(op)
         queues[node.node_id] = queue
 
-    ops_generator = None
-
     try:
         for node in cluster.nodes:
             node_args = (node, cluster, queues[node.node_id], flags)
@@ -121,21 +120,30 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
+        ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
+        ops_generator = Process(target=generator, args=ops_args)
+        ops_generator.start()
+
         # Stopping the queue worker
         for queue in queues.values():
             queue.close()
             queue.join_thread()
 
+        ops_generator.join()
+
         while process_list:
             for process in tuple(process_list):
                 process.join()
                 process_list.remove(process)
+
     finally:
+        if ops_generator.is_alive():
+            ops_generator.terminate()
+
         for process in process_list:
             if process.is_alive():
                 log.warning('Terminating %r', process)
                 process.terminate()
-
 
 """
 Utilities for argument parsing. Helps provide easy running of experiments.
@@ -175,13 +183,15 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--failure_rate',
-        default=0.2,
-        type=float
+        default=3,
+        type=float,
+        help='# of failed nodes per minute'
     )
     parser.add_argument(
         '--recover_rate',
-        default=0.2,
-        type=float
+        default=3,
+        type=float,
+        help='# of recovered nodes per minute'
     )
 
     parser.add_argument(
