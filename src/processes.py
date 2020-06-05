@@ -12,8 +12,6 @@ from cluster import Cluster
 from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
-from ops_generator import OpsGenerator
-
 
 log = logging.getLogger()
 
@@ -78,9 +76,6 @@ class SocketBasedNodeProcess(NodeProcess):
                 self, ops,
             )
             self.testOpRunner = operations.OpsRunnerThread(self)
-            self.ops_generator = OpsGenerator(self, self.cluster, self.op_queue,
-                                              failure_rate=self.flags['failure_rate'],
-                                              recover_rate=self.flags['recover_rate'])
 
     def startThread(self, thread, suffix):
         thread.name = suffix + '-' + str(self.node.node_id)
@@ -108,7 +103,6 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
-            self.startThread(self.ops_generator, 'ops generator')
 
         log.warning("Successfully started node %s", self.node.get_id())
 

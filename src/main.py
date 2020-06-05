@@ -6,7 +6,6 @@ import sys
 from time import sleep
 from multiprocessing import Process, Queue
 import shutil
-import random
 
 import processes
 import operations
@@ -14,7 +13,6 @@ import cluster as ctr
 import basecases
 from metrics import Metrics
 from operations import Op
-from ops_generator import generator
 
 """
 Logging guidelines are provided here. Importance increases while going down
