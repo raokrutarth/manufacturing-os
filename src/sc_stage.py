@@ -57,7 +57,7 @@ class SuppyChainStage(Thread):
         self.state_helper = node_process.state_helper
         self.cluster = node_process.cluster
         self.node_id = node_process.node.get_id()
-
+        self.node = node_process.node
         self.send_message = node_process.sendMessage  # function to send messages to cluster
 
         self.inbound_log = FileDict(abspath("./tmp/" + self.name + ".inbound.log"))
@@ -346,7 +346,7 @@ class SuppyChainStage(Thread):
         log.debug("Starting manufacturing cycle of %s in node %d with stage %s",
                   self.get_stage_result_type(), self.node_id, self.name)
         while self.running.is_set():
-            if self.node_process.node.state == NodeState.inactive:
+            if self.node.state == NodeState.inactive:
                 continue
 
             requested, suppliers = self._send_material_requests_upstream()

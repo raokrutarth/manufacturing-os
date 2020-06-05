@@ -60,7 +60,7 @@ class Cluster(object):
         :return:
         '''
         self.get_node(node_id).state = NodeState.inactive
-        log.info("Successfully deactivate node %s", node_id)
+        log.info("Node %s is successfully deactivated", node_id)
 
     def activate_node(self, node_id: int):
         '''
@@ -69,7 +69,7 @@ class Cluster(object):
         :return:
         '''
         self.get_node(node_id).state = NodeState.active
-        log.info("Successfully activate node %s", node_id)
+        log.info("Node %s is successfully activated", node_id)
 
     def get_node(self, node_id):
         '''
