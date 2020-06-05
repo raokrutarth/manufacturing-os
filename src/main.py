@@ -9,13 +9,12 @@ import processes
 import operations
 import cluster as ctr
 import basecases
+from multiprocessing import Process
 from metrics import Metrics
 
 from time import sleep
 from operations import Op
 from multiprocessing import Process, Queue
-
-from OpsGenerator import OpsGenerator
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -88,7 +87,9 @@ def main(args):
     log.critical("Starting %s", cluster)
 
     # start the nodes with operations runner based on what's specified
-    flags = {'runOps': args.run_test_ops}
+    flags = {'runOps': args.run_test_ops,
+             'failure_rate': args.failure_rate,
+             'recover_rate': args.recover_rate}
 
     process_list = list()
     queues = {}
@@ -111,11 +112,6 @@ def main(args):
             process_list.append(p)
 
         log.critical("All nodes started")
-
-        ops_generator = OpsGenerator(cluster, queues)
-        ops_generator.name = "Operation Generator"
-        ops_generator.daemon = True
-        ops_generator.start()
 
         if args.run_client:
             # Wait for the client thread to exit
@@ -173,6 +169,17 @@ def get_cluster_run_args():
         default=2,
         type=int
     )
+    parser.add_argument(
+        '--failure_rate',
+        default=0.2,
+        type=float
+    )
+    parser.add_argument(
+        '--recover_rate',
+        default=0.2,
+        type=float
+    )
+
     parser.add_argument(
         '--topology',
         default="simple",

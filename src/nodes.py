@@ -16,15 +16,20 @@
 
 from items import ItemDependency
 from collections import namedtuple
+import enum
 
 # Process Specification - port
 ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
+class NodeState(enum.Enum):
+    inactive = 0
+    active = 1
 
 class BaseNode(object):
 
     def __init__(self, node_id):
         self.node_id = node_id
+        self.state = NodeState.active
 
     def __repr__(self):
         return "BaseNode(id:{})".format(self.node_id)

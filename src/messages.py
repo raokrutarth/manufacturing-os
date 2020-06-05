@@ -3,6 +3,7 @@ import logging
 
 import cluster as ctr
 from items import ItemDependency, ItemReq
+from nodes import NodeState
 
 
 log = logging.getLogger()
@@ -158,6 +159,20 @@ class HeartbeatResp(Message):
     def __init__(self, source, dest):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
+class DeathReq(Message):
+    """
+    Signal a Dead Node
+    """
+    def __init__(self, source):
+        super(DeathReq, self).__init__(source, Action.Death, MsgType.Request)
+
+class RecoverReq(Message):
+    """
+    Signal a Dead Node
+    """
+    def __init__(self, source):
+        super(RecoverReq, self).__init__(source, Action.Recover, MsgType.Request)
+
 
 """
 Helper classes for Update related operations. Current implementation assumes,
@@ -284,9 +299,9 @@ class MessageHandler(object):
         elif action == Action.Update:
             return UpdateReq(source, ItemDependency.newNullDependency())
         elif action == Action.Death:
-            return UpdateReq(source, ItemDependency.newNullDependency())
+            return DeathReq(source)
         elif action == Action.Recover:
-            return UpdateReq(source, ItemDependency.newNullDependency())
+            return RecoverReq(source)
         elif action == Action.Ack:
             return AckResp(source, dest)
         else:
@@ -317,6 +332,7 @@ class MessageHandler(object):
 
             Action.RequestMaterialBatch: self.on_request_material_req,
             Action.CheckBatchStatus: self.on_check_batch_status_req,
+            Action.Recover: self.none_fn,
         }
         response_callbacks = {
             Action.Heartbeat: self.on_heartbeat_resp,
@@ -331,6 +347,7 @@ class MessageHandler(object):
             Action.ItemBatchNotAvailable: self.on_batch_unavailable_resp,
             Action.WaitingForMaterialBatch: self.on_item_waiting_resp,
             Action.BatchDeliveryConfirm: self.on_delivery_confirmed_resp,
+            Action.Recover: self.none_fn
         }
         callbacks = {
             MsgType.Response: response_callbacks,

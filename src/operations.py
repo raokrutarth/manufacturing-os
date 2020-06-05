@@ -9,7 +9,6 @@ from time import sleep
 from typing import List
 from nodes import SingleItemNode
 from op import Op
-from OpsGenerator import OpsGenerator
 
 log = logging.getLogger()
 
@@ -77,7 +76,6 @@ class OpsRunnerThread(Thread):
         while True:
             op = self.node_process.op_queue.get()
             msg = self.get_message_from_op(op)
-            # Add hacky initial method to simulate conditional node death
             if op == Op.Kill:
                 self.node_process.onKill()
             elif op == Op.Recover:

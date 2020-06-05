@@ -7,11 +7,12 @@ import cluster as ctr
 import multiprocessing as mp
 
 from multiprocessing import Queue
-from nodes import BaseNode
+from nodes import BaseNode, NodeState
 from cluster import Cluster
 from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
+from ops_generator import OpsGenerator
 
 
 log = logging.getLogger()
@@ -66,7 +67,6 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
 
-
         # Manage heartbeats and liveness between nodes
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
@@ -78,6 +78,9 @@ class SocketBasedNodeProcess(NodeProcess):
                 self, ops,
             )
             self.testOpRunner = operations.OpsRunnerThread(self)
+            self.ops_generator = OpsGenerator(self, self.cluster, self.op_queue,
+                                              failure_rate=self.flags['failure_rate'],
+                                              recover_rate=self.flags['recover_rate'])
 
     def startThread(self, thread, suffix):
         thread.name = suffix + '-' + str(self.node.node_id)
@@ -105,14 +108,21 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
             self.startThread(self.testOpRunner, 'heartbeat')
+            self.startThread(self.ops_generator, 'ops generator')
 
         log.warning("Successfully started node %s", self.node.get_id())
 
     def sendMessage(self, message):
+        if self.node.state == NodeState.inactive:
+            return
+
         self.metrics.increase_metric(self.node.node_id, "sent_messages")
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
+        if self.node.state == NodeState.inactive:
+            return
+
         self.metrics.increase_metric(self.node.node_id, "received_messages")
         self.msg_handler.onMessage(message)
 
@@ -143,8 +153,14 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def onKill(self):
         log.warning("Killing node %s", self.node.get_id())
-        pass
+        self.node.state = NodeState.inactive
 
     def onRecover(self):
+        self.node.state = NodeState.active
+        self.update_flow()
         log.warning("Recovering node %s", self.node.get_id())
-        pass
+
+    def update_flow(self):
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
+        log.info("Flow is updated")
+        self.state_helper.update_flow(new_flow)
