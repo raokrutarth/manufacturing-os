@@ -34,9 +34,6 @@ class OpsGenerator(Thread):
         self.running.set()  # set the stage to run by default
 
     def getRandomOperation(self):
-        if not self.is_node_part_of_flow(node_id=self.node.node_id):
-            return None
-
         if self.node.state == NodeState.active and random.random() < self.failure_rate:
             return Op.Kill
         elif self.node.state == NodeState.inactive and random.random() < self.recover_rate:
@@ -54,6 +51,7 @@ class OpsGenerator(Thread):
             try:
                 ins = len(flow.getIncomingFlowsForNode(str(node_id)))
                 outs = len(flow.getOutgoingFlowsForNode(str(node_id)))
+                # if both ins !=0 and outs !=0, then has both incoming and outgoing
                 if (ins * outs) > 0:
                     return True
             except Exception:

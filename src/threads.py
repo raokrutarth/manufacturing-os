@@ -6,6 +6,7 @@ import messages
 from time import sleep
 from threading import Thread
 from multiprocessing import Queue
+from nodes import NodeState
 
 log = logging.getLogger()
 
@@ -72,6 +73,9 @@ class PublishThread(Thread):
                 self.node_process.port += 1
 
         while True:
+            if self.node_process.node.state == NodeState.inactive:
+                continue
+
             if not self.node_process.message_queue.empty():
                 message = self.node_process.message_queue.get()
                 log.debug("publisher in node %s sending message %s", self.node_id, message)
@@ -93,7 +97,7 @@ class HeartbeatThread(Thread):
     def send_message_for_dead_nodes(self):
         dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
         for node in dead_nodes:
-            self.node_process.update_flow()
+            self.node_process.update_flow(node)
             log.error('Detected death of node %s by %s', node, self.node_id)
 
     def run(self):
@@ -101,6 +105,9 @@ class HeartbeatThread(Thread):
 
         while True:
             # TODO: Currently this is a broadcast, change it to P2P communication
+            if self.node_process.node.state == NodeState.inactive:
+                continue
+
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )

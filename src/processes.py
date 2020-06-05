@@ -114,6 +114,7 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def sendMessage(self, message):
         if self.node.state == NodeState.inactive:
+            raise Exception
             return
 
         self.metrics.increase_metric(self.node.node_id, "sent_messages")
@@ -151,16 +152,16 @@ class SocketBasedNodeProcess(NodeProcess):
             if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
-    def onKill(self):
+    def on_kill(self):
         log.warning("Killing node %s", self.node.get_id())
         self.node.state = NodeState.inactive
 
-    def onRecover(self):
+    def on_recover(self):
         self.node.state = NodeState.active
-        self.update_flow()
+        self.update_flow(self.node)
         log.warning("Recovering node %s", self.node.get_id())
 
-    def update_flow(self):
+    def update_flow(self, node):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
-        log.info("Flow is updated")
         self.state_helper.update_flow(new_flow)
+        log.info("Node %d updating flow due to %d", self.node.node_id, node.node_id)

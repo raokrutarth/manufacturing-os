@@ -77,9 +77,9 @@ class OpsRunnerThread(Thread):
             op = self.node_process.op_queue.get()
             msg = self.get_message_from_op(op)
             if op == Op.Kill:
-                self.node_process.onKill()
+                self.node_process.on_kill()
             elif op == Op.Recover:
-                self.node_process.onRecover()
+                self.node_process.on_recover()
             else:
                 self.node_process.sendMessage(msg)
             sleep(self.delay)

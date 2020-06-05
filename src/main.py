@@ -80,7 +80,7 @@ def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     SU, BD, RC = operations.Op.SendUpdateDep, operations.Op.Kill, operations.Op.Recover
-    demo_ops = {n.node_id: [SU, BD, RC] for n in nodes}
+    demo_ops = {n.node_id: [SU] for n in nodes}
 
     metrics = Metrics()
 

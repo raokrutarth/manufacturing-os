@@ -7,7 +7,7 @@ from random import choice
 from os.path import abspath
 from uuid import uuid4
 from typing import List
-
+from nodes import NodeState
 
 from items import Item, ItemReq
 from file_dict import FileDict
@@ -346,6 +346,9 @@ class SuppyChainStage(Thread):
         log.debug("Starting manufacturing cycle of %s in node %d with stage %s",
                   self.get_stage_result_type(), self.node_id, self.name)
         while self.running.is_set():
+            if self.node_process.node.state == NodeState.inactive:
+                continue
+
             requested, suppliers = self._send_material_requests_upstream()
             if requested:
                 self._manufacture_batch_and_enqueue(suppliers)
