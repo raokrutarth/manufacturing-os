@@ -1,20 +1,15 @@
-import enum
-from threading import Thread, Event, Timer
 import logging
 import random
-import messages
-import copy
-
+import multiprocessing
 from operations import Operations as Op
-
-from threading import Thread
 from time import sleep
-from typing import List
-from nodes import SingleItemNode, NodeState
+from nodes import NodeState
 import schedule
 import time
 
 log = logging.getLogger()
+manager = multiprocessing.Manager()
+dead_node_list = manager.list()
 
 
 def get_random_node_to_kill(cluster):
@@ -23,30 +18,32 @@ def get_random_node_to_kill(cluster):
     if len(active_nodes) == 0:
         return None
     else:
-        return random.choice(active_nodes)
+        kill_node = random.choice(active_nodes)
+        dead_node_list.append(kill_node)
+        return kill_node
 
 
 def get_random_node_to_recover(cluster):
-    nodes = cluster.nodes
-    inactive_nodes = [node for node in nodes if node.state == NodeState.inactive]
-    if len(inactive_nodes) == 0:
+    num_of_dead_nodes = len(dead_node_list)
+    if len(dead_node_list) == 0:
         return None
-    else:
-        return random.choice(inactive_nodes)
+
+    recover_node = dead_node_list.pop(0)
+    return recover_node
 
 
 def kill_node(cluster, queues):
     node_to_kill = get_random_node_to_kill(cluster)
     if node_to_kill is not None:
         queues[node_to_kill.node_id].put(Op.Kill)
-        log.info("Node %d to be killed", node_to_kill.node_id)
+        log.warning("Node %d to be killed", node_to_kill.node_id)
 
 
 def recover_node(cluster, queues):
     node_to_recover = get_random_node_to_recover(cluster)
     if node_to_recover is not None:
         queues[node_to_recover.node_id].put(Op.Recover)
-        log.info("Node %d to be recovered", node_to_recover.node_id)
+        log.warning("Node %d to be recovered", node_to_recover.node_id)
 
 
 def generator(queues, cluster, failure_rate=3, recover_rate=3):
