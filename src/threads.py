@@ -86,6 +86,12 @@ class PublishThread(Thread):
 
 class HeartbeatThread(Thread):
 
+    '''
+        Thread to keep sending out messages to neighbors and keep
+        track of neighbors that have not responded. For neighbors
+        that appear inactive,
+    '''
+
     def __init__(self, node_process: 'SocketBasedNodeProcess', delay):
         super(HeartbeatThread, self).__init__()
 
@@ -97,11 +103,12 @@ class HeartbeatThread(Thread):
     def send_message_for_dead_nodes(self):
         dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
         for node in dead_nodes:
+            log.critical('Node %d determined %s by %s', node, self.node_id)
             self.node_process.update_flow(node)
-            log.error('Detected death of node %s by %s', node, self.node_id)
+
 
     def run(self):
-        log.debug('node %s starting heartbeat thread', self.node_id)
+        log.debug('Node %s starting heartbeat thread', self.node_id)
 
         while True:
             # TODO: Currently this is a broadcast, change it to P2P communication

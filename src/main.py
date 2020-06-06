@@ -76,6 +76,7 @@ def run_cluster_client(queues):
                   local=dict(globals(), **locals()),
                   exitmsg='Performed all interactions. exiting and continuing...')
 
+
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 

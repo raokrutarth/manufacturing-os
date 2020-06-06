@@ -105,14 +105,17 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def sendMessage(self, message):
         if self.node.state == NodeState.inactive:
+            # no threads of the node should be sending messages
+            # if the node is inactive.
             raise Exception
-            return
 
         self.metrics.increase_metric(self.node.node_id, "sent_messages")
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
         if self.node.state == NodeState.inactive:
+            # if the node is inactive (i.e. a simulated crash state) then
+            # it should not reply to any messages
             return
 
         self.metrics.increase_metric(self.node.node_id, "received_messages")

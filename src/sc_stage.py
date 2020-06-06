@@ -40,7 +40,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=3):
+    def __init__(self, node_process, time_per_batch=2):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -78,12 +78,6 @@ class SuppyChainStage(Thread):
         '''
             attempts to populate the in-memory data structures from
             data in the disk log if there is any.
-
-            uses raftos
-
-            The log is unique to the stage using the stage-name as the key.
-
-            TODO
         '''
         for item, state in self.inbound_log.items():
             if state == StageStatus.IN_QUEUE:
@@ -104,17 +98,23 @@ class SuppyChainStage(Thread):
 
     def stop(self):
         '''
-            - Stop the stage's priduction & consumption loop.
-            - Destory the inbound and outbound queues.
-
-            Used for testing.
+            - Stop the stage's production & consumption loop.
+            - Destory in-memory state. E.g. the inbound and outbound queues.
         '''
         # stop the production loop
         self.running.clear()
-        # flush & invalidate the queues
+
+        # clear in-memory state
         self.inbound_material = self.outbound_material = None
-        # leave the logs for the next stage instance with the same
-        # name to pick up
+        self.manufacture_count = 0
+
+
+
+    def restart(self):
+        '''
+
+        '''
+
 
     def get_stage_result_type(self):
         return self.item_dep.get_result_type()
@@ -347,7 +347,8 @@ class SuppyChainStage(Thread):
                   self.get_stage_result_type(), self.node_id, self.name)
         while self.running.is_set():
             if self.node.state == NodeState.inactive:
-                continue
+                log.error("Node %d's stage still running after node set to inactive", self.node_id)
+                return
 
             requested, suppliers = self._send_material_requests_upstream()
             if requested:
