@@ -20,7 +20,7 @@ class SubscribeThread(Thread):
         self.node_id = node_process.node.get_id()
         self.DELAY = 0.01
 
-    def start(self):
+    def recover(self):
         self._attempt_log_recovery()
 
     def stop(self):
@@ -51,6 +51,9 @@ class SubscribeThread(Thread):
             socket.connect("tcp://127.0.0.1:%d" % port)
 
         while True:
+            if self.node_process.node.state == NodeState.inactive:
+                continue
+
             message = socket.recv()
             message = pickle.loads(message)
             log.debug("subscriber in node %s got message %s", self.node_id, message)
@@ -69,7 +72,7 @@ class PublishThread(Thread):
         self.delay = delay
         self.node_id = node_process.node.get_id()
 
-    def start(self):
+    def recover(self):
         self._attempt_log_recovery()
 
     def stop(self):
@@ -120,7 +123,7 @@ class HeartbeatThread(Thread):
             self.node_process.update_flow(node)
             log.error('Detected death of node %s by %s', node, self.node_id)
 
-    def start(self):
+    def recover(self):
         self._attempt_log_recovery()
 
     def stop(self):

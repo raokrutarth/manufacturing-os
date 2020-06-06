@@ -161,19 +161,17 @@ class SocketBasedNodeProcess(NodeProcess):
         self.node.state = NodeState.active
         self.update_flow(self.node.get_id())
         log.warning("Recovering node %s", self.node.get_id())
-        self.start()
 
-    def update_flow(self, node_id):
-        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
-        self.state_helper.update_flow(new_flow)
-        log.info("Node %s updating flow due to %s", str(self.node.node_id), node_id)
-
-    def start(self):
         self._attempt_log_recovery()
         self.subscriber.start()
         self.publisher.start()
         self.heartbeat.start()
         self.sc_stage.start()
+
+    def update_flow(self, node_id):
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
+        self.state_helper.update_flow(new_flow)
+        log.info("Node %s updating flow due to %s", str(self.node.node_id), node_id)
 
     def stop(self):
         # flush in-memory state

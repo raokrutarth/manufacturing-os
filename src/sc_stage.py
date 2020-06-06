@@ -102,7 +102,7 @@ class SuppyChainStage(Thread):
 
         return
 
-    def start(self):
+    def recover(self):
         self._attempt_log_recovery()
 
     def stop(self):

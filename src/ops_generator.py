@@ -28,22 +28,28 @@ def get_random_node_to_recover(cluster):
     if len(dead_node_list) == 0:
         return None
 
+    random.shuffle(dead_node_list)
     recover_node = dead_node_list.pop(0)
     return recover_node
 
 
-def kill_node(cluster, queues):
-    node_to_kill = get_random_node_to_kill(cluster)
-    if node_to_kill is not None:
-        queues[node_to_kill.node_id].put(Op.Kill)
-        log.warning("Node %d to be killed", node_to_kill.node_id)
+def kill_node(cluster, queues, failure_prob_per_sec):
+    if random.random() < failure_prob_per_sec:
+        node_to_kill = get_random_node_to_kill(cluster)
+        if node_to_kill is not None:
+            if node_to_kill not in dead_node_list:
+                queues[node_to_kill.node_id].put(Op.Kill)
+                log.warning("Node %d to be killed", node_to_kill.node_id)
+            else:
+                return None
 
 
-def recover_node(cluster, queues):
-    node_to_recover = get_random_node_to_recover(cluster)
-    if node_to_recover is not None:
-        queues[node_to_recover.node_id].put(Op.Recover)
-        log.warning("Node %d to be recovered", node_to_recover.node_id)
+def recover_node(cluster, queues, recover_prob_per_sec):
+    if random.random() < recover_prob_per_sec:
+        node_to_recover = get_random_node_to_recover(cluster)
+        if node_to_recover is not None:
+            queues[node_to_recover.node_id].put(Op.Recover)
+            log.warning("Node %d to be recovered", node_to_recover.node_id)
 
 
 def generator(queues, cluster, failure_rate=3, recover_rate=3):
@@ -55,12 +61,13 @@ def generator(queues, cluster, failure_rate=3, recover_rate=3):
     :return:
     '''
     failure_interval = max(1, int(round(60 / failure_rate)))
-    half_failure_interval = max(1, int(round(60 / failure_rate / 2)))
     recover_interval = max(1, int(round(60 / recover_rate)))
+    failure_prob_per_sec = min(1.0, failure_rate / 60.0)
+    recover_prob_per_sec = min(1.0, recover_rate / 60.0)
 
-    schedule.every(failure_interval).seconds.do(kill_node, cluster, queues)
-    sleep(half_failure_interval)
-    schedule.every(recover_interval).seconds.do(recover_node, cluster, queues)
+    schedule.every().second.do(kill_node, cluster, queues, failure_prob_per_sec)
+    sleep(2)
+    schedule.every().second.do(recover_node, cluster, queues, recover_prob_per_sec)
 
     while True:
         schedule.run_pending()
