@@ -1,4 +1,6 @@
 import logging
+from os.path import abspath
+
 import messages
 import threads
 import time
@@ -12,6 +14,7 @@ from cluster import Cluster
 from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
+from file_dict import FileDict
 
 log = logging.getLogger()
 
@@ -66,6 +69,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.publisher = threads.PublishThread(self)
 
         # Manage heartbeats and liveness between nodes
+        self.last_known_heartbeat_log = FileDict(abspath("./tmp/node_" + str(self.node.node_id) + ".last_known_heartbeat.log"))
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
 
@@ -126,11 +130,16 @@ class SocketBasedNodeProcess(NodeProcess):
         # -1 means no last known connection timestamp
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
+        for node in self.cluster.nodes:
+            if node != self.node:
+                self.last_known_heartbeat_log[node] = self.last_known_heartbeat[node]
+
     def update_heartbeat(self, node):
         # NOTE: This is a VERY strong assumption; we usually don't have
         # precise synced distributed clocks
         curr_time = time.time()
         self.last_known_heartbeat[node] = curr_time
+        self.last_known_heartbeat_log[node] = self.last_known_heartbeat[node]
 
     def detect_and_fetch_dead_nodes(self):
         """
@@ -146,13 +155,35 @@ class SocketBasedNodeProcess(NodeProcess):
     def on_kill(self):
         log.warning("Killing node %s", self.node.get_id())
         self.node.state = NodeState.inactive
+        self.stop()
 
     def on_recover(self):
         self.node.state = NodeState.active
         self.update_flow(self.node.get_id())
         log.warning("Recovering node %s", self.node.get_id())
+        self.start()
 
     def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
         self.state_helper.update_flow(new_flow)
         log.info("Node %s updating flow due to %s", str(self.node.node_id), node_id)
+
+    def start(self):
+        self._attempt_log_recovery()
+        self.subscriber.start()
+        self.publisher.start()
+        self.heartbeat.start()
+        self.sc_stage.start()
+
+    def stop(self):
+        # flush in-memory state
+        self.last_known_heartbeat = None
+
+    def _attempt_log_recovery(self):
+        # -1 means no last known connection timestamp
+        self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
+
+        for node in self.cluster.nodes:
+            if node != self.node:
+                self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
+        log.debug("### Node %d succeeds in recovery from log ", self.node.node_id)

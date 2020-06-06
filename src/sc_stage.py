@@ -102,6 +102,9 @@ class SuppyChainStage(Thread):
 
         return
 
+    def start(self):
+        self._attempt_log_recovery()
+
     def stop(self):
         '''
             - Stop the stage's priduction & consumption loop.

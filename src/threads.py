@@ -20,6 +20,16 @@ class SubscribeThread(Thread):
         self.node_id = node_process.node.get_id()
         self.DELAY = 0.01
 
+    def start(self):
+        self._attempt_log_recovery()
+
+    def stop(self):
+        # flush in-memory state
+        pass
+
+    def _attempt_log_recovery(self):
+        pass
+
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
 
@@ -58,6 +68,16 @@ class PublishThread(Thread):
         self.node_process = node_process
         self.delay = delay
         self.node_id = node_process.node.get_id()
+
+    def start(self):
+        self._attempt_log_recovery()
+
+    def stop(self):
+        # flush in-memory state
+        pass
+
+    def _attempt_log_recovery(self):
+        pass
 
     def run(self):
         log.debug('node %s starting publisher thread', self.node_id)
@@ -99,6 +119,16 @@ class HeartbeatThread(Thread):
         for node in dead_nodes:
             self.node_process.update_flow(node)
             log.error('Detected death of node %s by %s', node, self.node_id)
+
+    def start(self):
+        self._attempt_log_recovery()
+
+    def stop(self):
+        # flush in-memory state
+        pass
+
+    def _attempt_log_recovery(self):
+        pass
 
     def run(self):
         log.debug('node %s starting heartbeat thread', self.node_id)
