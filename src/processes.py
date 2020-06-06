@@ -2,9 +2,9 @@ import logging
 import messages
 import threads
 import time
-import operations
 import cluster as ctr
 import multiprocessing as mp
+import ops_runner
 
 from multiprocessing import Queue
 from nodes import BaseNode, NodeState
@@ -72,10 +72,7 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
             ops = self.cluster.get_node_ops(self.node.node_id)
-            self.testOpRunner = operations.OpsRunnerThread(
-                self, ops,
-            )
-            self.testOpRunner = operations.OpsRunnerThread(self)
+            self.testOpRunner = ops_runner.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
         thread.name = suffix + '-' + str(self.node.node_id)
@@ -102,7 +99,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.heartbeat, 'heartbeat')
         self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
-            self.startThread(self.testOpRunner, 'heartbeat')
+            self.startThread(self.testOpRunner, 'test ops runner')
 
         log.warning("Successfully started node %s", self.node.get_id())
 

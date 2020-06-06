@@ -33,3 +33,4 @@ asgiref==3.2.7
 atomicfile==1.0.1
 networkx==2.4
 pandas==0.23.4
+schedule=0.6.0
