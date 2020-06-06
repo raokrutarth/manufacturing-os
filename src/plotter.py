@@ -31,7 +31,7 @@ class ClusterPlotter(object):
         return self.cluster.node_ids_to_nodes[node_id].dependency.get_result_item_type()
 
     def get_color_for_node_id(self, node_id):
-        return self.colors[self.item_type_to_id[self.get_item_type(node_id)]]
+        return self.node_ids_to_colors[node_id]
 
     def reinit_colors_for_nodes(self, leader=None, dead_nodes=None):
         """

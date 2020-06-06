@@ -80,9 +80,9 @@ def run_cluster_client(queues):
 
 
 def run_cluster_plotter(cluster: ctr.Cluster):
-    sleep(1.0)
     num_nodes = len(cluster.nodes)
     delay = 0.25 * (num_nodes ** 0.5)
+    sleep(delay)
     plotter = pltr.ClusterPlotter(cluster)
     while 1:
         plotter.plot_current_state()
