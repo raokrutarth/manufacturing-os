@@ -1,8 +1,10 @@
 import os
 import jsonpickle
 
-from main import TMP_PATH
 from atomicfile import AtomicFile
+
+
+TMP_PATH = '.tmp'
 
 
 class ComplexJSONSerializer:

@@ -85,8 +85,7 @@ def run_cluster_plotter(cluster: ctr.Cluster):
     delay = 0.25 * (num_nodes ** 0.5)
     plotter = pltr.ClusterPlotter(cluster)
     while 1:
-        # info = get_somehow()
-        # plotter.plot_current_state(info)
+        plotter.plot_current_state()
         sleep(delay)
         log.critical("Completed plotting step")
 

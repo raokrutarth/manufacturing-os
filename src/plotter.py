@@ -1,5 +1,6 @@
 import pydot
 import io
+import state
 import randomcolor
 
 import basecases as bcs
@@ -13,18 +14,36 @@ from metrics import Metrics
 
 class ClusterPlotter(object):
 
-    def __init__(self, cluster):
-        self.cluster = cluster
+    def __init__(self, cluster: ctr.Cluster):
+        self.reader = state.StateReader(cluster)
+        self.cluster = self.reader.cluster
+        self.nodes = self.cluster.nodes
         self.rand_color = randomcolor.RandomColor()
+
         # TODO: Add number of colors based on output item type
         self.item_type_to_id = self.cluster.get_distinct_item_types_mapping()
         self.colors = self.rand_color.generate(hue="blue", count=len(self.item_type_to_id))
+        self.node_ids_to_colors = {
+            n.node_id: self.colors[self.item_type_to_id[self.get_item_type(n.node_id)]] for n in self.nodes
+        }
 
     def get_item_type(self, node_id):
         return self.cluster.node_ids_to_nodes[node_id].dependency.get_result_item_type()
 
     def get_color_for_node_id(self, node_id):
         return self.colors[self.item_type_to_id[self.get_item_type(node_id)]]
+
+    def reinit_colors_for_nodes(self, leader=None, dead_nodes=None):
+        """
+        Reinits colors for dead nodes and leader
+        """
+        leader_color = "#CAFF70"
+        dead_color = "#FF4040"
+        if leader:
+            self.node_ids_to_colors[leader] = leader_color
+        if dead_nodes:
+            for nid in dead_nodes:
+                self.node_ids_to_colors[nid] = dead_color
 
     def render_pydot_graph_to_console(self, graph):
         # render pydot by calling dot, no file saved to disk
@@ -37,7 +56,9 @@ class ClusterPlotter(object):
         plt.imshow(plt.imread(sio), aspect="equal")
         plt.show()
 
-    def get_pydot_graph_from_nx_graph(self, nx_graph: nx.Graph):
+    def get_pydot_graph_from_nx_graph(self, nx_graph: nx.Graph, leader, dead_nodes):
+
+        self.reinit_colors_for_nodes(leader=leader, dead_nodes=dead_nodes)
 
         def get_pydot_node(nid):
             return pydot.Node(
@@ -71,9 +92,31 @@ class ClusterPlotter(object):
 
         return graph
 
-    def plot_current_state(self, flow: ctr.ClusterWideFlow):
+    def plot_current_state(self):
+        """
+        Plots the current state of the cluster after reading the state from file
+        We use the following information,
+            - Flow
+            - Leader info
+            - Hidden info e.g. whether node has crashed or not
+            - Metrics - various stats we want to measure
+        """
+        flow = self.reader.get_flow()
+        leader = self.reader.get_leader()
+
+        if flow is None:
+            return
+
+        # Add plotting the following eventually
+        # dead_nodes = self.reader.get_dead_nodes()
+        # metrics = self.reader.get_metrics()
         graph = flow.get_networkx_graph_repr()
-        pydot_graph = self.get_pydot_graph_from_nx_graph(graph)
+        pydot_graph = self.get_pydot_graph_from_nx_graph(graph, leader, dead_nodes=None)
+        self.render_pydot_graph_to_console(pydot_graph)
+
+    def plot_flow(self, flow: ctr.ClusterWideFlow):
+        graph = flow.get_networkx_graph_repr()
+        pydot_graph = self.get_pydot_graph_from_nx_graph(graph, leader=None, dead_nodes=None)
         self.render_pydot_graph_to_console(pydot_graph)
 
 
@@ -88,4 +131,5 @@ if __name__ == "__main__":
 
     plotter = ClusterPlotter(cluster)
 
-    plotter.plot_current_state(flow)
+    plotter.plot_flow(flow)
+    plotter.plot_current_state()
