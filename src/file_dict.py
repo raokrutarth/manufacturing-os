@@ -90,5 +90,8 @@ class FileDict:
         for key, value in contents.items():
             yield jsonpickle.loads(key), value
 
+    def size(self):
+        return len(self._get_file_content().items())
+
     def clear(self):
         AtomicFile(self.filename, self.write_mode).close()

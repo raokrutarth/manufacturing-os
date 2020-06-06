@@ -78,7 +78,7 @@ class PublishThread(Thread):
 
             if not self.node_process.message_queue.empty():
                 message = self.node_process.message_queue.get()
-                log.debug("publisher in node %s sending message %s", self.node_id, message)
+                log.debug("Node %s's publisher sending message %s", self.node_id, message)
                 socket.send(pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL))
             else:
                 sleep(self.delay)
@@ -103,9 +103,8 @@ class HeartbeatThread(Thread):
     def send_message_for_dead_nodes(self):
         dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
         for node in dead_nodes:
-            log.critical('Node %d determined %s by %s', node, self.node_id)
+            log.critical('Node %d determined neighbor node %s has crashed.', node, self.node_id)
             self.node_process.update_flow(node)
-
 
     def run(self):
         log.debug('Node %s starting heartbeat thread', self.node_id)
@@ -118,7 +117,7 @@ class HeartbeatThread(Thread):
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )
-            log.info("node %s sending heartbeat %s", self.node_id, message)
+            log.info("Node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)
             self.send_message_for_dead_nodes()
             sleep(self.delay)

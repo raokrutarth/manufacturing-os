@@ -443,7 +443,7 @@ class MessageHandler(object):
         '''
         assert message.action == Action.CheckBatchStatus
         assert isinstance(message, BatchStatusRequest)
-        self.sc_stage.reply_to_batch_status_query(message)
+        self.sc_stage.process_batch_status_check_request(message)
 
     def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat

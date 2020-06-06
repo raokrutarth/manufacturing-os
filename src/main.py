@@ -168,7 +168,7 @@ def get_cluster_run_args():
     # General global training parameters
     parser.add_argument(
         '--num_types',
-        default=4,
+        default=5,
         type=int,
     )
     parser.add_argument(
@@ -178,18 +178,18 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=2,
+        default=3,
         type=int
     )
     parser.add_argument(
         '--failure_rate',
-        default=3,
+        default=0,
         type=float,
         help='# of failed nodes per minute'
     )
     parser.add_argument(
         '--recover_rate',
-        default=3,
+        default=0,
         type=float,
         help='# of recovered nodes per minute'
     )
