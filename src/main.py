@@ -80,19 +80,18 @@ def run_cluster_client(queues):
 
 
 def run_cluster_plotter(cluster: ctr.Cluster):
-    sleep(5.0)
+    sleep(1.0)
     num_nodes = len(cluster.nodes)
     delay = 0.25 * (num_nodes ** 0.5)
     plotter = pltr.ClusterPlotter(cluster)
     while 1:
         plotter.plot_current_state()
         sleep(delay)
-        log.critical("Completed plotting step")
+        log.debug("Completed plotting step...")
 
 
 def main(args):
-    # nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
-    nodes = basecases.bootstrap_dependencies_six_nodes()
+    nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     SU = operations.Op.SendUpdateDep
     demo_ops = {n.node_id: [SU] for n in nodes}

@@ -54,7 +54,9 @@ class ClusterPlotter(object):
         sio.seek(0)
         plt.axis('off')
         plt.imshow(plt.imread(sio), aspect="equal")
-        plt.show()
+        # Allows the plots to work in a non-blocking manner
+        plt.draw()
+        plt.pause(0.001)
 
     def get_pydot_graph_from_nx_graph(self, nx_graph: nx.Graph, leader, dead_nodes):
 

@@ -107,8 +107,9 @@ class SocketBasedNodeProcess(NodeProcess):
             self.startThread(self.testOpRunner, 'heartbeat')
 
         # Wait for leader to be elected
-        while self.state_helper.get_leader():
+        while not self.state_helper.get_leader():
             time.sleep(0.1)
+
         # Initialize the flow if this node is the leader
         if self.state_helper.am_i_leader():
             self.init_cluster_flow()

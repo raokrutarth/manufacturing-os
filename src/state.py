@@ -28,8 +28,12 @@ class StateReader(object):
         self.flow_key = "flow"
 
     def get_leader(self):
-        leader = self.leader_file[self.leader_id]
-        return leader
+        try:
+            leader = self.leader_file[self.leader_id]
+        except:
+            return None
+        else:
+            return leader
 
     def get_flow(self):
         try:
