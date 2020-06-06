@@ -2,17 +2,16 @@ import logging
 import messages
 import threads
 import time
-import operations
 import cluster as ctr
 import multiprocessing as mp
+import ops_runner
 
-from queue import Queue
-from nodes import BaseNode
+from multiprocessing import Queue
+from nodes import BaseNode, NodeState
 from cluster import Cluster
 from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
-
 
 log = logging.getLogger()
 
@@ -66,7 +65,6 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber = threads.SubscribeThread(self, self.cluster)
         self.publisher = threads.PublishThread(self)
 
-
         # Manage heartbeats and liveness between nodes
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
@@ -74,10 +72,7 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
             ops = self.cluster.get_node_ops(self.node.node_id)
-            self.testOpRunner = operations.OpsRunnerThread(
-                self, ops,
-            )
-            self.testOpRunner = operations.OpsRunnerThread(self)
+            self.testOpRunner = ops_runner.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
         thread.name = suffix + '-' + str(self.node.node_id)
@@ -104,15 +99,22 @@ class SocketBasedNodeProcess(NodeProcess):
         self.startThread(self.heartbeat, 'heartbeat')
         self.startThread(self.sc_stage, 'production-stage')
         if self.flags['runOps']:
-            self.startThread(self.testOpRunner, 'heartbeat')
+            self.startThread(self.testOpRunner, 'test ops runner')
 
         log.warning("Successfully started node %s", self.node.get_id())
 
     def sendMessage(self, message):
+        if self.node.state == NodeState.inactive:
+            raise Exception
+            return
+
         self.metrics.increase_metric(self.node.node_id, "sent_messages")
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
+        if self.node.state == NodeState.inactive:
+            return
+
         self.metrics.increase_metric(self.node.node_id, "received_messages")
         self.msg_handler.onMessage(message)
 
@@ -140,3 +142,19 @@ class SocketBasedNodeProcess(NodeProcess):
             n for n, lt in self.last_known_heartbeat.items()
             if (lt < (curr_time - margin)) and (lt >= 0)
         ]
+
+    def on_kill(self):
+        log.warning("Killing node %s", self.node.get_id())
+        self.node.state = NodeState.inactive
+        self.sc_stage.stop()
+
+    def on_recover(self):
+        self.sc_stage.start()
+        self.node.state = NodeState.active
+        self.update_flow(self.node.get_id())
+        log.warning("Recovering node %s", self.node.get_id())
+
+    def update_flow(self, node_id):
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
+        self.state_helper.update_flow(new_flow)
+        log.info("Node %s updating flow due to %s", str(self.node.node_id), node_id)
