@@ -58,7 +58,8 @@ class FileBasedStateHelper(object):
         try:
             flow = self.consensus_file[self.flow_key]
         except Exception as e:
-            log.error("Unable to fetch cluster flow in node %d with exception %s", self.node_id, str(e))
+            log.error("Unable to fetch cluster flow in node %d with exception", self.node_id)
+            log.exception(e)
             return None
         else:
             # HACK convert the flow key types to bypass the implicit int to str conversion

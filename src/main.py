@@ -92,7 +92,8 @@ def run_cluster_plotter(cluster: ctr.Cluster):
 
 
 def main(args):
-    nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
+    # nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
+    nodes = basecases.bootstrap_dependencies_six_nodes()
 
     SU = operations.Op.SendUpdateDep
     demo_ops = {n.node_id: [SU] for n in nodes}
