@@ -215,7 +215,7 @@ class SuppyChainStage(Thread):
             log.error("Node %d was not waiting got a response for request ID %s but got %s", self.node_id, response.request_id, response)
 
     def process_item_waiting_response(self, message):
-        log.debug("Node %d got an in-transit ack from node %d for batch ", self.node_id, message.source, message.item_req)
+        log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)
         batch = message.item_req
         curr_status = self.outbound_log[batch]
         if curr_status != BatchStatus.IN_TRANSIT:
@@ -329,7 +329,7 @@ class SuppyChainStage(Thread):
             Identifies the supplier nodes from where parts are to be requested
             and makes a request for the parts from that node.
         '''
-        log.debug("Node %d sending a material batch request for %s to node %d", self.node_id, supplier_type, supplier_id)
+        log.debug("Node %d sending a material batch request for item type %s to node %d", self.node_id, supplier_type, supplier_id)
 
         batch_request = BatchRequest(
             source=self.node_id,
@@ -349,7 +349,6 @@ class SuppyChainStage(Thread):
         prereqs = self.item_dep.get_prereq()
         if prereqs:
             queue_types = set(self.inbound_material.keys())
-            prereqs = set([ir.item.type for ir in prereqs])
             supplier_types = set([ir.item.type for _, ir in suppliers])
 
             suppliers = {ir.item.type: sid for sid, ir in suppliers}  # convert the flow edges to dict
@@ -361,7 +360,7 @@ class SuppyChainStage(Thread):
                 return
 
             has_all_materials = True
-            for item_type, supplier_id in suppliers:
+            for item_type, supplier_id in suppliers.items():
                 queue = self.inbound_material[item_type]
 
                 if queue.empty():
@@ -370,7 +369,9 @@ class SuppyChainStage(Thread):
                     has_all_materials = False
 
             if has_all_materials:
-                for item_type, queue in self.inbound_material.items():
+                for item_type, supplier_id in suppliers.items():
+                    queue = self.inbound_material[item_type]
+
                     material_req = queue.get(timeout=1)  # HACK wait at most 1 second for a material batch
                     self.inbound_log[material_req] = BatchStatus.CONSUMED
                     log.info("Node %d successfully consumed %s", self.node_id, material_req)
