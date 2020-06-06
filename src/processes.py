@@ -178,6 +178,10 @@ class SocketBasedNodeProcess(NodeProcess):
     def stop(self):
         # flush in-memory state
         self.last_known_heartbeat = None
+        self.subscriber.stop()
+        self.publisher.stop()
+        self.heartbeat.stop()
+        self.sc_stage.stop()
 
     def _attempt_log_recovery(self):
         # -1 means no last known connection timestamp
