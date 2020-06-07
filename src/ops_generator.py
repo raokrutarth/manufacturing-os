@@ -62,7 +62,7 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             queues[node.node_id].put(Op.SendUpdateDep)
             log.warning("Node %d to update dependency", node.node_id)
 
-def generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0):
+def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0):
     '''
     :param queues:
     :param cluster:
