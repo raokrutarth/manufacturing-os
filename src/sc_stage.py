@@ -122,9 +122,9 @@ class SuppyChainStage(Thread):
                 self._add_batch_to_inbound_queue(batch)
             elif state == BatchStatus.CONSUMED:
                 self.consumed_count += 1
-                self.metrics.increase_metric(self.node_id, "recovered_inbound_batches")
+                self.metrics.increase_metric(self.node_id, "wal_recovered_inbound_batches")
             else:
-                self.metrics.increase_metric(self.node_id, "ghost_inbound_batches")
+                self.metrics.increase_metric(self.node_id, "wal_ghost_inbound_batches")
 
     def _attempt_outbound_recovery(self, out_log, flow):
         log.info("Node %d attempting post-crash recovery to verify status of batches in outbound WAL of size %d", self.node_id, out_log.size())
@@ -148,9 +148,9 @@ class SuppyChainStage(Thread):
             elif state == BatchStatus.DELIVERED:
                 # we are sure the item was delivered downstream
                 self.manufacture_count += 1
-                self.metrics.increase_metric(self.node_id, "recovered_outbound_batches")
+                self.metrics.increase_metric(self.node_id, "wal_recovered_outbound_batches")
             else:
-                self.metrics.increase_metric(self.node_id, "ghost_outbound_batches")
+                self.metrics.increase_metric(self.node_id, "wal_ghost_outbound_batches")
 
     def stop(self):
         '''
@@ -420,6 +420,8 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "batches_produced", self.manufacture_count)
             self.metrics.set_metric(self.node_id, "batches_consumed", self.consumed_count)
             self.metrics.set_metric(self.node_id, "unanswered_batch_requests", len(self.pending_requests))
+            self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
+            self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
 
             if self.node.state == NodeState.inactive:
                 log.error("Node %d's stage still running after node was set to inactive", self.node_id)
