@@ -242,7 +242,7 @@ class SuppyChainStage(Thread):
             return
         except Empty:
             # outbound queue is empty
-            log.error("Node %d unable to supply %s because no batch of %s has been manufactired yet.",
+            log.info("Node %d unable to supply %s because no batch of %s has been manufactired yet.",
                       self.node_id, request,  self.get_stage_result_type())
 
         reply = BatchUnavailableResponse(

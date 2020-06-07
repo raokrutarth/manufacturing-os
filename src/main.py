@@ -101,11 +101,9 @@ def main(args):
     SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
     demo_ops = {n.node_id: [SU] for n in nodes}
 
-    metrics = Metrics()
-
     # build the cluster object
     blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
-    cluster = ctr.Cluster(metrics, blueprint)
+    cluster = ctr.Cluster(blueprint)
 
     log.critical("Starting %s", cluster)
 
