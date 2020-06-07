@@ -343,16 +343,34 @@ class MessageHandler(object):
         self.metrics.increase_metric(self.node.node_id, "sent_messages")
 
     def onMessage(self, message):
+        """
+        Multiple checks to decide whether to process message
+            - Check recipient
+                - If message is broadcast, you are a recipient
+                - If not, check if you're recipient
+            - If not recipient, ignore
+            - Else,
+                - If message is heartbeat
+                    - If it is from self, ignore
+                    - else, process
+                - else process
+        Act according to the above
+        """
+
+        is_msg_only_for_me = message.dest == self.node_id
         is_msg_for_all = message.dest == Message.ALL
-        is_msg_for_me = message.dest == self.node_id
+        is_msg_for_me = is_msg_only_for_me or is_msg_for_all
+        is_msg_heartbeat = message.action == Action.Heartbeat
         is_msg_from_me = message.source == self.node_id
 
-        if is_msg_for_all or is_msg_for_me and not is_msg_from_me:
+        if not is_msg_for_me:
+            return None
+        elif is_msg_heartbeat and is_msg_from_me:
+            return None
+        else:
             self.metrics.increase_metric(self.node.node_id, "received_messages")
-            callback = self.callbacks[message.type][message.action]
-            callback(message)
-
-        return None
+            log.info("Received: %s from %s", message, message.source)
+            return self.callbacks[message.type][message.action](message)
 
     """
     Callback implementations of all possible messages and their requests/response variants
