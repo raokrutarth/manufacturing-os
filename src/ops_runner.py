@@ -13,7 +13,7 @@ log = logging.getLogger()
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source: SingleItemNode, op: Op, dest=""):
+    def getMsgForOp(source: SingleItemNode, op: Op, type: messages.MsgType = messages.MsgType.Request, dest = ""):
         '''
             returns an object of type Message or operations sent
             to the node.

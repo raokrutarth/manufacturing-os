@@ -82,6 +82,9 @@ class SuppyChainStage(Thread):
             attempts to populate the in-memory data structures from
             data in the WAL.
         '''
+        self.inbound_material = {}  # map of item-type -> Queue()
+        self.outbound_material = Queue()
+
         out_log, in_log = self.outbound_log, self.inbound_log
         if not out_log.size() and not in_log.size():
             log.info("Node %d's batch status WALs are empty. Skipping post-crash item and material status verification", self.node_id)

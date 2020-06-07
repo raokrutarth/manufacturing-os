@@ -20,6 +20,16 @@ class SubscribeThread(Thread):
         self.node_id = node_process.node.get_id()
         self.DELAY = 0.01
 
+    def recover(self):
+        self._attempt_log_recovery()
+
+    def stop(self):
+        # flush in-memory state
+        pass
+
+    def _attempt_log_recovery(self):
+        pass
+
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
 
@@ -41,6 +51,9 @@ class SubscribeThread(Thread):
             socket.connect("tcp://127.0.0.1:%d" % port)
 
         while True:
+            if self.node_process.node.state == NodeState.inactive:
+                continue
+
             message = socket.recv()
             message = pickle.loads(message)
             self.node_process.onMessage(message)
@@ -57,6 +70,16 @@ class PublishThread(Thread):
         self.node_process = node_process
         self.delay = delay
         self.node_id = node_process.node.get_id()
+
+    def recover(self):
+        self._attempt_log_recovery()
+
+    def stop(self):
+        # flush in-memory state
+        pass
+
+    def _attempt_log_recovery(self):
+        pass
 
     def run(self):
         log.debug('node %s starting publisher thread', self.node_id)
@@ -103,6 +126,16 @@ class HeartbeatThread(Thread):
         for node in dead_nodes:
             log.critical('Node %d determined neighbor node %s has crashed.', node, self.node_id)
             self.node_process.update_flow(node)
+
+    def recover(self):
+        self._attempt_log_recovery()
+
+    def stop(self):
+        # flush in-memory state
+        pass
+
+    def _attempt_log_recovery(self):
+        pass
 
     def run(self):
         log.debug('Node %s starting heartbeat thread', self.node_id)

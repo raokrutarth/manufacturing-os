@@ -109,14 +109,13 @@ def main(args):
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops,
-             'failure_rate': args.failure_rate,
-             'recover_rate': args.recover_rate}
+    }
 
     process_list = list()
     queues = {}
 
     # Contain multiple misc threads which are useful
-    ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
+    ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {
@@ -179,7 +178,6 @@ def main(args):
                 log.warning('Terminating %r', process)
                 process.terminate()
 
-
 """
 Utilities for argument parsing. Helps provide easy running of experiments.
 """
@@ -216,6 +214,9 @@ def get_cluster_run_args():
         default=3,
         type=int
     )
+
+    parser.add_argument('--leader_can_fail', default=False, type=str2bool, help='kill leader or not')
+
     parser.add_argument(
         '--failure_rate',
         default=0,
@@ -230,6 +231,13 @@ def get_cluster_run_args():
     )
 
     parser.add_argument(
+        '--update_dep_rate',
+        default=0,
+        type=int,
+        help='# of update dependence per minute'
+    )
+
+    parser.add_argument(
         '--topology',
         default="simple",
         type=str,
@@ -237,8 +245,8 @@ def get_cluster_run_args():
     )
 
     # Options to interact and simulate the system
-    parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
-    parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interative cli')
+    parser.add_argument('--run_test_ops', default=False, type=str2bool, help='Whether to run test ops or not')
+    parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interactive cli')
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
     # Execution level arguments
