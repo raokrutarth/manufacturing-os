@@ -11,9 +11,9 @@ import processes
 import operations
 import cluster as ctr
 import basecases
-from metrics import Metrics
 from operations import Operations as Op
 from ops_generator import generator
+from metrics import Metrics
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -83,11 +83,9 @@ def main(args):
     SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
     demo_ops = {n.node_id: [SU] for n in nodes}
 
-    metrics = Metrics()
-
     # build the cluster object
     blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
-    cluster = ctr.Cluster(metrics, blueprint)
+    cluster = ctr.Cluster(blueprint)
 
     log.critical("Starting %s", cluster)
 

@@ -59,7 +59,7 @@ class SuppyChainStage(Thread):
         self.time_per_batch = time_per_batch
         self.state_helper = node_process.state_helper
         # self.cluster = node_process.cluster
-        self.metrics = node_process.cluster.metrics
+        self.metrics = node_process.metrics
 
         self.node = node_process.node
         self.send_message = node_process.sendMessage  # function to send messages to cluster
@@ -228,7 +228,7 @@ class SuppyChainStage(Thread):
 
         try:
             # outbound queue has items waiting to be sent
-            produced_batch = self.outbound_material.get()
+            produced_batch = self.outbound_material.get(block=False)
             self.inbound_log[produced_batch] = BatchStatus.IN_TRANSIT
 
             reply = BatchSentResponse(
@@ -360,7 +360,7 @@ class SuppyChainStage(Thread):
                 for item_type, supplier_id in suppliers.items():
                     queue = self.inbound_material[item_type]
 
-                    material_req = queue.get(timeout=1)  # HACK wait at most 1 second for a material batch
+                    material_req = queue.get(block=False)  # HACK wait at most 1 second for a material batch
                     self.inbound_log[material_req] = BatchStatus.CONSUMED
                     log.info("Node %d successfully consumed %s", self.node_id, material_req)
                     self.consumed_count += 1

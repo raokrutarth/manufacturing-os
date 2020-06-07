@@ -12,6 +12,7 @@ from cluster import Cluster
 from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
+from metrics import Metrics
 
 log = logging.getLogger()
 
@@ -57,7 +58,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.port = self.process_spec.port
         self.flags = flags
         self.op_queue = queue
-        self.metrics = self.cluster.metrics
+        self.metrics = Metrics(self.node.node_id)
 
         self.state_helper = FileBasedStateHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(self)
@@ -71,7 +72,6 @@ class SocketBasedNodeProcess(NodeProcess):
 
         if self.flags['runOps']:
             # run the ops runner, a testing utility. See doc for OpsRunnerThread class
-            ops = self.cluster.get_node_ops(self.node.node_id)
             self.testOpRunner = ops_runner.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
@@ -104,17 +104,14 @@ class SocketBasedNodeProcess(NodeProcess):
             # no threads of the node should be sending messages
             # if the node is inactive.
             raise Exception
-
-        self.metrics.increase_metric(self.node.node_id, "sent_messages")
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
         if self.node.state == NodeState.inactive:
             # if the node is inactive (i.e. a simulated crash state) then
             # it should not reply to any messages
+            log.warning("Node {} got message {} but node is marked inactive so ignoring message".format(self.node.node_id, message))
             return
-
-        self.metrics.increase_metric(self.node.node_id, "received_messages")
         self.msg_handler.onMessage(message)
 
     """

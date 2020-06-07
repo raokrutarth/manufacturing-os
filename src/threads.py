@@ -77,7 +77,6 @@ class PublishThread(Thread):
 
             if not self.node_process.message_queue.empty():
                 message = self.node_process.message_queue.get()
-                log.debug("Node %s's publisher sending message %s", self.node_id, message)
                 socket.send(pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL))
             else:
                 sleep(self.delay)

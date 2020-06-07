@@ -157,12 +157,14 @@ class HeartbeatResp(Message):
     def __init__(self, source, dest):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
+
 class DeathReq(Message):
     """
     Signal a Dead Node
     """
     def __init__(self, source):
         super(DeathReq, self).__init__(source, Action.Death, MsgType.Request)
+
 
 class RecoverReq(Message):
     """
@@ -313,6 +315,7 @@ class MessageHandler(object):
         self.sc_stage = node_process.sc_stage
         self.node_id = node_process.node.get_id()
         self.callbacks = self.get_action_callbacks()
+        self.metrics = self.node_process.metrics
 
     def get_action_callbacks(self):
         """
@@ -355,6 +358,7 @@ class MessageHandler(object):
     def sendMessage(self, message):
         log.info("sending message %s from node %s", message, self.node.node_id)
         self.node_process.message_queue.put(message)
+        self.metrics.increase_metric(self.node.node_id, "sent_messages")
 
     def onMessage(self, message):
         is_msg_for_all = message.dest == Message.ALL
@@ -362,8 +366,9 @@ class MessageHandler(object):
         is_msg_from_me = message.source == self.node_id
 
         if is_msg_for_all or is_msg_for_me and not is_msg_from_me:
-            log.info("Received: %s from %s", message, message.source)
-            return self.callbacks[message.type][message.action](message)
+            self.metrics.increase_metric(self.node.node_id, "received_messages")
+            callback = self.callbacks[message.type][message.action]
+            callback(message)
 
         return None
 
