@@ -1,3 +1,5 @@
+import enum
+from threading import Thread, Event, Timer
 import logging
 import random
 import multiprocessing
@@ -63,8 +65,7 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             queues[node.node_id].put(Op.SendUpdateDep)
             log.warning("Node %d to update dependency", node.node_id)
 
-
-def generator(queues, cluster, failure_rate=3, recover_rate=3, update_dep_rate=3):
+def generator(queues, cluster, failure_rate=3, recover_rate=3):
     '''
     :param queues:
     :param cluster:
@@ -73,6 +74,9 @@ def generator(queues, cluster, failure_rate=3, recover_rate=3, update_dep_rate=3
     :param update_dep_rate: how many update_dep to send every minutes
     :return:
     '''
+    if not failure_rate and not recover_rate:
+        return
+
     failure_interval = max(1, int(round(60 / failure_rate)))
     recover_interval = max(1, int(round(60 / recover_rate)))
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)

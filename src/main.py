@@ -11,9 +11,9 @@ import processes
 import operations
 import cluster as ctr
 import basecases
-from metrics import Metrics
 from operations import Operations as Op
 from ops_generator import generator
+from metrics import Metrics
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -76,17 +76,16 @@ def run_cluster_client(queues):
                   local=dict(globals(), **locals()),
                   exitmsg='Performed all interactions. exiting and continuing...')
 
+
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
     demo_ops = {n.node_id: [SU] for n in nodes}
 
-    metrics = Metrics()
-
     # build the cluster object
     blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
-    cluster = ctr.Cluster(metrics, blueprint)
+    cluster = ctr.Cluster(blueprint)
 
     log.critical("Starting %s", cluster)
 
@@ -167,29 +166,29 @@ def get_cluster_run_args():
     # General global training parameters
     parser.add_argument(
         '--num_types',
-        default=4,
+        default=5,
         type=int,
     )
     parser.add_argument(
         '--complexity',
-        default="medium",
+        default="high",
         type=str
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=2,
+        default=3,
         type=int
     )
     parser.add_argument(
         '--failure_rate',
-        default=3,
-        type=int,
+        default=0,
+        type=float,
         help='# of failed nodes per minute'
     )
     parser.add_argument(
         '--recover_rate',
-        default=3,
-        type=int,
+        default=0,
+        type=float,
         help='# of recovered nodes per minute'
     )
 

@@ -1,32 +1,35 @@
 import logging
-import random
 import items
-import messages
-import copy
-
 from threading import Thread
 from time import sleep
-from typing import List
+
+import messages
 from nodes import SingleItemNode, NodeState
 from operations import Operations as Op
 
 log = logging.getLogger()
+
 
 class OpHandler:
 
     @staticmethod
     def getMsgForOp(source: SingleItemNode, op: Op, type: messages.MsgType = messages.MsgType.Request, dest = ""):
         '''
-            returns an object of type Message from messages.py.
+            returns an object of type Message or operations sent
+            to the node.
+
+            NOTE operations are different from messages exchanged between nodes.
+            primary usage of operations is to manually "instruct" a node to commit
+            an action using an external client from the main thread.
         '''
         source_id = source.node_id
         if op == Op.TriggerAllocate:
             return messages.AllocateReq(source_id)
         elif op == Op.SendHeartbeat:
             if type == messages.MsgType.Request:
-               return messages.HeartbeatReq(source_id)
+                return messages.HeartbeatReq(source_id)
             else:
-               return messages.HeartbeatResp(source_id, dest)
+                return messages.HeartbeatResp(source_id, dest)
         elif op == Op.SendUpdateDep:
             return messages.UpdateReq(source_id, items.ItemDependency.halveDependency(source.dependency))
         elif op == Op.Kill:
@@ -34,7 +37,7 @@ class OpHandler:
         elif op == Op.Recover:
             return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
         else:
-            assert False, "Invalid op: {}".format(op.name)
+            assert False, "looked up message for invalid operation {} in operation handler".format(op)
 
 
 class OpsRunnerThread(Thread):
@@ -51,10 +54,6 @@ class OpsRunnerThread(Thread):
     '''
 
     def __init__(self, node_process: 'SocketBasedNodeProcess', delay=1):
-        '''
-            ops: operations the node will run when it starts.
-            callback: the callback to send a message
-        '''
         super(OpsRunnerThread, self).__init__()
 
         self.node_process = node_process
@@ -64,7 +63,7 @@ class OpsRunnerThread(Thread):
         self.node_id = node_process.node.get_id()
 
     def get_message_from_op(self, op):
-        log.debug('node %s constructing message for operation %s', self.node_id, op)
+        log.debug('Node %s constructing message for operation %s', self.node_id, op)
         return OpHandler.getMsgForOp(self.node, op)
 
     def is_node_part_of_flow(self, node_id):
@@ -85,7 +84,7 @@ class OpsRunnerThread(Thread):
             return False
 
     def run(self):
-        log.warning('node %s running operation thread with operations %s', self.node_id, self.node_process.op_queue)
+        log.info('Node %s running operation thread with operations %s', self.node_id, self.node_process.op_queue)
 
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
         sleep(self.delay)
@@ -93,13 +92,18 @@ class OpsRunnerThread(Thread):
         while True:
             op = self.node_process.op_queue.get()
             if op == Op.Kill:
+                # node is being asked to crash
                 self.node_process.on_kill()
             elif op == Op.Recover:
+                # node is being asked to waken from a crash
                 self.node_process.on_recover()
             else:
+                # node is being requested to run
                 if self.node_process.node.state == NodeState.active:
                     msg = self.get_message_from_op(op)
+                    log.debug('Node %s responding to operation %s with %s', self.node_id, op, msg)
                     self.node_process.sendMessage(msg)
-            sleep(self.delay)
+                else:
+                    log.error("Node %d is inactive and cannot respond to operation %s", self.node_id, op)
 
-        log.warning('node %s finished running operations %s', self.node_id, self.node_process.op_queue)
+            sleep(self.delay)
