@@ -180,6 +180,10 @@ class SocketBasedNodeProcess(NodeProcess):
         # -1 means no last known connection timestamp
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
+        if not len(self.last_known_heartbeat):
+            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node_id)
+            return
+
         for node in self.cluster.nodes:
             if node != self.node:
                 try:
