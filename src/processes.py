@@ -14,6 +14,8 @@ from cluster import Cluster
 from state import FileBasedStateHelper
 from collections import defaultdict
 from sc_stage import SuppyChainStage
+from metrics import Metrics
+from file_dict import FileDict
 
 log = logging.getLogger()
 
@@ -157,7 +159,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber.recover()
         self.publisher.recover()
         self.heartbeat.recover()
-        self.sc_stage.recover()
+        self.sc_stage.restart()
         self.node.state = NodeState.active
         self.update_flow(self.node.get_id())
 
