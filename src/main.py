@@ -173,7 +173,7 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--complexity',
-        default="medium",
+        default="high",
         type=str
     )
     parser.add_argument(

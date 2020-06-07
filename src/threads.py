@@ -43,7 +43,6 @@ class SubscribeThread(Thread):
         while True:
             message = socket.recv()
             message = pickle.loads(message)
-            log.debug("subscriber in node %s got message %s", self.node_id, message)
             self.node_process.onMessage(message)
 
             # Polling based approach to receive messages. Can convert to blocking call if needed
