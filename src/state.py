@@ -21,11 +21,23 @@ class StateReader(object):
         # Constructs for maintaining source of truth
         self.leader_file = fd.FileDict(filename="state:leader")
         self.consensus_file = fd.FileDict(filename="state:consensus")
+        self.cluster_file = fd.FileDict(filename="state:cluster")
 
         # Keys for each of the fields involved
         self.leader_id = "leader_id"
         self.time_key = "timestamp"
         self.flow_key = "flow"
+        self.cluster_key = "cluster"
+
+    def get_cluster(self):
+        try:
+            cluster = self.cluster_file[self.cluster_key]
+        except Exception as e:
+            log.critical("Unable to fetch cluster information")
+            log.exception(e)
+            return None
+        else:
+            return cluster
 
     def get_leader(self):
         try:
