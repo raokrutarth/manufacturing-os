@@ -19,8 +19,8 @@ class Metrics:
         Metrics allows different parts of the code to set metics that can
         be measured and persisted in a csv file.
     '''
-    def __init__(self):
-        self._metrics_file = abspath("./tmp/manufacturing_os_metrics.csv")
+    def __init__(self, node_id):
+        self._metrics_file = abspath("./tmp/manufacturing_os_metrics_node_{}.csv".format(node_id))
         self._df = pd.DataFrame(columns=["timestamp", "node_id", "metric_name", "value"])
 
         self._df.timestamp = pd.to_datetime(self._df.timestamp)

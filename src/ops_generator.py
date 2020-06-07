@@ -46,7 +46,7 @@ def recover_node(cluster, queues):
         log.warning("Node %d to be recovered", node_to_recover.node_id)
 
 
-def generator(queues, cluster, failure_rate=3, recover_rate=3):
+def generator(queues, cluster, failure_rate, recover_rate):
     '''
     :param queues:
     :param cluster:
@@ -54,6 +54,9 @@ def generator(queues, cluster, failure_rate=3, recover_rate=3):
     :param recover_rate: how many nodes to cover every minutes
     :return:
     '''
+    if not failure_rate and not recover_rate:
+        return
+
     failure_interval = max(1, int(round(60 / failure_rate)))
     half_failure_interval = max(1, int(round(60 / failure_rate / 2)))
     recover_interval = max(1, int(round(60 / recover_rate)))
@@ -65,4 +68,3 @@ def generator(queues, cluster, failure_rate=3, recover_rate=3):
     while True:
         schedule.run_pending()
         time.sleep(1)
-
