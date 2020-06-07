@@ -91,7 +91,7 @@ def run_cluster_plotter(cluster: ctr.Cluster):
 
 
 def has_live_threads(threads):
-    return True in [t.isAlive() for t in threads]
+    return True in [t.is_alive() for t in threads]
 
 
 def main(args):
@@ -156,12 +156,13 @@ def main(args):
         while has_live_threads(threads.values()):
             try:
                 for _, thread in threads.items():
-                    if thread is not None and thread.isAlive():
+                    if thread is not None and thread.is_alive():
                         thread.join()
             except KeyboardInterrupt:
                 # Handle Ctrl-C and send kill to threads
-                for t in threads:
-                    t.kill_received = True
+                for p in process_list:
+                        p.terminate()
+                sys.exit()
 
         # Stopping the queue worker
         for queue in queues.values():
