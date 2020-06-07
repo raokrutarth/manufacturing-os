@@ -16,6 +16,7 @@ from threading import Thread
 from metrics import Metrics
 from operations import Operations as Op
 from ops_generator import run_generator
+from metrics import Metrics
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -204,17 +205,17 @@ def get_cluster_run_args():
     # General global training parameters
     parser.add_argument(
         '--num_types',
-        default=4,
+        default=5,
         type=int,
     )
     parser.add_argument(
         '--complexity',
-        default="medium",
+        default="high",
         type=str
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=2,
+        default=3,
         type=int
     )
     parser.add_argument(

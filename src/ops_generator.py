@@ -46,7 +46,7 @@ def recover_node(cluster, queues):
         log.warning("Node %d to be recovered", node_to_recover.node_id)
 
 
-def run_generator(queues, cluster, failure_rate=3, recover_rate=3):
+def run_generator(queues, cluster, failure_rate=0, recover_rate=0):
     '''
     :param queues:
     :param cluster:
@@ -70,4 +70,3 @@ def run_generator(queues, cluster, failure_rate=3, recover_rate=3):
     while True:
         schedule.run_pending()
         time.sleep(1)
-

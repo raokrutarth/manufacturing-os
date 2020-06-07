@@ -157,12 +157,14 @@ class HeartbeatResp(Message):
     def __init__(self, source, dest):
         super(HeartbeatResp, self).__init__(source, Action.Heartbeat, MsgType.Response, dest)
 
+
 class DeathReq(Message):
     """
     Signal a Dead Node
     """
     def __init__(self, source):
         super(DeathReq, self).__init__(source, Action.Death, MsgType.Request)
+
 
 class RecoverReq(Message):
     """
@@ -313,6 +315,7 @@ class MessageHandler(object):
         self.sc_stage = node_process.sc_stage
         self.node_id = node_process.node.get_id()
         self.callbacks = self.get_action_callbacks()
+        self.metrics = self.node_process.metrics
 
     def get_action_callbacks(self):
         """
@@ -355,6 +358,7 @@ class MessageHandler(object):
     def sendMessage(self, message):
         log.info("sending message %s from node %s", message, self.node.node_id)
         self.node_process.message_queue.put(message)
+        self.metrics.increase_metric(self.node.node_id, "sent_messages")
 
     def onMessage(self, message):
         """
@@ -382,6 +386,7 @@ class MessageHandler(object):
         elif is_msg_heartbeat and is_msg_from_me:
             return None
         else:
+            self.metrics.increase_metric(self.node.node_id, "received_messages")
             log.info("Received: %s from %s", message, message.source)
             return self.callbacks[message.type][message.action](message)
 
@@ -461,7 +466,7 @@ class MessageHandler(object):
         '''
         assert message.action == Action.CheckBatchStatus
         assert isinstance(message, BatchStatusRequest)
-        self.sc_stage.reply_to_batch_status_query(message)
+        self.sc_stage.process_batch_status_check_request(message)
 
     def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat
