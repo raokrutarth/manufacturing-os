@@ -245,7 +245,7 @@ class SuppyChainStage(Thread):
             return
         except Empty:
             # outbound queue is empty
-            log.error("Node %d unable to supply %s because no batch of %s has been manufactired yet.",
+            log.info("Node %d unable to supply %s because no batch of %s has been manufactired yet.",
                       self.node_id, request,  self.get_stage_result_type())
 
         reply = BatchUnavailableResponse(
@@ -255,6 +255,16 @@ class SuppyChainStage(Thread):
             request_id=request.request_id,
         )
         self.send_message(reply)
+
+    def am_i_a_finale_item(self):
+        """
+        Checks if this stage produces a finale item
+        TODO: Optimize; this should be a flag or state in self.cluster
+        """
+        flow = self.state_helper.get_flow()
+        if flow:
+            return len(flow.getOutgoingFlowsForNode(self.node_id)) == 0
+        return False
 
     def process_batch_request_response(self, response: Message):
         '''
@@ -379,7 +389,13 @@ class SuppyChainStage(Thread):
         self.outbound_log[new_batch] = BatchStatus.IN_QUEUE
         self.outbound_material.put(new_batch)
         self.manufacture_count += 1
-        log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue", self.node_id, new_batch)
+
+        # Log production of important items differently
+        if self.am_i_a_finale_item():
+            log.critical("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
+        else:
+            log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue",
+                      self.node_id, new_batch)
 
     def _update_stage_metrics(self):
         '''
@@ -390,6 +406,9 @@ class SuppyChainStage(Thread):
         self.metrics.set_metric(self.node_id, "batches_consumed", self.consumed_count)
 
     def run(self):
+
+        # Add cooldown before starting stage, allows initial leader, flow to be detected
+        sleep(2.0)
 
         log.debug("Node %d starting manufacturing cycle of %s", self.node_id, self.get_stage_result_type())
 

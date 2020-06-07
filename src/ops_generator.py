@@ -1,5 +1,3 @@
-import enum
-from threading import Thread, Event, Timer
 import logging
 import random
 import multiprocessing
@@ -30,7 +28,6 @@ def get_random_node_to_recover(cluster):
     if len(dead_node_list) == 0:
         return None
 
-    random.shuffle(dead_node_list)
     recover_node = dead_node_list.pop(0)
     return recover_node
 
@@ -41,7 +38,7 @@ def kill_node(cluster, queues, failure_prob_per_sec):
         if node_to_kill is not None:
             if node_to_kill not in dead_node_list:
                 queues[node_to_kill.node_id].put(Op.Kill)
-                log.warning("Node %d to be killed", node_to_kill.node_id)
+                log.critical("Node %d to be killed", node_to_kill.node_id)
             else:
                 return None
 
@@ -51,7 +48,7 @@ def recover_node(cluster, queues, recover_prob_per_sec):
         node_to_recover = get_random_node_to_recover(cluster)
         if node_to_recover is not None:
             queues[node_to_recover.node_id].put(Op.Recover)
-            log.warning("Node %d to be recovered", node_to_recover.node_id)
+            log.critical("Node %d to be recovered", node_to_recover.node_id)
 
 
 def send_update_dep(cluster, queues, update_dep_prob_per_sec):
@@ -65,7 +62,7 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             queues[node.node_id].put(Op.SendUpdateDep)
             log.warning("Node %d to update dependency", node.node_id)
 
-def generator(queues, cluster, failure_rate=3, recover_rate=3, update_dep_rate=3):
+def generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0):
     '''
     :param queues:
     :param cluster:
@@ -74,8 +71,10 @@ def generator(queues, cluster, failure_rate=3, recover_rate=3, update_dep_rate=3
     :param update_dep_rate: how many update_dep to send every minutes
     :return:
     '''
-    if not failure_rate and not recover_rate:
-        return
+
+    eps = 1e-4
+    failure_rate += eps
+    recover_rate += eps
 
     failure_interval = max(1, int(round(60 / failure_rate)))
     recover_interval = max(1, int(round(60 / recover_rate)))
@@ -91,4 +90,3 @@ def generator(queues, cluster, failure_rate=3, recover_rate=3, update_dep_rate=3
     while True:
         schedule.run_pending()
         time.sleep(1)
-
