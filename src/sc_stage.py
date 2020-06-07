@@ -6,7 +6,6 @@ from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
 from uuid import uuid4
-from typing import List
 from nodes import NodeState
 
 from items import Item, ItemReq
@@ -21,11 +20,14 @@ from messages import BatchRequest, \
 log = logging.getLogger()
 
 
-class StageStatus():
+class BatchStatus():
     IN_QUEUE = "in-queue"  # ready to be consumed or sent
-    DELIVERED = "delivered"  # item was delivered downstream
-    CONSUMED = "consumed"  # item was consumed in present node
-    IN_TRANSIT = "in-transit"
+    DELIVERED = "delivered"  # batch was delivered downstream
+    CONSUMED = "consumed"  # batch was consumed in present node
+    IN_TRANSIT = "in-transit"  # batch sent by producing node and awaited downstream
+
+    # statues when current node is waiting for the neighbor to report the status
+    WAITING_FOR_NEIGHBOR = "waiting-for-neighbor-response"
 
 
 class SuppyChainStage(Thread):
@@ -49,22 +51,24 @@ class SuppyChainStage(Thread):
             inbound_node_fetcher: function implemented by node that allows fetching incoming nodes
         '''
         super(SuppyChainStage, self).__init__()
+        self.node_id = node_process.node.get_id()
         self.name = "sc-stage-{}".format(node_process.node.get_id())
-        self.item_dep = node_process.node.get_dependency()
-        self.inbound_material = Queue() if self.item_dep else None
+        self.item_dep = node_process.node.get_dependency()  # TODO (Nishant) verify this is up to date with latest prereqs
+        self.inbound_material = {}  # map of item-type -> Queue()
         self.outbound_material = Queue()
         self.time_per_batch = time_per_batch
         self.state_helper = node_process.state_helper
-        self.cluster = node_process.cluster
-        self.node_id = node_process.node.get_id()
+        # self.cluster = node_process.cluster
+        self.metrics = node_process.metrics
+
         self.node = node_process.node
         self.send_message = node_process.sendMessage  # function to send messages to cluster
 
         self.inbound_log = FileDict(abspath("./tmp/" + self.name + ".inbound.log"))
         self.outbound_log = FileDict(abspath("./tmp/" + self.name + ".outbound.log"))
 
-        # dict to keep track of requests that haven't gotten
-        # a response and need additional retries.
+        # dict to keep track of requests that haven't gotten a response yet
+        # maps request_id -> Message object
         self.pending_requests = {}
 
         # hack to stop stage
@@ -72,106 +76,115 @@ class SuppyChainStage(Thread):
         self.running.set()  # set the stage to run by default
 
         self.manufacture_count = 0
+        self.consumed_count = 0
         self._attempt_log_recovery()
+
+        log.info("Node %d's stage bootstrap complete", self.node_id)
 
     def _attempt_log_recovery(self):
         '''
             attempts to populate the in-memory data structures from
-            data in the disk log if there is any.
-
-            uses raftos
-
-            The log is unique to the stage using the stage-name as the key.
-
-            TODO
+            data in the WAL.
         '''
-        for item, state in self.inbound_log.items():
-            if state == StageStatus.IN_QUEUE:
-                self.inbound_material.put(item)
+        out_log, in_log = self.outbound_log, self.inbound_log
+        if not out_log.size() and not in_log.size():
+            log.info("Node %d's batch status WALs are empty. Skipping post-crash item and material status verification", self.node_id)
+            return
 
-        for item, state in self.outbound_log.items():
-            # TODO
-            # check with neighbors if the item status
-            # in the logs is accurate. i.e. if it is marked
-            # in-transit or in-queue or consumed in their logs.
-            if state == StageStatus.IN_QUEUE:
-                self.outbound_material.put(item)
-            elif state == StageStatus.IN_TRANSIT:
-                pass
-            self.manufacture_count += 1
+        flow = self.state_helper.get_flow()
+        self.metrics.increase_metric(self.node_id, "flow_queries")
+        while not flow:
+            # cant proceed until flow is obtained
+            sleep(self.time_per_batch)
+            log.debug("Node %d waiting for flow to be set to start batch status verification", self.node_id)
+            flow = self.state_helper.get_flow()
+            self.metrics.increase_metric(self.node_id, "flow_queries")
 
-        return
+        self._attempt_inbound_recovery(in_log, flow)
+        self._attempt_outbound_recovery(out_log, flow)
+
+    def _attempt_inbound_recovery(self, in_log, flow):
+        log.info("Node %d attempting post-crash recovery to verify status of batches in inbound WAL of size %d", self.node_id, in_log.size())
+
+        neighbors = [nid for nid, _ in flow.getIncomingFlowsForNode(self.node_id)]
+        unknown_state_batches = set()
+
+        for batch, state in in_log.items():
+            # only consumed batches need no further confirmation from
+            # neighbors about the status of the item
+            if state != BatchStatus.CONSUMED:
+                self._request_batch_status_from_neighbor(neighbors, batch)
+                unknown_state_batches.add(batch)
+            else:
+                self.consumed_count += 1
+
+        for batch in unknown_state_batches:
+            self.outbound_log[batch] = BatchStatus.WAITING_FOR_NEIGHBOR
+
+    def _attempt_outbound_recovery(self, out_log, flow):
+        log.info("Node %d attempting post-crash recovery to verify status of batches in outbound WAL of size %d", self.node_id, out_log.size())
+
+        neighbors = [nid for nid, _ in flow.getOutgoingFlowsForNode(self.node_id)]
+        unknown_state_batches = set()
+
+        for batch, state in out_log.items():
+            # only items marked in-transit, in-queue or waiting-for-neigh need
+            # confirmation of status from it's neighbors.
+            if state != BatchStatus.DELIVERED:
+                self._request_batch_status_from_neighbor(neighbors, batch)
+                unknown_state_batches.add(batch)
+            else:
+                # we are sure the item was consumed downstream
+                self.manufacture_count += 1
+
+        for batch in unknown_state_batches:
+            self.outbound_log[batch] = BatchStatus.WAITING_FOR_NEIGHBOR
+
+    def _request_batch_status_from_neighbor(self, neighbors, batch):
+        '''
+            TODO
+            make a status check request to the neighbor about the given batch
+        '''
+        # send a batch status check request with send_message()
+        pass
+
+    def process_batch_status_check_request(self, request: Message):
+        log.debug("Node %d received batch status check query %s", self.node_id, request)
+        # TODO
+        # reply with right the status of the item as present in
+        # the node's inbound/outbound logs.
+        assert request.action == BatchStatusRequest
+
+        # if consumed or in-queue, send delivered
+        # if in-transit, send waiting
+        # if not in log, send unseen
 
     def stop(self):
         '''
-            - Stop the stage's priduction & consumption loop.
-            - Destory the inbound and outbound queues.
-
-            Used for testing.
+            - Stop the stage's production & consumption loop.
+            - Destory in-memory state. E.g. the inbound and outbound queues.
         '''
+        log.critical("Node %d's stage is being stopped", self.node_id)
         # stop the production loop
         self.running.clear()
-        # flush & invalidate the queues
-        self.inbound_material = self.outbound_material = None
-        # leave the logs for the next stage instance with the same
-        # name to pick up
+
+        # clear in-memory state
+        self.outbound_material = None
+        for item_type in self.inbound_material:
+            # Set all inbound queues to null
+            self.inbound_material[item_type] = None
+        self.manufacture_count = self.consumed_count = 0
+
+    def restart(self):
+        '''
+            Simulated restart after a crash. Initalise in-memory state
+            and attempt a recovery from the WAL.
+        '''
+        self.outbound_material = Queue()
+        self._attempt_log_recovery()
 
     def get_stage_result_type(self):
         return self.item_dep.get_result_type()
-
-    def get_manufacture_count(self):
-        '''
-            returns the count of items produced by the stage since the
-            first time the stage was created.
-        '''
-        return self.manufacture_count
-
-    def get_inbound_waiting_items_count(self):
-        return self.inbound_material.qsize()
-
-    def get_outbound_waiting_items_count(self):
-        return self.outbound_material.qsize()
-
-    def _send_material_requests_upstream(self):
-        '''
-            Identifies the nodes from where parts are to be requested
-            and makes a request for the parts from that node.
-        '''
-        if not self.item_dep.has_prereq():
-            # stage requires no inbound material.
-            log.debug("Node %d has no inbound materials to acquire. "
-                      "Continuing without making material request.", self.node_id)
-            return True, []
-
-        flow = self.state_helper.get_flow()
-        if not flow:
-            log.error("Unable to retrieve flow to acquire items %s for manufacture in node %d",
-                      self.item_dep.get_prereq(), self.node_id)
-            return False, []
-
-        suppliers = flow.getIncomingFlowsForNode(self.node_id)
-        supplier_ids = [sid for sid, _ in suppliers]
-        log.debug("Node %d seeing suppliers %s in flow", self.node_id, supplier_ids)
-
-        for supplier_id, supplier_type in suppliers:
-            batch_request = BatchRequest(
-                source=self.node_id,
-                dest=supplier_id,
-                item_req=supplier_type,
-                request_id=str(uuid4())[:8],  # HACK for unique but short request IDs
-            )
-            self.send_message(batch_request)
-            self.pending_requests[batch_request.request_id] = batch_request
-            log.debug("Node %d sent a material batch request %s", self.node_id, batch_request)
-
-        return True, supplier_ids
-
-    def _retry_pending_requests(self):
-        if self.pending_requests:
-            log.debug("Node %d retrying %d requests that did not receive a response", self.node_id, len(self.pending_requests))
-            for request in self.pending_requests:
-                # log.debug("[TODO] Node %d retrying request %s", self.node_id, request)
-                pass
 
     def _mark_request_complete(self, response):
         '''
@@ -182,50 +195,41 @@ class SuppyChainStage(Thread):
         try:
             del self.pending_requests[response.request_id]
         except KeyError:
-            log.warning("Node %d unable to find request id %s in pending requests but got a response %s",
-                        self.node_id, response.request_id, response)
-
-    def reply_to_batch_status_query(self, request: Message):
-        log.debug("Received batch status check query %s", request)
-        # TODO
-        # reply with right the status of the item as present in
-        # the node's inbound/outbound logs.
-        assert request.action == BatchStatusRequest
+            log.error("Node %d was not waiting got a response for request ID %s but got %s", self.node_id, response.request_id, response)
 
     def process_item_waiting_response(self, message):
-        log.debug("Stage at node %s is now waiting for batch %s from %d",
-                  message.source, message.item_req, self.node_id)
+        log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)
         batch = message.item_req
         curr_status = self.outbound_log[batch]
-        if curr_status != StageStatus.IN_TRANSIT:
-            log.warning("Node %d's outbound log for item %s was at status %s, expected %s",
-                        self.node_id, batch, curr_status, StageStatus.IN_TRANSIT)
-            self.outbound_log[batch] = StageStatus.IN_TRANSIT
+        if curr_status != BatchStatus.IN_TRANSIT:
+            log.warning("Node %d's outbound log for item %s was at status %s, expected %s", self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
+            self.outbound_log[batch] = BatchStatus.IN_TRANSIT
 
     def process_batch_request(self, request: Message):
         log.debug("Node %d received request %s", self.node_id, request)
 
-        # verif the right item type is being requested
-        if request.item_req.item.type != self.get_stage_result_type():
+        # verify the right item type is being requested
+        if request.item_req.item.type != self.get_stage_result_type():  # TODO (Nishant) this check will fail if prereq is not updated
             log.error("Node %d requested to supply %s but it produces %s",
                       self.node_id, request.item_req, self.get_stage_result_type())
 
         # verify the right node is making the request
         flow = self.state_helper.get_flow()
+        self.metrics.increase_metric(self.node_id, "flow_queries")
         if flow:
             allowed_requesters = flow.getOutgoingFlowsForNode(self.node_id)
-            allowed_requesters = [sid for sid, _ in allowed_requesters]
+            allowed_requesters = [nid for nid, _ in allowed_requesters]
             if request.source not in allowed_requesters:
-                log.error("Node %d got a supply request from %d but %d's outgoing edges are %s",
+                log.error("Node %d got a supply-batch request from node %d but %d's outgoing edges are %s. Ignoring request.",
                           self.node_id, request.source, self.node_id, allowed_requesters)
         else:
-            log.error("Node %d unable to retrieve flow to acquire items %s",
-                      self.node_id, self.item_dep.get_prereq())
+            log.error("Node %d unable to retrieve flow. Ignoring request %s", self.node_id, request)
+            return
 
         try:
             # outbound queue has items waiting to be sent
-            produced_batch = self.outbound_material.get()
-            self.inbound_log[produced_batch] = StageStatus.IN_TRANSIT
+            produced_batch = self.outbound_material.get(block=False)
+            self.inbound_log[produced_batch] = BatchStatus.IN_TRANSIT
 
             reply = BatchSentResponse(
                 source=self.node_id,
@@ -254,41 +258,46 @@ class SuppyChainStage(Thread):
             receives a BatchSentResponse or BatchUnavailableResponse message after
             the node made a request for a part
         '''
-        log.debug("Node %d got %s after request %s", self.node_id, response, response.request_id)
+        log.debug("Node %d received %s after batch request %s", self.node_id, response, response.request_id)
         if isinstance(response, BatchSentResponse):
-            material = response.item_req
-            if not self.item_dep.is_valid_material(material):
+            batch = response.item_req
+            if not self.item_dep.is_valid_material(batch):  # TODO (Nishant) this check will fail if the prereq is not updated
                 log.error("Node %d received invalid batch %s from node %d. Node %d's deps are %s. Ignoring received batch.",
-                          self.node_id, material, response.source, self.node_id, self.item_dep)
+                          self.node_id, batch, response.source, self.node_id, self.item_dep)
                 return
 
-            self.inbound_log[material] = StageStatus.IN_TRANSIT
-
+            self.inbound_log[batch] = BatchStatus.IN_TRANSIT
             ack = WaitingForBatchResponse(
                 source=self.node_id,
                 dest=response.source,
-                item_req=material,
+                item_req=batch,
                 request_id=response.request_id,
             )
             self.send_message(ack)
-            log.info("Node %d marked material %s in-transit from upstream node", self.node_id, response.item_req)
+            log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
             sleep(self.time_per_batch)  # HACK simulated transit time
 
-            self.inbound_log[material] = StageStatus.IN_QUEUE
+            log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
+            self.inbound_log[batch] = BatchStatus.IN_QUEUE
             ack = BatchDeliveryConfirmResponse(
                 source=self.node_id,
                 dest=response.source,
-                item_req=material,
+                item_req=batch,
                 request_id=response.request_id,
             )
             self.send_message(ack)
-            self.inbound_material.put(material)
-            log.info("Node %d received %s from upstream node %d",
-                     self.node_id, response.item_req, response.source)
+            batch_type = batch.item.type
+            if batch_type not in self.inbound_material:
+                # start a new queue for a new type of inbound item
+                log.info("Node {} started new inbound queue for type {}".format(self.node_id, batch_type))
+                self.inbound_material[batch_type] = Queue()
+            self.inbound_material[batch_type].put(batch)
+
+            log.info("Node %d received batch %s from node %d and enqueued into inbound queue", self.node_id, response.item_req, response.source)
         else:
-            log.error("Node %d unable to obtain %s from node %d. Request ID: %s",
-                      self.node_id, response.item_req, response.source, response.request_id)
+            log.error("Node %d unable to obtain batch of type %s from node %d. Request ID: %s",
+                      self.node_id, response.item_req.item.type, response.source, response.request_id)
 
         self._mark_request_complete(response)
 
@@ -303,56 +312,102 @@ class SuppyChainStage(Thread):
             BatchDeliveryConfirm message
         '''
         item = message.item_req
-        self.outbound_log[item] = StageStatus.DELIVERED
+        self.outbound_log[item] = BatchStatus.DELIVERED
 
-    def _manufacture_batch_and_enqueue(self, suppliers: List[int]):
+    def _send_material_request_upstream(self, supplier_id, supplier_type):
         '''
-            TODO
-            logic to poll/query/update the inbound queue until it can make one unit of
-            the output using the right quantities by reffering to the item_dep.
+            Identifies the supplier nodes from where parts are to be requested
+            and makes a request for the parts from that node.
+        '''
+        log.debug("Node %d sending a material batch request for item type %s to node %d", self.node_id, supplier_type, supplier_id)
 
-            This is a blocking call since it has to wait on the inbound queue.
+        batch_request = BatchRequest(
+            source=self.node_id,
+            dest=supplier_id,
+            item_req=ItemReq(Item(supplier_type, None), 1),  # HACK only batches of size 1 requested
+            request_id=str(uuid4())[:8],  # HACK for unique but short request IDs
+        )
+        self.send_message(batch_request)
+        self.pending_requests[batch_request.request_id] = batch_request
+
+        log.debug("Node %d sent a material batch request %s", self.node_id, batch_request)
+
+    def _attempt_manufacture_cycle(self, suppliers):
         '''
-        if self.item_dep.has_prereq():
-            try:
-                # For each manufactured batch item, do a get() in the inbound queue once.
-                # NOTE/FIXME/TODO
-                # This does not work if batches of different item quantities
-                # and item types are required by the stage's inbound requirements.
-                # The manufacture logic assumes each result batch can be made with
-                # any, single, incoming batch.
-                log.info("Node %d waiting for %s from %s", self.node_id, self.item_dep.get_prereq(), suppliers)
-                material_req = self.inbound_material.get(timeout=5)  # HACK wait at most 5 seconds for a material batch
-                self.inbound_log[material_req] = StageStatus.CONSUMED
-                log.info("Node %d successfully consumed %s", self.node_id, material_req)
-            except Empty:
-                # queue is empty, need to wait till it's not.
-                log.warning("Node %d's inbound material queue is empty but needs %s. Skipping manufacturing of one batch of item type %s",
-                            self.node_id, self.item_dep.get_prereq(), self.get_stage_result_type())
+            suppliers: list of (node_id, item_req) tuples obtained from the latest flow
+        '''
+        prereqs = self.item_dep.get_prereq()  # [ItemReq(Item(type:0)...uantity:1)]
+        if prereqs:
+            prereq_types = set([ir.item.type for ir in prereqs])
+            supplier_types = set(suppliers.keys())
+
+            if not prereq_types.issuperset(supplier_types):  # verify there is prerequisite for each supplier
+                # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
+                log.critical("Node {} has more suppliers ({}) from flow than the node's prerequisite types ({})"
+                             .format(self.node_id, supplier_types, prereq_types))
+                log.error("Node %d skipping manufacturing cycle", self.node_id)
+                return
+
+            has_all_materials = True
+            for item_type, supplier_id in suppliers.items():
+
+                if item_type not in self.inbound_material or self.inbound_material[item_type].empty():
+                    log.info("Node %d needs batch of type %s from node %s", self.node_id, item_type, supplier_id)
+                    self._send_material_request_upstream(supplier_id, item_type)
+                    has_all_materials = False
+
+            if has_all_materials:
+                for item_type, supplier_id in suppliers.items():
+                    queue = self.inbound_material[item_type]
+
+                    material_req = queue.get(block=False)  # HACK wait at most 1 second for a material batch
+                    self.inbound_log[material_req] = BatchStatus.CONSUMED
+                    log.info("Node %d successfully consumed %s", self.node_id, material_req)
+                    self.consumed_count += 1
+            else:
+                # all the necessary inbound materials are not present in the inbound
+                # queues. batch requests have been made and this manufacture cycle needs to be skipped.
                 return
 
         new_item_id = str(self.get_stage_result_type()) + '-' + str(self._generate_new_item_id())
         new_item = Item(_type=self.get_stage_result_type(), _id=new_item_id)
         new_batch = ItemReq(new_item, 1)  # TODO/FIXME assumes batch size is always 1
 
-        self.outbound_log[new_batch] = StageStatus.IN_QUEUE
+        self.outbound_log[new_batch] = BatchStatus.IN_QUEUE
         self.outbound_material.put(new_batch)
         self.manufacture_count += 1
-        log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue",
-                  self.node_id, new_batch)
+        log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue", self.node_id, new_batch)
+
+    def _update_stage_metrics(self):
+        '''
+            Called at the end of a manufacture batch cycle to
+            populate any metrics the stage needs to publish.
+        '''
+        self.metrics.set_metric(self.node_id, "batches_produced", self.manufacture_count)
+        self.metrics.set_metric(self.node_id, "batches_consumed", self.consumed_count)
 
     def run(self):
 
-        log.debug("Starting manufacturing cycle of %s in node %d with stage %s",
-                  self.get_stage_result_type(), self.node_id, self.name)
+        log.debug("Node %d starting manufacturing cycle of %s", self.node_id, self.get_stage_result_type())
+
         while self.running.is_set():
+            sleep(self.time_per_batch)
+
             if self.node.state == NodeState.inactive:
+                log.error("Node %d's stage still running after node was set to inactive", self.node_id)
                 continue
 
-            requested, suppliers = self._send_material_requests_upstream()
-            if requested:
-                self._manufacture_batch_and_enqueue(suppliers)
+            flow = self.state_helper.get_flow()
+            if not flow:
+                log.error("Node %d unable to retrieve flow to acquire items %s. Skipping cycle.",
+                          self.node_id, self.item_dep.get_prereq())
+                continue
 
-            self._retry_pending_requests()
+            latest_suppliers = flow.getIncomingFlowsForNode(self.node_id)  # [(1, ItemReq(Item(type:1)...uantity:1))]
+            log.debug("Node %d seeing suppliers %s in flow", self.node_id, [sid for sid, _ in latest_suppliers])
+            self.metrics.increase_metric(self.node_id, "flow_queries")
 
-            sleep(self.time_per_batch)
+            latest_suppliers = {ir.item.type: sid for sid, ir in latest_suppliers}  # convert the flow edges to dict
+            self._attempt_manufacture_cycle(latest_suppliers)
+
+            self._update_stage_metrics()

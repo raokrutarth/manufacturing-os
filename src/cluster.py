@@ -31,12 +31,11 @@ class Cluster(object):
     Represents the set of nodes interacting
     """
 
-    def __init__(self, metrics, blueprint, port_range_start=40000):
+    def __init__(self, blueprint, port_range_start=40000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.process_specs = None
         self.init_process_specs(port_range_start)
-        self.metrics = metrics
 
     def init_process_specs(self, port_range_start: int):
         # assign a process name and port to process
