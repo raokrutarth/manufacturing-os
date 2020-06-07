@@ -96,7 +96,7 @@ class PublishThread(Thread):
 
         while True:
             if self.node_process.node.state == NodeState.inactive:
-                continue
+                sleep(0.01)
 
             if not self.node_process.message_queue.empty():
                 message = self.node_process.message_queue.get()
@@ -143,7 +143,7 @@ class HeartbeatThread(Thread):
         while True:
             # TODO: Currently this is a broadcast, change it to P2P communication
             if self.node_process.node.state == NodeState.inactive:
-                continue
+                sleep(0.01)
 
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request

@@ -68,8 +68,8 @@ class SuppyChainStage(Thread):
         self.pending_requests = set()
 
         # hack to stop stage
-        self.running = Event()
-        self.running.set()  # set the stage to run by default
+        self.stage_active = Event()
+        self.stage_active.set()  # set the stage to run by default
 
         self.manufacture_count = 0
         self.consumed_count = 0
@@ -162,7 +162,7 @@ class SuppyChainStage(Thread):
         '''
         log.critical("Node %d's stage is being stopped", self.node_id)
         # stop the production loop
-        self.running.clear()
+        self.stage_active.clear()
 
         # clear in-memory state
         self.outbound_material = None
@@ -176,8 +176,10 @@ class SuppyChainStage(Thread):
             Simulated restart after a crash. Initalise in-memory state
             and attempt a recovery from the WAL.
         '''
+        log.critical("Node %d's stage is being restarted", self.node_id)
         self.outbound_material = Queue()
         self._attempt_log_recovery()
+        self.stage_active.set()
 
     def get_stage_result_type(self):
         return self.item_dep.get_result_type()
@@ -416,7 +418,8 @@ class SuppyChainStage(Thread):
 
         log.debug("Node %d starting manufacturing cycle of %s", self.node_id, self.get_stage_result_type())
 
-        while self.running.is_set():
+        while True:
+            self.stage_active.wait()  # Blocks until the stage is set to active
             sleep(self.time_per_batch)
 
             self.metrics.increase_metric(self.node_id, "total_manufacture_cycles")
@@ -427,7 +430,7 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
 
             if self.node.state == NodeState.inactive:
-                log.error("Node %d's stage still running after node was set to inactive", self.node_id)
+                log.error("Node %d's stage still running after node process was set to inactive", self.node_id)
                 continue
 
             flow = self.state_helper.get_flow()

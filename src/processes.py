@@ -166,13 +166,14 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def on_recover(self):
         log.warning("Recovering node %s", self.node.get_id())
+        self.node.state = NodeState.active
         self._attempt_log_recovery()
+
         self.subscriber.recover()
         self.publisher.recover()
         self.heartbeat.recover()
-        self.node.state = NodeState.active
+
         self.update_flow(self.node.get_id())
-        log.warning("Recovering node %s", self.node.get_id())
         self.sc_stage.restart()
 
     def update_flow(self, node_id):
@@ -193,13 +194,13 @@ class SocketBasedNodeProcess(NodeProcess):
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
         if not len(self.last_known_heartbeat):
-            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node_id)
+            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node.node_id)
             return
 
         for node in self.cluster.nodes:
             if node != self.node:
                 try:
                     self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
-                except:
-                    log.warning("### Node %d has issues to recovery from log ", self.node.node_id)
+                except Exception:
+                    log.warning("Node %d has issues to recovery from log ", self.node.node_id)
         log.debug("Node %d succeeds in recovery heartbeat from log ", self.node.node_id)
