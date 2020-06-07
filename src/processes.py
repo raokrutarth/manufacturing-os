@@ -5,6 +5,7 @@ import time
 import cluster as ctr
 import multiprocessing as mp
 import ops_runner
+from os.path import abspath
 
 from multiprocessing import Queue
 from nodes import BaseNode, NodeState
