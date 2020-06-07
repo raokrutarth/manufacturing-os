@@ -72,7 +72,7 @@ class SuppyChainStage(Thread):
         self.running.set()  # set the stage to run by default
 
         self.manufacture_count = 0
-        self._attempt_log_recovery()
+        #self._attempt_log_recovery()
 
     def _attempt_log_recovery(self):
         '''
@@ -85,6 +85,9 @@ class SuppyChainStage(Thread):
 
             TODO
         '''
+        self.inbound_material = Queue() if self.item_dep else None
+        self.outbound_material = Queue()
+
         for item, state in self.inbound_log.items():
             if state == StageStatus.IN_QUEUE:
                 self.inbound_material.put(item)
@@ -99,6 +102,8 @@ class SuppyChainStage(Thread):
             elif state == StageStatus.IN_TRANSIT:
                 pass
             self.manufacture_count += 1
+
+        log.debug("Node %d succeeds in recovery from sc stage log ", self.node.node_id)
 
         return
 

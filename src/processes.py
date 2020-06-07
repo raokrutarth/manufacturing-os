@@ -158,15 +158,14 @@ class SocketBasedNodeProcess(NodeProcess):
         self.stop()
 
     def on_recover(self):
-        self.node.state = NodeState.active
-        self.update_flow(self.node.get_id())
         log.warning("Recovering node %s", self.node.get_id())
-
         self._attempt_log_recovery()
         self.subscriber.recover()
         self.publisher.recover()
         self.heartbeat.recover()
         self.sc_stage.recover()
+        self.node.state = NodeState.active
+        self.update_flow(self.node.get_id())
 
     def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
@@ -187,5 +186,8 @@ class SocketBasedNodeProcess(NodeProcess):
 
         for node in self.cluster.nodes:
             if node != self.node:
-                self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
-        log.debug("### Node %d succeeds in recovery from log ", self.node.node_id)
+                try:
+                    self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
+                except:
+                    log.warning("### Node %d has issues to recovery from log ", self.node.node_id)
+        log.debug("Node %d succeeds in recovery heartbeat from log ", self.node.node_id)

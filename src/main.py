@@ -222,7 +222,7 @@ def get_cluster_run_args():
     )
 
     # Options to interact and simulate the system
-    parser.add_argument('--run_test_ops', default=True, type=str2bool, help='Whether to run test ops or not')
+    parser.add_argument('--run_test_ops', default=False, type=str2bool, help='Whether to run test ops or not')
     parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interative cli')
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
