@@ -154,11 +154,13 @@ class SocketBasedNodeProcess(NodeProcess):
     def on_kill(self):
         log.warning("Killing node %s", self.node.get_id())
         self.node.state = NodeState.inactive
+        self.sc_stage.stop()
 
     def on_recover(self):
         self.node.state = NodeState.active
         self.update_flow(self.node.get_id())
         log.warning("Recovering node %s", self.node.get_id())
+        self.sc_stage.restart()
 
     def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)

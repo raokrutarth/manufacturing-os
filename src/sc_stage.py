@@ -38,7 +38,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=3):
+    def __init__(self, node_process, time_per_batch=5):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -105,6 +105,7 @@ class SuppyChainStage(Thread):
         neighbors = {ir.item.type: nid for nid, ir in flow.getIncomingFlowsForNode(self.node_id)}
 
         for batch, state in in_log.items():
+            log.info("Node %d found batch %s in state %s in inbound WAL", self.node_id, batch, state)
             batch_type = batch.item.type
             if state == BatchStatus.IN_TRANSIT and batch_type in neighbors:
                 # make a best effort to correct status in neighbor
@@ -131,6 +132,7 @@ class SuppyChainStage(Thread):
         neighbors = {ir.item.type: nid for nid, ir in flow.getOutgoingFlowsForNode(self.node_id)}
 
         for batch, state in out_log.items():
+            log.info("Node %d found batch %s in state %s in outbound WAL", self.node_id, batch, state)
             # if in-transit in WAL, resend the sentBatch message, the downstream node will
             # reply with a delivery confirmation.
             if state == BatchStatus.IN_TRANSIT and batch.item.type in neighbors:
@@ -240,7 +242,7 @@ class SuppyChainStage(Thread):
         except Empty:
             # outbound queue is empty
             log.info("Node %d unable to supply %s because no batch of %s has been manufactired yet.",
-                      self.node_id, request,  self.get_stage_result_type())
+                     self.node_id, request,  self.get_stage_result_type())
 
         reply = BatchUnavailableResponse(
             source=self.node_id,
@@ -303,6 +305,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
 
             if not batch_seen_before:
+                self.metrics.increase_metric(self.node_id, "batches_received")
                 self._add_batch_to_inbound_queue(batch)
                 log.info("Node %d received batch %s from node %d and enqueued into inbound queue",
                          self.node_id, response.item_req, response.source)
@@ -322,8 +325,10 @@ class SuppyChainStage(Thread):
             node. Updates the persistant log. Gets called when a downstream node sends a
             BatchDeliveryConfirm message
         '''
-        item = message.item_req
-        self.outbound_log[item] = BatchStatus.DELIVERED
+        batch = message.item_req
+        if batch not in self.outbound_log or self.outbound_log[batch] != BatchStatus.DELIVERED:
+            self.metrics.increase_metric(self.node_id, "batches_delivered")
+            self.outbound_log[batch] = BatchStatus.DELIVERED
 
     def _send_material_request_upstream(self, supplier_id, supplier_type):
         '''
@@ -411,6 +416,11 @@ class SuppyChainStage(Thread):
         while self.running.is_set():
             sleep(self.time_per_batch)
 
+            self.metrics.increase_metric(self.node_id, "total_manufacture_cycles")
+            self.metrics.set_metric(self.node_id, "batches_produced", self.manufacture_count)
+            self.metrics.set_metric(self.node_id, "batches_consumed", self.consumed_count)
+            self.metrics.set_metric(self.node_id, "unanswered_batch_requests", len(self.pending_requests))
+
             if self.node.state == NodeState.inactive:
                 log.error("Node %d's stage still running after node was set to inactive", self.node_id)
                 continue
@@ -428,8 +438,3 @@ class SuppyChainStage(Thread):
 
             latest_suppliers = {ir.item.type: sid for sid, ir in latest_suppliers}  # convert the flow edges to dict
             self._attempt_manufacture_cycle(latest_suppliers)
-
-            self.metrics.increase_metric(self.node_id, "total_manufacture_cycles")
-            self.metrics.set_metric(self.node_id, "batches_produced", self.manufacture_count)
-            self.metrics.set_metric(self.node_id, "batches_consumed", self.consumed_count)
-            self.metrics.set_metric(self.node_id, "unanswered_requests", len(self.pending_requests))
