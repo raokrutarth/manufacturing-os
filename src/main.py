@@ -148,14 +148,14 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
+        # Join the threads spawned
+        for _, thread in threads.items():
+            thread.join()
+
         # Stopping the queue worker
         for queue in queues.values():
             queue.close()
             queue.join_thread()
-
-        # Join the threads spawned
-        for _, thread in threads.items():
-            thread.join()
 
         while process_list:
             for process in tuple(process_list):
@@ -207,13 +207,13 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--failure_rate',
-        default=3,
+        default=0,
         type=float,
         help='# of failed nodes per minute'
     )
     parser.add_argument(
         '--recover_rate',
-        default=3,
+        default=0,
         type=float,
         help='# of recovered nodes per minute'
     )

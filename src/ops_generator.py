@@ -54,6 +54,11 @@ def run_generator(queues, cluster, failure_rate=3, recover_rate=3):
     :param recover_rate: how many nodes to cover every minutes
     :return:
     '''
+
+    eps = 1e-4
+    failure_rate += eps
+    recover_rate += eps
+
     failure_interval = max(1, int(round(60 / failure_rate)))
     half_failure_interval = max(1, int(round(60 / failure_rate / 2)))
     recover_interval = max(1, int(round(60 / recover_rate)))
