@@ -36,17 +36,17 @@ def kill_node(cluster, queues):
     node_to_kill = get_random_node_to_kill(cluster)
     if node_to_kill is not None:
         queues[node_to_kill.node_id].put(Op.Kill)
-        log.warning("Node %d to be killed", node_to_kill.node_id)
+        log.critical("Node %d to be killed", node_to_kill.node_id)
 
 
 def recover_node(cluster, queues):
     node_to_recover = get_random_node_to_recover(cluster)
     if node_to_recover is not None:
         queues[node_to_recover.node_id].put(Op.Recover)
-        log.warning("Node %d to be recovered", node_to_recover.node_id)
+        log.critical("Node %d to be recovered", node_to_recover.node_id)
 
 
-def generator(queues, cluster, failure_rate, recover_rate):
+def run_generator(queues, cluster, failure_rate=0, recover_rate=0):
     '''
     :param queues:
     :param cluster:
@@ -54,8 +54,10 @@ def generator(queues, cluster, failure_rate, recover_rate):
     :param recover_rate: how many nodes to cover every minutes
     :return:
     '''
-    if not failure_rate and not recover_rate:
-        return
+
+    eps = 1e-4
+    failure_rate += eps
+    recover_rate += eps
 
     failure_interval = max(1, int(round(60 / failure_rate)))
     half_failure_interval = max(1, int(round(60 / failure_rate / 2)))

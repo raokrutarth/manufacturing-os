@@ -3,16 +3,19 @@ import logging
 import os
 import argparse
 import sys
-from time import sleep
-from multiprocessing import Process, Queue
 import shutil
-
 import processes
 import operations
-import cluster as ctr
 import basecases
+import cluster as ctr
+import plotter as pltr
+
+from time import sleep
+from multiprocessing import Process, Queue
+from threading import Thread
+from metrics import Metrics
 from operations import Operations as Op
-from ops_generator import generator
+from ops_generator import run_generator
 from metrics import Metrics
 
 """
@@ -77,6 +80,21 @@ def run_cluster_client(queues):
                   exitmsg='Performed all interactions. exiting and continuing...')
 
 
+def run_cluster_plotter(cluster: ctr.Cluster):
+    num_nodes = len(cluster.nodes)
+    delay = 0.25 * (num_nodes ** 0.5)
+    sleep(delay)
+    plotter = pltr.ClusterPlotter(cluster)
+    while 1:
+        plotter.plot_current_state()
+        sleep(delay)
+        log.debug("Completed plotting step...")
+
+
+def has_live_threads(threads):
+    return True in [t.is_alive() for t in threads]
+
+
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
@@ -97,6 +115,15 @@ def main(args):
     process_list = list()
     queues = {}
 
+    # Contain multiple misc threads which are useful
+    ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
+    ops_generator_thread = Thread(target=run_generator, args=ops_args)
+    plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
+    threads = {
+        'cluster-plotter': plotter_thread,
+        'ops-runner': ops_generator_thread
+    }
+
     # Create messaging queues to interact with cluster
     for node in cluster.nodes:
         queue = Queue()
@@ -104,6 +131,12 @@ def main(args):
         for op in cluster.blueprint.node_specific_ops[node.node_id]:
             queue.put(op)
         queues[node.node_id] = queue
+
+    # Start all the threads
+    for k, thread in threads.items():
+        thread.name = k
+        thread.daemon = True
+        thread.start()
 
     try:
         for node in cluster.nodes:
@@ -118,16 +151,22 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
-        ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
-        ops_generator = Process(target=generator, args=ops_args)
-        ops_generator.start()
+        # Join the threads spawned in a safe manner
+        while has_live_threads(threads.values()):
+            try:
+                for _, thread in threads.items():
+                    if thread is not None and thread.is_alive():
+                        thread.join()
+            except KeyboardInterrupt:
+                # Handle Ctrl-C and send kill to threads
+                for p in process_list:
+                        p.terminate()
+                sys.exit()
 
         # Stopping the queue worker
         for queue in queues.values():
             queue.close()
             queue.join_thread()
-
-        ops_generator.join()
 
         while process_list:
             for process in tuple(process_list):
@@ -135,13 +174,11 @@ def main(args):
                 process_list.remove(process)
 
     finally:
-        if ops_generator.is_alive():
-            ops_generator.terminate()
-
         for process in process_list:
             if process.is_alive():
                 log.warning('Terminating %r', process)
                 process.terminate()
+
 
 """
 Utilities for argument parsing. Helps provide easy running of experiments.
