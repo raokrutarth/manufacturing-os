@@ -110,13 +110,13 @@ def main(args):
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops,
              'heartbeat_delay': args.heartbeat_delay,
-             'num_unresponded_heartbeats_for_death': args.num_hearbeats_for_death}
+             'num_unresponded_heartbeats_for_death': args.num_heartbeats_for_death}
 
     process_list = list()
     queues = {}
 
     # Contain multiple misc threads which are useful
-    ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate)
+    ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {
@@ -215,6 +215,9 @@ def get_cluster_run_args():
         default=3,
         type=int
     )
+
+    parser.add_argument('--leader_can_fail', default=False, type=str2bool, help='kill leader or not')
+
     parser.add_argument(
         '--failure_rate',
         default=0,
@@ -243,10 +246,10 @@ def get_cluster_run_args():
     )
 
     parser.add_argument(
-        '--num_hearbeats_for_death',
+        '--num_heartbeats_for_death',
         default=5,
         type=int,
-        help='# of unresponsed hearbeats to be declared death by neighbor'
+        help='# of unresponsed heartbeats to be declared death by neighbor'
     )
 
     parser.add_argument(
@@ -258,7 +261,7 @@ def get_cluster_run_args():
 
     # Options to interact and simulate the system
     parser.add_argument('--run_test_ops', default=False, type=str2bool, help='Whether to run test ops or not')
-    parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interative cli')
+    parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interactive cli')
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
     # Execution level arguments

@@ -13,13 +13,15 @@ manager = multiprocessing.Manager()
 dead_node_list = manager.list()
 
 
-def get_random_node_to_kill(cluster):
+def get_random_node_to_kill(cluster, leader_can_fail=False):
     nodes = cluster.nodes
     active_nodes = [node for node in nodes if node.state == NodeState.active]
-    for node in active_nodes:
-        state_helper = FileBasedStateHelper(node, cluster)
-        if state_helper.am_i_leader():
-            active_nodes.remove(node)
+
+    if not leader_can_fail:
+        for node in active_nodes:
+            state_helper = FileBasedStateHelper(node, cluster)
+            if state_helper.am_i_leader():
+                active_nodes.remove(node)
 
     if len(active_nodes) == 0:
         return None
@@ -38,9 +40,9 @@ def get_random_node_to_recover(cluster):
     return recover_node
 
 
-def kill_node(cluster, queues, failure_prob_per_sec):
+def kill_node(cluster, queues, failure_prob_per_sec, leader_can_fail=False):
     if random.random() < failure_prob_per_sec:
-        node_to_kill = get_random_node_to_kill(cluster)
+        node_to_kill = get_random_node_to_kill(cluster, leader_can_fail)
         if node_to_kill is not None:
             if node_to_kill not in dead_node_list:
                 queues[node_to_kill.node_id].put(Op.Kill)
@@ -68,7 +70,7 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             queues[node.node_id].put(Op.SendUpdateDep)
             log.warning("Node %d to update dependency", node.node_id)
 
-def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0):
+def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
     '''
     :param queues:
     :param cluster:
@@ -82,7 +84,7 @@ def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_ra
     recover_prob_per_sec = min(1.0, recover_rate / 60.0)
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
 
-    schedule.every().second.do(kill_node, cluster, queues, failure_prob_per_sec)
+    schedule.every().second.do(kill_node, cluster, queues, failure_prob_per_sec, leader_can_fail)
     sleep(2)
     schedule.every().second.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
     schedule.every().second.do(recover_node, cluster, queues, recover_prob_per_sec)

@@ -2,12 +2,14 @@ import pydot
 import io
 import state
 import randomcolor
+import random
 
 import basecases as bcs
 import cluster as ctr
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from time import sleep
 
 from metrics import Metrics
 
@@ -124,14 +126,13 @@ class ClusterPlotter(object):
 
 if __name__ == "__main__":
 
-    metrics = Metrics()
     nodes = bcs.bootstrap_dependencies_seven_nodes()
 
     blueprint = ctr.ClusterBlueprint(nodes)
-    cluster = ctr.Cluster(metrics, blueprint)
+    cluster = ctr.Cluster(blueprint)
     flow = ctr.bootstrap_flow(cluster.nodes)
 
     plotter = ClusterPlotter(cluster)
-
     plotter.plot_flow(flow)
     plotter.plot_current_state()
+    sleep(10000)
