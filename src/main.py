@@ -15,7 +15,7 @@ from multiprocessing import Process, Queue
 from threading import Thread
 from metrics import Metrics
 from operations import Operations as Op
-from ops_generator import generator
+from ops_generator import run_generator
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -112,10 +112,13 @@ def main(args):
     process_list = list()
     queues = {}
 
-    # Contain multiple misc threads which could be useful
+    # Contain multiple misc threads which are useful
+    ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
+    ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {
-        'cluster-plotter': plotter_thread
+        'cluster-plotter': plotter_thread,
+        'ops-runner': ops_generator_thread
     }
 
     # Create messaging queues to interact with cluster
@@ -145,16 +148,14 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
-        ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
-        ops_generator = Process(target=generator, args=ops_args)
-        ops_generator.start()
-
         # Stopping the queue worker
         for queue in queues.values():
             queue.close()
             queue.join_thread()
 
-        ops_generator.join()
+        # Join the threads spawned
+        for _, thread in threads.items():
+            thread.join()
 
         while process_list:
             for process in tuple(process_list):
@@ -162,17 +163,10 @@ def main(args):
                 process_list.remove(process)
 
     finally:
-        if ops_generator.is_alive():
-            ops_generator.terminate()
-
         for process in process_list:
             if process.is_alive():
                 log.warning('Terminating %r', process)
                 process.terminate()
-
-    # Join the threads spawned
-    for _, thread in threads.items():
-        thread.join()
 
 
 """
