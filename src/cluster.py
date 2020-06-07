@@ -5,7 +5,7 @@ import networkx as nx
 from typing import List
 from collections import defaultdict
 
-from nodes import BaseNode, ProcessSpec, SingleItemNode
+from nodes import BaseNode, ProcessSpec, SingleItemNode, NodeState
 import basecases
 
 log = logging.getLogger()
@@ -59,6 +59,24 @@ class Cluster(object):
         for idx in range(len(self.nodes)):
             if self.nodes[idx].node_id == node_id:
                 self.nodes[idx].dependency = new_dependency
+
+    def deactivate_node(self, node_id: int):
+        '''
+            deactivate dead node from the graph
+        :param node_id:
+        :return:
+        '''
+        self.get_node(node_id).state = NodeState.inactive
+        log.info("Node %s is successfully deactivated", node_id)
+
+    def activate_node(self, node_id: int):
+        '''
+            reactivate dead node from the graph during recovery
+        :param node_id:
+        :return:
+        '''
+        self.get_node(node_id).state = NodeState.active
+        log.info("Node %s is successfully activated", node_id)
 
     def get_node(self, node_id):
         '''
@@ -248,12 +266,18 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
 
     return cluster_flow_final
 
+def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode]):
+    """
+    Create a flow with a possible path
+    """
+    active_nodes = [active_node for active_node in nodes if active_node.state == NodeState.active]
+    return bootstrap_flow(active_nodes)
 
 # for testing purposes
 def _test():
-    number_types = 4
+    number_types = 10
     complexity = "medium"
-    nodes_per_type = 2
+    nodes_per_type = 10
     demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
     print("Nodes have been created.")
     print(demo_nodes)

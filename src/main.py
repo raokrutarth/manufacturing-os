@@ -14,8 +14,8 @@ from time import sleep
 from multiprocessing import Process, Queue
 from threading import Thread
 from metrics import Metrics
-from operations import Op
-
+from operations import Operations as Op
+from ops_generator import generator
 
 """
 Logging guidelines are provided here. Importance increases while going down
@@ -93,7 +93,7 @@ def run_cluster_plotter(cluster: ctr.Cluster):
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
-    SU = operations.Op.SendUpdateDep
+    SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
     demo_ops = {n.node_id: [SU] for n in nodes}
 
     metrics = Metrics()
@@ -105,7 +105,9 @@ def main(args):
     log.critical("Starting %s", cluster)
 
     # start the nodes with operations runner based on what's specified
-    flags = {'runOps': args.run_test_ops}
+    flags = {'runOps': args.run_test_ops,
+             'failure_rate': args.failure_rate,
+             'recover_rate': args.recover_rate}
 
     process_list = list()
     queues = {}
@@ -143,16 +145,26 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
+        ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
+        ops_generator = Process(target=generator, args=ops_args)
+        ops_generator.start()
+
         # Stopping the queue worker
         for queue in queues.values():
             queue.close()
             queue.join_thread()
 
+        ops_generator.join()
+
         while process_list:
             for process in tuple(process_list):
                 process.join()
                 process_list.remove(process)
+
     finally:
+        if ops_generator.is_alive():
+            ops_generator.terminate()
+
         for process in process_list:
             if process.is_alive():
                 log.warning('Terminating %r', process)
@@ -199,6 +211,19 @@ def get_cluster_run_args():
         default=2,
         type=int
     )
+    parser.add_argument(
+        '--failure_rate',
+        default=3,
+        type=float,
+        help='# of failed nodes per minute'
+    )
+    parser.add_argument(
+        '--recover_rate',
+        default=3,
+        type=float,
+        help='# of recovered nodes per minute'
+    )
+
     parser.add_argument(
         '--topology',
         default="simple",
