@@ -90,6 +90,10 @@ def run_cluster_plotter(cluster: ctr.Cluster):
         log.debug("Completed plotting step...")
 
 
+def has_live_threads(threads):
+    return True in [t.isAlive() for t in threads]
+
+
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
@@ -148,9 +152,16 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
-        # Join the threads spawned
-        for _, thread in threads.items():
-            thread.join()
+        # Join the threads spawned in a safe manner
+        while has_live_threads(threads.values()):
+            try:
+                for _, thread in threads.items():
+                    if thread is not None and thread.isAlive():
+                        thread.join()
+            except KeyboardInterrupt:
+                # Handle Ctrl-C and send kill to threads
+                for t in threads:
+                    t.kill_received = True
 
         # Stopping the queue worker
         for queue in queues.values():
