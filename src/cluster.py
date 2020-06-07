@@ -1,5 +1,6 @@
 import logging
 import items
+import networkx as nx
 
 from typing import List
 from collections import defaultdict
@@ -34,8 +35,14 @@ class Cluster(object):
     def __init__(self, blueprint, port_range_start=40000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
+        self.node_ids_to_nodes = {node.node_id: node for node in self.nodes}
         self.process_specs = None
         self.init_process_specs(port_range_start)
+
+    def get_distinct_item_types_mapping(self):
+        item_types = set([node.dependency.get_result_item_type() for node in self.nodes])
+        item_type_to_id = {item_type: idx for idx, item_type in enumerate(item_types)}
+        return item_type_to_id
 
     def init_process_specs(self, port_range_start: int):
         # assign a process name and port to process
@@ -157,6 +164,19 @@ class ClusterWideFlow(object):
             self.incoming_flows, self.outgoing_flows, self.node_ids,
         )
 
+    def get_networkx_graph_repr(self):
+        """
+        Returns a representation of self in the form of a networkx graph object
+        Each graph represents the outgoing flow of the node
+        """
+        graph = nx.DiGraph()
+        graph.add_nodes_from(self.node_ids)
+        for n0 in self.node_ids:
+            for edge in self.outgoing_flows[n0]:
+                n1, item_req = edge
+                graph.add_edge(n0, n1, item_req=item_req)
+        return graph
+
 
 def bootstrap_all_paths(nodes: List[SingleItemNode]):
     """
@@ -225,7 +245,7 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
 
-    log.info("Cluster flow with all possible paths created: {}".format(cluster_flow))
+    log.debug("Cluster flow with all possible paths created: {}".format(cluster_flow))
 
     # Create a new ClusterWideFlow object containing only one possible paths.
     cluster_flow_final = ClusterWideFlow(nodes)
@@ -241,7 +261,7 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
             edge[0], edge[1], node.dependency.result_item_req
         )
 
-    log.info("Cluster flow with one specific path created: {}".format(cluster_flow_final))
+    log.debug("Cluster flow with one specific path created: {}".format(cluster_flow_final))
 
     return cluster_flow_final
 

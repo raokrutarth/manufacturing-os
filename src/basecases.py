@@ -65,6 +65,7 @@ def bootstrap_dependencies_six_nodes():
 
     return demo_nodes
 
+
 def bootstrap_dependencies_seven_nodes():
     """
     initialize demo_node with the following dependencies
@@ -93,6 +94,7 @@ def bootstrap_dependencies_seven_nodes():
     demo_nodes[6].dependency = ItemDependency([screws], awesomeness)
 
     return demo_nodes
+
 
 # Creates Random DAG!
 def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
@@ -185,6 +187,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
     log.info("Final nodes created:  %s", demo_nodes) 
     return demo_nodes
+
 
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
