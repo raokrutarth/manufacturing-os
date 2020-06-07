@@ -92,8 +92,8 @@ def main(args):
 
     # start the nodes with operations runner based on what's specified
     flags = {'runOps': args.run_test_ops,
-             'failure_rate': args.failure_rate,
-             'recover_rate': args.recover_rate}
+             'heartbeat_delay': args.heartbeat_delay,
+             'num_unresponded_heartbeats_for_death': args.num_hearbeats_for_death}
 
     process_list = list()
     queues = {}
@@ -119,7 +119,7 @@ def main(args):
             # Wait for the client thread to exit
             run_cluster_client(queues)
 
-        ops_args = (queues, cluster, args.failure_rate, args.recover_rate)
+        ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate)
         ops_generator = Process(target=generator, args=ops_args)
         ops_generator.start()
 
@@ -183,14 +183,35 @@ def get_cluster_run_args():
     parser.add_argument(
         '--failure_rate',
         default=3,
-        type=float,
+        type=int,
         help='# of failed nodes per minute'
     )
     parser.add_argument(
         '--recover_rate',
         default=3,
-        type=float,
+        type=int,
         help='# of recovered nodes per minute'
+    )
+
+    parser.add_argument(
+        '--update_dep_rate',
+        default=3,
+        type=int,
+        help='# of update dependence per minute'
+    )
+
+    parser.add_argument(
+        '--heartbeat_delay',
+        default=10,
+        type=int,
+        help='# of heartbeat delay'
+    )
+
+    parser.add_argument(
+        '--num_hearbeats_for_death',
+        default=5,
+        type=int,
+        help='# of unresponsed hearbeats to be declared death by neighbor'
     )
 
     parser.add_argument(

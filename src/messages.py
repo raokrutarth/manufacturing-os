@@ -471,6 +471,7 @@ class MessageHandler(object):
             self.node_process.cluster.update_deps(message.source, message.dependency)
             new_flow = ctr.bootstrap_flow(self.node_process.cluster.nodes)
             self.node_process.state_helper.update_flow(new_flow)
+            log.debug("Received Update Dependency Request from %s", message.source)
 
             # Send an ack
             response = MessageHandler.getMsgForAction(

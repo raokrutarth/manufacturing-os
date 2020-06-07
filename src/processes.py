@@ -53,8 +53,8 @@ class SocketBasedNodeProcess(NodeProcess):
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
         # Execution constants for the process
-        self.heartbeat_delay = 10.0
-        self.num_unresponded_hearbeats_for_death = 5
+        self.heartbeat_delay = flags['heartbeat_delay']  #10.0
+        self.num_unresponded_heartbeats_for_death = flags['num_unresponded_heartbeats_for_death'] #5
 
         self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
         self.port = self.process_spec.port
@@ -146,7 +146,7 @@ class SocketBasedNodeProcess(NodeProcess):
         Goes over the last_known_heartbeat dict and finds which nodes are probably dead
         """
         curr_time = time.time()
-        margin = self.num_unresponded_hearbeats_for_death * self.heartbeat_delay
+        margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
         return [
             n for n, lt in self.last_known_heartbeat.items()
             if (lt < (curr_time - margin)) and (lt >= 0)
@@ -163,10 +163,10 @@ class SocketBasedNodeProcess(NodeProcess):
         log.warning("Recovering node %s", self.node.get_id())
 
         self._attempt_log_recovery()
-        self.subscriber.start()
-        self.publisher.start()
-        self.heartbeat.start()
-        self.sc_stage.start()
+        self.subscriber.recover()
+        self.publisher.recover()
+        self.heartbeat.recover()
+        self.sc_stage.recover()
 
     def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)

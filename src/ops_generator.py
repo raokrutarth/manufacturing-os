@@ -52,21 +52,35 @@ def recover_node(cluster, queues, recover_prob_per_sec):
             log.warning("Node %d to be recovered", node_to_recover.node_id)
 
 
-def generator(queues, cluster, failure_rate=3, recover_rate=3):
+def send_update_dep(cluster, queues, update_dep_prob_per_sec):
+    if random.random() < update_dep_prob_per_sec:
+        nodes = cluster.nodes
+        active_nodes = [node for node in nodes if node.state == NodeState.active]
+        if len(active_nodes) == 0:
+            return None
+        else:
+            node = random.choice(active_nodes)
+            queues[node.node_id].put(Op.SendUpdateDep)
+
+
+def generator(queues, cluster, failure_rate=3, recover_rate=3, update_dep_rate=3):
     '''
     :param queues:
     :param cluster:
     :param failure_rate: how many nodes to kill every minutes
     :param recover_rate: how many nodes to cover every minutes
+    :param update_dep_rate: how many update_dep to send every minutes
     :return:
     '''
     failure_interval = max(1, int(round(60 / failure_rate)))
     recover_interval = max(1, int(round(60 / recover_rate)))
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)
     recover_prob_per_sec = min(1.0, recover_rate / 60.0)
+    update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
 
     schedule.every().second.do(kill_node, cluster, queues, failure_prob_per_sec)
     sleep(2)
+    schedule.every().second.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
     schedule.every().second.do(recover_node, cluster, queues, recover_prob_per_sec)
 
     while True:
