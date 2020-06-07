@@ -84,12 +84,8 @@ class SocketBasedNodeProcess(NodeProcess):
         self.state_helper.apply_for_leadership()
         # Wait for confirmation of new leader
 
-    def init_cluster_flow(self):
-        new_flow = ctr.bootstrap_shortest_path(self.cluster.nodes)
-        self.state_helper.update_flow(new_flow)
-
     def start(self):
-        log.warning("Starting node %s", self.node.get_id())
+        log.info("Starting node %s", self.node.get_id())
 
         # Apply for leadership
         self.state_helper.apply_for_leadership()
@@ -158,4 +154,4 @@ class SocketBasedNodeProcess(NodeProcess):
     def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
         self.state_helper.update_flow(new_flow)
-        log.info("Node %s updating flow due to %s", str(self.node.node_id), node_id)
+        log.info("Node {} updated flow due to node {}".format(self.node.node_id, node_id))

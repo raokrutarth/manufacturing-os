@@ -53,8 +53,8 @@ class SuppyChainStage(Thread):
         super(SuppyChainStage, self).__init__()
         self.node_id = node_process.node.get_id()
         self.name = "sc-stage-{}".format(node_process.node.get_id())
-        self.item_dep = node_process.node.get_dependency()
-        self._bootstrap_inbound_queues()
+        self.item_dep = node_process.node.get_dependency()  # TODO (Nishant) verify this is up to date with latest prereqs
+        self.inbound_material = {}  # map of item-type -> Queue()
         self.outbound_material = Queue()
         self.time_per_batch = time_per_batch
         self.state_helper = node_process.state_helper
@@ -80,19 +80,6 @@ class SuppyChainStage(Thread):
         self._attempt_log_recovery()
 
         log.info("Node %d's stage bootstrap complete", self.node_id)
-
-    def _bootstrap_inbound_queues(self):
-        '''
-            For each prerequisite material consumed by the stage,
-            initialize a new queue that can be pop'd by the stage
-            to consume an item.
-
-            Sets the inbound_material to a dict with item_type -> queue
-            mapping.
-        '''
-        self.inbound_material = {}
-        for req in self.item_dep.get_prereq():
-            self.inbound_material[req.item.type] = Queue()
 
     def _attempt_log_recovery(self):
         '''
@@ -123,15 +110,13 @@ class SuppyChainStage(Thread):
         unknown_state_batches = set()
 
         for batch, state in in_log.items():
-            if state != BatchStatus.DELIVERED:
-                material_type = batch.item.type
-
-                if material_type not in self.inbound_material:
-                    log.error("Node %d found batch %s in inbound WAL but only consumes %s. Skipping batch.", self.node_id, self.item_dep.get_prereq())
-                    continue
-
+            # only consumed batches need no further confirmation from
+            # neighbors about the status of the item
+            if state != BatchStatus.CONSUMED:
                 self._request_batch_status_from_neighbor(neighbors, batch)
                 unknown_state_batches.add(batch)
+            else:
+                self.consumed_count += 1
 
         for batch in unknown_state_batches:
             self.outbound_log[batch] = BatchStatus.WAITING_FOR_NEIGHBOR
@@ -143,10 +128,8 @@ class SuppyChainStage(Thread):
         unknown_state_batches = set()
 
         for batch, state in out_log.items():
-            if batch.item.type != self.get_stage_result_type():
-                log.error("Node %d found batch %s in inbound WAL but only produces %s. Skipping batch.", self.node_id, self.get_stage_result_type())
-                continue
-
+            # only items marked in-transit, in-queue or waiting-for-neigh need
+            # confirmation of status from it's neighbors.
             if state != BatchStatus.DELIVERED:
                 self._request_batch_status_from_neighbor(neighbors, batch)
                 unknown_state_batches.add(batch)
@@ -181,14 +164,15 @@ class SuppyChainStage(Thread):
             - Stop the stage's production & consumption loop.
             - Destory in-memory state. E.g. the inbound and outbound queues.
         '''
-        log.critical("Node %d's stage being stopped", self.node_id)
+        log.critical("Node %d's stage is being stopped", self.node_id)
         # stop the production loop
         self.running.clear()
 
         # clear in-memory state
         self.outbound_material = None
-        for req in self.item_dep.get_prereq():
-            self.inbound_material[req.item.type] = None
+        for item_type in self.inbound_material:
+            # Set all inbound queues to null
+            self.inbound_material[item_type] = None
         self.manufacture_count = self.consumed_count = 0
 
     def restart(self):
@@ -196,7 +180,6 @@ class SuppyChainStage(Thread):
             Simulated restart after a crash. Initalise in-memory state
             and attempt a recovery from the WAL.
         '''
-        self._bootstrap_inbound_queues()
         self.outbound_material = Queue()
         self._attempt_log_recovery()
 
@@ -225,8 +208,8 @@ class SuppyChainStage(Thread):
     def process_batch_request(self, request: Message):
         log.debug("Node %d received request %s", self.node_id, request)
 
-        # verif the right item type is being requested
-        if request.item_req.item.type != self.get_stage_result_type():
+        # verify the right item type is being requested
+        if request.item_req.item.type != self.get_stage_result_type():  # TODO (Nishant) this check will fail if prereq is not updated
             log.error("Node %d requested to supply %s but it produces %s",
                       self.node_id, request.item_req, self.get_stage_result_type())
 
@@ -278,7 +261,7 @@ class SuppyChainStage(Thread):
         log.debug("Node %d received %s after batch request %s", self.node_id, response, response.request_id)
         if isinstance(response, BatchSentResponse):
             batch = response.item_req
-            if not self.item_dep.is_valid_material(batch):
+            if not self.item_dep.is_valid_material(batch):  # TODO (Nishant) this check will fail if the prereq is not updated
                 log.error("Node %d received invalid batch %s from node %d. Node %d's deps are %s. Ignoring received batch.",
                           self.node_id, batch, response.source, self.node_id, self.item_dep)
                 return
@@ -295,6 +278,7 @@ class SuppyChainStage(Thread):
 
             sleep(self.time_per_batch)  # HACK simulated transit time
 
+            log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
             ack = BatchDeliveryConfirmResponse(
                 source=self.node_id,
@@ -303,7 +287,13 @@ class SuppyChainStage(Thread):
                 request_id=response.request_id,
             )
             self.send_message(ack)
-            self.inbound_material[batch.item.type].put(batch)
+            batch_type = batch.item.type
+            if batch_type not in self.inbound_material:
+                # start a new queue for a new type of inbound item
+                log.info("Node {} started new inbound queue for type {}".format(self.node_id, batch_type))
+                self.inbound_material[batch_type] = Queue()
+            self.inbound_material[batch_type].put(batch)
+
             log.info("Node %d received batch %s from node %d and enqueued into inbound queue", self.node_id, response.item_req, response.source)
         else:
             log.error("Node %d unable to obtain batch of type %s from node %d. Request ID: %s",
@@ -346,24 +336,22 @@ class SuppyChainStage(Thread):
         '''
             suppliers: list of (node_id, item_req) tuples obtained from the latest flow
         '''
-        prereqs = self.item_dep.get_prereq()
+        prereqs = self.item_dep.get_prereq()  # [ItemReq(Item(type:0)...uantity:1)]
         if prereqs:
-            queue_types = set(self.inbound_material.keys())
-            supplier_types = set([ir.item.type for _, ir in suppliers])
+            prereq_types = set([ir.item.type for ir in prereqs])
+            supplier_types = set(suppliers.keys())
 
-            suppliers = {ir.item.type: sid for sid, ir in suppliers}  # convert the flow edges to dict
-
-            if not queue_types.issuperset(supplier_types):  # verify there is queue for each supplier
-                log.critical("Node {} has more suppliers ({}) from flow the available queue types ({})"
-                             .format(self.node_id, supplier_types, queue_types))
+            if not prereq_types.issuperset(supplier_types):  # verify there is prerequisite for each supplier
+                # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
+                log.critical("Node {} has more suppliers ({}) from flow than the node's prerequisite types ({})"
+                             .format(self.node_id, supplier_types, prereq_types))
                 log.error("Node %d skipping manufacturing cycle", self.node_id)
                 return
 
             has_all_materials = True
             for item_type, supplier_id in suppliers.items():
-                queue = self.inbound_material[item_type]
 
-                if queue.empty():
+                if item_type not in self.inbound_material or self.inbound_material[item_type].empty():
                     log.info("Node %d needs batch of type %s from node %s", self.node_id, item_type, supplier_id)
                     self._send_material_request_upstream(supplier_id, item_type)
                     has_all_materials = False
@@ -415,11 +403,11 @@ class SuppyChainStage(Thread):
                           self.node_id, self.item_dep.get_prereq())
                 continue
 
-            # [(1, ItemReq(Item(type:1)...uantity:1))]
-            latest_suppliers = flow.getIncomingFlowsForNode(self.node_id)
+            latest_suppliers = flow.getIncomingFlowsForNode(self.node_id)  # [(1, ItemReq(Item(type:1)...uantity:1))]
             log.debug("Node %d seeing suppliers %s in flow", self.node_id, [sid for sid, _ in latest_suppliers])
             self.metrics.increase_metric(self.node_id, "flow_queries")
 
+            latest_suppliers = {ir.item.type: sid for sid, ir in latest_suppliers}  # convert the flow edges to dict
             self._attempt_manufacture_cycle(latest_suppliers)
 
             self._update_stage_metrics()
