@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List
 import logging
 from enum import Enum
+import glob
 
 log = logging.getLogger()
 
@@ -60,7 +61,9 @@ class Metrics:
         self._modify_or_add_to_df(node_id, metric_name, value, DFOperation.Set)
 
     def get_metric(self, node_id: int, metric_name: str):
-        column = self._df.loc[(self._df["node_id"] == node_id) & (self._df["metric_name"] == metric_name)]
+        all_metrics_file = glob.glob('./tmp/*metrics*.csv')
+        df = pd.concat([pd.read_csv(f) for f in all_metrics_file], ignore_index=True)
+        column = df.loc[(df["node_id"] == node_id) & (df["metric_name"] == metric_name)]
 
         if column.empty:
             raise LookupError
@@ -71,3 +74,12 @@ class Metrics:
 
     def plot_metrics(self, node_id: int, metric_names: List[str]):
         pass
+
+
+def _test():
+    m = Metrics("test")
+    print(m.get_metric(0, "batches_produced"))
+
+
+if __name__ == "__main__":
+    _test()

@@ -1,6 +1,7 @@
 import unittest
 import logging
 import sys
+import glob
 
 from metrics import Metrics
 
@@ -16,7 +17,7 @@ log = logging.getLogger()
 class TestMetrics(unittest.TestCase):
 
     def setUp(self):
-        self.metrics = Metrics()
+        self.metrics = Metrics(99999)
 
     def tearDown(self):
         pass

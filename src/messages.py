@@ -3,7 +3,6 @@ import logging
 
 import cluster as ctr
 from items import ItemDependency, ItemReq
-from nodes import NodeState
 
 
 log = logging.getLogger()
@@ -47,19 +46,15 @@ class Action(enum.Enum):
     #  - B requests material batch from A with RequestMaterialBatch.
     #  - A sends a SentItemBatch or ItemBatchNotAvailable to B.
     #  - B sends a WaitingForMaterialBatch to A.
+    #  - [expriment] B sleeps for 2 seconds.
     #  - B sends a BatchDeliveryConfirm to A after delivery.
+    #    - A marks it delivered, B marks it in-queue.
     RequestMaterialBatch = 7
     SentItemBatch = 8
     ItemBatchNotAvailable = 9
     WaitingForMaterialBatch = 10  # like an ack for SentItemBatch
     BatchDeliveryConfirm = 11
 
-    # Signals used by SC stage in crash recovery
-    # For nodes A -> B & A crashed:
-    #  - A wakes up and verifies for all items marked in-transit/in-queue is accurate in log.
-    #  - B replies with a BatchDeliveryConfirm, WaitingForMaterialBatch or
-    #    ItemBatchNotAvailable by looking at it's log.
-    CheckBatchStatus = 12
     Recover = 13
 
 
@@ -215,18 +210,6 @@ class BatchRequest(Message):
         )
 
 
-class BatchStatusRequest(Message):
-    def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
-        super(BatchStatusRequest, self).__init__(source, Action.CheckBatchStatus, MsgType.Request, dest)
-        self.item_req = item_req
-        self.request_id = request_id
-
-    def __repr__(self):
-        return "BatchStatusRequest(from:{}, to:{}, batch:{}, req-id:{})".format(
-            self.source, self.dest, self.item_req, self.request_id,
-        )
-
-
 class BatchSentResponse(Message):
     def __init__(self, source: int, dest: int, item_req: ItemReq, request_id: str):
         super(BatchSentResponse, self).__init__(source, Action.SentItemBatch, MsgType.Response, dest)
@@ -332,7 +315,6 @@ class MessageHandler(object):
             Action.Update: self.on_update_req,
 
             Action.RequestMaterialBatch: self.on_request_material_req,
-            Action.CheckBatchStatus: self.on_check_batch_status_req,
             Action.Recover: self.none_fn,
         }
         response_callbacks = {
@@ -437,18 +419,6 @@ class MessageHandler(object):
         assert message.action == Action.BatchDeliveryConfirm
         assert isinstance(message, BatchDeliveryConfirmResponse)
         self.sc_stage.mark_item_delivered(message)
-
-    def on_check_batch_status_req(self, message: Message):
-        '''
-            Callback implementing the actions to be taken when a neighbor
-            node makes a request to check the status of a batch.
-
-            Can reply with ItemBatchNotAvailable, BatchDeliveryConfirm, WaitingForMaterialBatch
-            SentItemBatch
-        '''
-        assert message.action == Action.CheckBatchStatus
-        assert isinstance(message, BatchStatusRequest)
-        self.sc_stage.process_batch_status_check_request(message)
 
     def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat
