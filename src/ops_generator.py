@@ -6,6 +6,7 @@ from time import sleep
 from nodes import NodeState
 import schedule
 import time
+from state import FileBasedStateHelper
 
 log = logging.getLogger()
 manager = multiprocessing.Manager()
@@ -15,6 +16,11 @@ dead_node_list = manager.list()
 def get_random_node_to_kill(cluster):
     nodes = cluster.nodes
     active_nodes = [node for node in nodes if node.state == NodeState.active]
+    for node in active_nodes:
+        state_helper = FileBasedStateHelper(node, cluster)
+        if state_helper.am_i_leader():
+            active_nodes.remove(node)
+
     if len(active_nodes) == 0:
         return None
     else:
@@ -72,12 +78,6 @@ def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_ra
     :return:
     '''
 
-    eps = 1e-4
-    failure_rate += eps
-    recover_rate += eps
-
-    failure_interval = max(1, int(round(60 / failure_rate)))
-    recover_interval = max(1, int(round(60 / recover_rate)))
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)
     recover_prob_per_sec = min(1.0, recover_rate / 60.0)
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
