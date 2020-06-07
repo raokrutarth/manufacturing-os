@@ -54,8 +54,8 @@ class SocketBasedNodeProcess(NodeProcess):
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
         # Execution constants for the process
-        self.heartbeat_delay = flags['heartbeat_delay']  #10.0
-        self.num_unresponded_heartbeats_for_death = flags['num_unresponded_heartbeats_for_death'] #5
+        self.heartbeat_delay = 10.0
+        self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
         self.port = self.process_spec.port
