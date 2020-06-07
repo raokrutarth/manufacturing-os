@@ -62,6 +62,11 @@ class FileDict:
             f.write(self.serializer.pack(content))
             f.close()
 
+    def __contains__(self, item):
+        key = self.process_key(item)
+        contents = self._get_file_content()
+        return key in contents
+
     def update(self, updates):
         try:
             content = self._get_file_content()

@@ -21,9 +21,11 @@ import enum
 # Process Specification - port
 ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
+
 class NodeState(enum.Enum):
     inactive = 0
     active = 1
+
 
 class BaseNode(object):
 
