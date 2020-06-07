@@ -119,7 +119,7 @@ def main(args):
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {
-        'cluster-plotter': plotter_thread,
+        # 'cluster-plotter': plotter_thread,
         'ops-runner': ops_generator_thread
     }
 

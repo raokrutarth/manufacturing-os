@@ -1,6 +1,4 @@
 import logging
-from os.path import abspath
-
 import messages
 import threads
 import time
@@ -171,9 +169,10 @@ class SocketBasedNodeProcess(NodeProcess):
         self.subscriber.recover()
         self.publisher.recover()
         self.heartbeat.recover()
-        self.sc_stage.restart()
         self.node.state = NodeState.active
         self.update_flow(self.node.get_id())
+        log.warning("Recovering node %s", self.node.get_id())
+        self.sc_stage.restart()
 
     def update_flow(self, node_id):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
