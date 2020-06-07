@@ -343,8 +343,12 @@ class SuppyChainStage(Thread):
 
     def run(self):
 
+        # Add cooldown before starting stage, allows initial leader, flow to be detected
+        sleep(2.0)
+        
         log.debug("Starting manufacturing cycle of %s in node %d with stage %s",
                   self.get_stage_result_type(), self.node_id, self.name)
+
         while self.running.is_set():
             if self.node.state == NodeState.inactive:
                 continue
