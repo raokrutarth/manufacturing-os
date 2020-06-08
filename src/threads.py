@@ -11,12 +11,11 @@ log = logging.getLogger()
 
 
 class SubscribeThread(Thread):
-    def __init__(self, node_process: 'SocketBasedNodeProcess', cluster: 'Cluster'):
+    def __init__(self, node_process: 'SocketBasedNodeProcess'):
         super(SubscribeThread, self).__init__()
 
         self.node_process = node_process
-        self.cluster = cluster
-        self.node_id = node_process.node.get_id()
+        self.node_id = node_process.node_id
         self.DELAY = 0.01
 
     def recover(self):
@@ -39,8 +38,10 @@ class SubscribeThread(Thread):
         # by any publisher. (can be optimized later)
         socket.setsockopt(zmq.SUBSCRIBE, b'')
 
+        cluster = self.node_process.cluster()
+
         other_node_ports = \
-            [spec.port for spec in self.cluster.process_specs.values() if spec.port != self.node_process.port]
+            [spec.port for spec in cluster.process_specs.values() if spec.port != self.node_process.port]
         log.debug("subscriber in node %d connecting to sockets %s", self.node_id, other_node_ports)
 
         for port in other_node_ports:
@@ -50,7 +51,7 @@ class SubscribeThread(Thread):
             socket.connect("tcp://127.0.0.1:%d" % port)
 
         while True:
-            if self.node_process.node.state == NodeState.inactive:
+            if self.node_process.node().state == NodeState.inactive:
                 continue
 
             message = socket.recv()
@@ -68,7 +69,7 @@ class PublishThread(Thread):
 
         self.node_process = node_process
         self.delay = delay
-        self.node_id = node_process.node.get_id()
+        self.node_id = node_process.node_id
 
     def recover(self):
         self._attempt_log_recovery()
@@ -94,7 +95,7 @@ class PublishThread(Thread):
                 self.node_process.port += 1
 
         while True:
-            if self.node_process.node.state == NodeState.inactive:
+            if self.node_process.node().state == NodeState.inactive:
                 sleep(0.01)
                 continue
 
@@ -118,8 +119,7 @@ class HeartbeatThread(Thread):
 
         self.node_process = node_process
         self.delay = delay
-        self.node = node_process.node
-        self.node_id = node_process.node.get_id()
+        self.node_id = node_process.node_id
         self.metrics = node_process.metrics
 
     def send_message_for_dead_nodes(self):
@@ -127,7 +127,7 @@ class HeartbeatThread(Thread):
         for node_id in dead_node_ids:
             # Send a request to the leader informing of death
             message = messages.MessageHandler.getMsgForAction(
-                source=self.node.node_id,
+                source=self.node_id,
                 action=messages.Action.InformLeaderOfDeath,
                 msg_type=messages.MsgType.Request,
                 dest=self.node_process.get_leader(),
@@ -150,14 +150,13 @@ class HeartbeatThread(Thread):
         log.debug('Node %s starting heartbeat thread', self.node_id)
 
         while True:
-            if self.node_process.node.state == NodeState.inactive:
-                sleep(0.01)
+            if self.node_process.node().state == NodeState.inactive:
+                sleep(0.05)
                 continue
 
             message = messages.MessageHandler.getMsgForAction(
-                source=self.node.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
+                source=self.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )
-            log.info("Node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)
             self.metrics.increase_metric(self.node_id, "heartbeats_sent")
             self.send_message_for_dead_nodes()

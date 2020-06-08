@@ -13,7 +13,7 @@ log = logging.getLogger()
 class OpHandler:
 
     @staticmethod
-    def getMsgForOp(source: SingleItemNode, op: Op, type: messages.MsgType = messages.MsgType.Request, dest = ""):
+    def getMsgForOp(source_id: int, op: Op, type: messages.MsgType = messages.MsgType.Request, dest=-1):
         '''
             returns an object of type Message or operations sent
             to the node.
@@ -22,7 +22,6 @@ class OpHandler:
             primary usage of operations is to manually "instruct" a node to commit
             an action using an external client from the main thread.
         '''
-        source_id = source.node_id
         if op == Op.TriggerAllocate:
             return messages.AllocateReq(source_id)
         elif op == Op.SendHeartbeat:
@@ -31,7 +30,7 @@ class OpHandler:
             else:
                 return messages.HeartbeatResp(source_id, dest)
         elif op == Op.SendUpdateDep:
-            return messages.UpdateReq(source_id, items.ItemDependency.halveDependency(source.dependency))
+            return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
         elif op == Op.Kill:
             return messages.UpdateReq(source_id, items.ItemDependency.newNullDependency())
         elif op == Op.Recover:
@@ -59,17 +58,16 @@ class OpsRunnerThread(Thread):
         self.node_process = node_process
         self.delay = delay
 
-        self.node = node_process.node
-        self.node_id = node_process.node.get_id()
+        self.node_id = node_process.node_id
 
     def get_message_from_op(self, op):
         log.debug('Node %s constructing message for operation %s', self.node_id, op)
-        return OpHandler.getMsgForOp(self.node, op)
+        return OpHandler.getMsgForOp(self.node_id, op)
 
     def is_node_part_of_flow(self, node_id):
         leader = self.node_process.state_helper.get_leader()
         flow = self.node_process.state_helper.get_flow()
-        if leader == self.node.node_id:
+        if leader == self.node_id:
             return False
         elif flow is not None:
             try:
@@ -99,7 +97,7 @@ class OpsRunnerThread(Thread):
                 self.node_process.on_recover()
             else:
                 # node is being requested to run
-                if self.node_process.node.state == NodeState.active:
+                if self.node_process.node().state == NodeState.active:
                     msg = self.get_message_from_op(op)
                     log.debug('Node %s responding to operation %s with %s', self.node_id, op, msg)
                     self.node_process.sendMessage(msg)

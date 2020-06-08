@@ -56,8 +56,8 @@ log.addHandler(fileHandler)
 log.addHandler(consoleHandler)
 
 
-def run_node_routine(node, cluster, queue, flags):
-    node_process = processes.SocketBasedNodeProcess(node, cluster, queue, flags)
+def run_node_routine(node, cluster, queue):
+    node_process = processes.SocketBasedNodeProcess(node, cluster, queue)
     node_process.start()
     log.debug("Node %d started", node.node_id)
     while 1:
@@ -84,7 +84,7 @@ def run_cluster_plotter(cluster: ctr.Cluster):
     num_nodes = len(cluster.nodes)
     delay = 0.25 * (num_nodes ** 0.5)
     sleep(delay)
-    plotter = pltr.ClusterPlotter(cluster)
+    plotter = pltr.ClusterPlotter()
     while 1:
         plotter.plot_current_state()
         sleep(delay)
@@ -98,38 +98,30 @@ def has_live_threads(threads):
 def main(args):
     nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
-    SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
-    demo_ops = {n.node_id: [SU] for n in nodes}
-
-    cluster_level_metrics = Metrics("cluster-wide")
     # build the cluster object
-    blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
-    cluster = ctr.Cluster(cluster_level_metrics, blueprint)
+    blueprint = ctr.ClusterBlueprint(nodes)
+    cluster = ctr.Cluster(blueprint)
 
     log.critical("Starting %s", cluster)
 
-    # start the nodes with operations runner based on what's specified
-    flags = {'runOps': args.run_test_ops}
-
     process_list = list()
     queues = {}
+
+    # Create messaging queues to interact with cluster
+    for node in cluster.nodes:
+        queue = Queue()
+        queues[node.node_id] = queue
 
     # Contain multiple misc threads which are useful
     ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
-    threads = {
-        # 'cluster-plotter': plotter_thread,
-        'ops-runner': ops_generator_thread
-    }
+    threads = {}
 
-    # Create messaging queues to interact with cluster
-    for node in cluster.nodes:
-        queue = Queue()
-        # Add the pre-planned operations
-        for op in cluster.blueprint.node_specific_ops[node.node_id]:
-            queue.put(op)
-        queues[node.node_id] = queue
+    if args.run_plotter:
+        threads['cluster-plotter'] = plotter_thread
+    if args.run_random_ops:
+        threads['ops-runner'] = ops_generator_thread
 
     # Start all the threads
     for k, thread in threads.items():
@@ -139,7 +131,7 @@ def main(args):
 
     try:
         for node in cluster.nodes:
-            node_args = (node, cluster, queues[node.node_id], flags)
+            node_args = (node, cluster, queues[node.node_id])
             p = Process(target=run_node_routine, args=node_args)
             p.start()
             process_list.append(p)
@@ -244,8 +236,9 @@ def get_cluster_run_args():
     )
 
     # Options to interact and simulate the system
-    parser.add_argument('--run_test_ops', default=False, type=str2bool, help='Whether to run test ops or not')
+    parser.add_argument('--run_plotter', default=False, type=str2bool, help='Whether to run the GUI plotter')
     parser.add_argument('--run_client', default=False, type=str2bool, help='Whether to run the interactive cli')
+    parser.add_argument('--run_random_ops', default=True, type=str2bool, help='Whether to run random operations')
     parser.add_argument('--ops_to_run', default=[], type=str2list, help='Which ops to allow running for tests')
 
     # Execution level arguments
