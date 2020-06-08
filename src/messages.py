@@ -479,7 +479,7 @@ class MessageHandler(object):
         if is_leader:
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
             self.node_process.cluster.update_deps(message.source, message.dependency)
-            self.node_process.update_flow(self.node_id)
+            self.node_process.update_flow()
             log.debug("Received Update Dependency Request from %s", message.source)
 
             # Send an ack

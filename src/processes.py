@@ -88,7 +88,7 @@ class SocketBasedNodeProcess(NodeProcess):
         # Wait for confirmation of new leader
 
     def init_cluster_flow(self):
-        new_flow = ctr.bootstrap_flow(self.cluster.nodes)
+        new_flow = ctr.bootstrap_flow(self.cluster.nodes, self.metrics, self.node.node_id)
         self.state_helper.update_flow(new_flow)
 
     def get_leader(self):
@@ -171,22 +171,23 @@ class SocketBasedNodeProcess(NodeProcess):
         ]
 
     def on_kill(self):
-        log.warning("Killing node %s", self.node.get_id())
+        log.warning("Crashing node %s", self.node.get_id())
         self.node.state = NodeState.inactive
         self.stop()
 
     def on_recover(self):
-        log.warning("Recovering node %s", self.node.get_id())
+        log.warning("Restarting node %s", self.node.get_id())
+        self.node.state = NodeState.active
         self._attempt_log_recovery()
+
         self.subscriber.recover()
         self.publisher.recover()
         self.heartbeat.recover()
-        self.node.state = NodeState.active
-        log.warning("Recovering node %s", self.node.get_id())
+
         self.sc_stage.restart()
 
     def update_flow(self):
-        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes, self.metrics, self.node.node_id)
         self.state_helper.update_flow(new_flow)
 
     def stop(self):
@@ -198,17 +199,20 @@ class SocketBasedNodeProcess(NodeProcess):
         self.sc_stage.stop()
 
     def _attempt_log_recovery(self):
+        log.debug("Node %d starting heartbeat WAL recovery", self.node.node_id)
+
         # -1 means no last known connection timestamp
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
         if not len(self.last_known_heartbeat):
-            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node_id)
+            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node.node_id)
             return
 
         for node in self.cluster.nodes:
-            if node != self.node:
+            if node.node_id != self.node.node_id:
                 try:
                     self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
-                except:
-                    log.warning("### Node %d has issues to recovery from log ", self.node.node_id)
-        log.debug("Node %d succeeds in recovery heartbeat from log ", self.node.node_id)
+                except Exception:
+                    log.warning("Node %d unable to recover heartbeat details from WAL for node %s", self.node.node_id, node)
+
+        log.debug("Node %d completed heartbeat WAL recovery", self.node.node_id)

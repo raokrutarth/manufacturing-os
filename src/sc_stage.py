@@ -6,8 +6,9 @@ from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
 from uuid import uuid4
-from nodes import NodeState
+from random import randint
 
+from nodes import NodeState
 from items import Item, ItemReq
 from file_dict import FileDict
 from messages import BatchRequest, \
@@ -68,11 +69,23 @@ class SuppyChainStage(Thread):
         self.pending_requests = set()
 
         # hack to stop stage
-        self.running = Event()
-        self.running.set()  # set the stage to run by default
+        self.stage_active = Event()
+        self.stage_active.set()  # set the stage to run by default
 
         self.manufacture_count = 0
         self.consumed_count = 0
+
+        self.metrics.set_metric(self.node_id, "failed_flow_queries", 0)
+        self.metrics.set_metric(self.node_id, "skipped_manufacture_cycles", 0)
+        self.metrics.set_metric(self.node_id, "batch_unavailable_messages_sent", 0)
+        self.metrics.set_metric(self.node_id, "successful_manufacture_cycles", 0)
+        self.metrics.set_metric(self.node_id, "flow_queries", 0)
+        self.metrics.set_metric(self.node_id, "wal_recovered_inbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "wal_recovered_outbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "wal_ghost_outbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "wal_ghost_inbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "empty_outbound_inventory_occurrences", 0)
+
         self._attempt_log_recovery()
 
         log.info("Node %d's stage bootstrap complete", self.node_id)
@@ -94,10 +107,12 @@ class SuppyChainStage(Thread):
         self.metrics.increase_metric(self.node_id, "flow_queries")
         while not flow:
             # cant proceed until flow is obtained
-            sleep(self.time_per_batch)
-            log.debug("Node %d waiting for flow to be set to start batch status verification", self.node_id)
+            log.debug("Node %d waiting for flow to be set to start batch status verification in WAL recovery", self.node_id)
+            self.metrics.increase_metric(self.node_id, "failed_flow_queries")
+
             flow = self.state_helper.get_flow()
             self.metrics.increase_metric(self.node_id, "flow_queries")
+            sleep(1)
 
         self._attempt_inbound_recovery(in_log, flow)
         self._attempt_outbound_recovery(out_log, flow)
@@ -123,6 +138,7 @@ class SuppyChainStage(Thread):
                 self._add_batch_to_inbound_queue(batch)
             elif state == BatchStatus.IN_QUEUE:
                 self._add_batch_to_inbound_queue(batch)
+                self.metrics.increase_metric(self.node_id, "wal_recovered_inbound_batches")
             elif state == BatchStatus.CONSUMED:
                 self.consumed_count += 1
                 self.metrics.increase_metric(self.node_id, "wal_recovered_inbound_batches")
@@ -148,6 +164,7 @@ class SuppyChainStage(Thread):
                 self.send_message(replay_message)
             elif state == BatchStatus.IN_QUEUE:
                 self.outbound_material.put(batch)
+                self.metrics.increase_metric(self.node_id, "wal_recovered_outbound_batches")
             elif state == BatchStatus.DELIVERED:
                 # we are sure the item was delivered downstream
                 self.manufacture_count += 1
@@ -162,7 +179,7 @@ class SuppyChainStage(Thread):
         '''
         log.critical("Node %d's stage is being stopped", self.node_id)
         # stop the production loop
-        self.running.clear()
+        self.stage_active.clear()
 
         # clear in-memory state
         self.outbound_material = None
@@ -176,8 +193,10 @@ class SuppyChainStage(Thread):
             Simulated restart after a crash. Initalise in-memory state
             and attempt a recovery from the WAL.
         '''
+        log.critical("Node %d's stage is being restarted", self.node_id)
         self.outbound_material = Queue()
         self._attempt_log_recovery()
+        self.stage_active.set()
 
     def get_stage_result_type(self):
         return self.item_dep.get_result_type()
@@ -246,6 +265,7 @@ class SuppyChainStage(Thread):
             # outbound queue is empty
             log.info("Node %d unable to supply %s because no batch of %s has been manufactired yet.",
                      self.node_id, request,  self.get_stage_result_type())
+            self.metrics.increase_metric(self.node_id, "empty_outbound_inventory_occurrences")
 
         reply = BatchUnavailableResponse(
             source=self.node_id,
@@ -254,6 +274,7 @@ class SuppyChainStage(Thread):
             request_id=request.request_id,
         )
         self.send_message(reply)
+        self.metrics.increase_metric(self.node_id, "batch_unavailable_messages_sent")
 
     def am_i_a_finale_item(self):
         """
@@ -278,8 +299,8 @@ class SuppyChainStage(Thread):
                 log.error("Node %d received invalid batch %s from node %d. Node %d's deps are %s. Ignoring received batch.",
                           self.node_id, batch, response.source, self.node_id, self.item_dep)
                 return
-            batch_seen_before = False
 
+            batch_seen_before = False
             if batch in self.inbound_log:
                 log.info("Node %d seeing duplicate send message for batch %s, will not add to inbound queue",
                          self.node_id, batch)
@@ -295,7 +316,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            sleep(self.time_per_batch)  # HACK simulated transit time
+            sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
@@ -313,6 +334,7 @@ class SuppyChainStage(Thread):
                 log.info("Node %d received batch %s from node %d and enqueued into inbound queue",
                          self.node_id, response.item_req, response.source)
         else:
+            self.metrics.increase_metric(self.node_id, "batch_unavailable_messages_received")
             log.warning("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. Request ID: %s",
                         self.node_id, response.item_req.item.type, response.source, response.request_id)
 
@@ -416,18 +438,19 @@ class SuppyChainStage(Thread):
 
         log.debug("Node %d starting manufacturing cycle of %s", self.node_id, self.get_stage_result_type())
 
-        while self.running.is_set():
+        while True:
+            self.stage_active.wait()  # Blocks until the stage is set to active
             sleep(self.time_per_batch)
 
             self.metrics.increase_metric(self.node_id, "total_manufacture_cycles")
-            self.metrics.set_metric(self.node_id, "batches_produced", self.manufacture_count)
-            self.metrics.set_metric(self.node_id, "batches_consumed", self.consumed_count)
-            self.metrics.set_metric(self.node_id, "unanswered_batch_requests", len(self.pending_requests))
+            self.metrics.set_metric(self.node_id, "batches_produced_total", self.manufacture_count)
+            self.metrics.set_metric(self.node_id, "batches_consumed_total", self.consumed_count)
+            self.metrics.set_metric(self.node_id, "unanswered_batch_requests_current", len(self.pending_requests))
             self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
 
             if self.node.state == NodeState.inactive:
-                log.error("Node %d's stage still running after node was set to inactive", self.node_id)
+                log.error("Node %d's stage still running after node process was set to inactive", self.node_id)
                 continue
 
             flow = self.state_helper.get_flow()
@@ -436,6 +459,7 @@ class SuppyChainStage(Thread):
                 log.error("Node %d unable to retrieve flow to acquire items %s. Skipping cycle.",
                           self.node_id, self.item_dep.get_prereq())
                 self.metrics.increase_metric(self.node_id, "skipped_manufacture_cycles")
+                self.metrics.increase_metric(self.node_id, "failed_flow_queries")
                 continue
 
             latest_suppliers = flow.getIncomingFlowsForNode(self.node_id)  # [(1, ItemReq(Item(type:1)...uantity:1))]
