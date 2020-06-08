@@ -151,8 +151,6 @@ def bootstrap_demo():
     demo_nodes[22].dependency = ItemDependency([door_knob, door_frame, window_frame], raw_door)
     demo_nodes[23].dependency = ItemDependency([hinge, casing, raw_door], finished_door)
 
-
-
     return demo_nodes
 
 
@@ -252,6 +250,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
+    random.seed()
     G = nx.DiGraph()
     for i in range(1, nodes+1):
         G.add_node(i)

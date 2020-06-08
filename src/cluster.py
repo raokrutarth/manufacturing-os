@@ -293,12 +293,12 @@ def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode], metrics, node_
 
 # for testing purposes
 def _test():
-    # number_types = 10
-    # complexity = "medium"
-    # nodes_per_type = 10
-    # demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
+    number_types = 10
+    complexity = "medium"
+    nodes_per_type = 10
+    demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
     
-    demo_nodes = basecases.bootstrap_demo()
+    # demo_nodes = basecases.bootstrap_demo()
     
     print("Nodes have been created.")
     print(demo_nodes)
