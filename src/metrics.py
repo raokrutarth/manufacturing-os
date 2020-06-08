@@ -51,7 +51,7 @@ class Metrics:
                 "value": value if mode != DFOperation.Decrease else (-1 * value),
             }, ignore_index=True)
         self._updates_until_persist += 1
-        if not self._updates_until_persist % 10000:
+        if not self._updates_until_persist % 100:
             self._persist_metrics()
 
     def increase_metric(self, node_id: int, metric_name: str, value: float = 1.0):

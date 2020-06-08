@@ -481,7 +481,7 @@ class MessageHandler(object):
 
     def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
-        log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
+        # log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
         self.node_process.update_heartbeat(message.source)
 
     def on_update_req(self, message):
