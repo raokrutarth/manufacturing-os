@@ -22,11 +22,20 @@ class Metricparser:
         self.df = self._get_full_df()
 
     def _get_full_df(self):
-        try:
-            return pd.concat([pd.read_csv(f) for f in self.metrics_files], ignore_index=True)
-        except Exception as e:
-            log.error("Unable to read metrics in directory {} and files {} with exception {}. Exiting.".format(self.m_dir, e, self.metrics_files))
-            sys.exit(1)
+
+        dfs = []
+        if not self.metrics_files:
+            log.error("Not metrics files in {}".format(self.m_dir))
+
+        for fn in self.metrics_files:
+            try:
+                new_df = pd.read_csv(fn)
+                dfs.append(new_df)
+            except Exception as e:
+                log.error("Unable to read metrics in file {} with exception {}. Skipping.".format(fn, e))
+                continue
+
+        return pd.concat(dfs, ignore_index=True)
 
     def _augment_results(self):
         # compute messages sent - heartbeats
@@ -47,7 +56,7 @@ class Metricparser:
 
 
 if __name__ == "__main__":
-    mp = Metricparser("../tmp")
+    mp = Metricparser("./tmp")
     mp._print_all_data()
     mp._augment_results()
     mp._print_all_metric_stats()

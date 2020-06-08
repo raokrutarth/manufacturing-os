@@ -84,6 +84,7 @@ class SuppyChainStage(Thread):
         self.metrics.set_metric(self.node_id, "wal_ghost_outbound_batches", 0)
         self.metrics.set_metric(self.node_id, "wal_ghost_inbound_batches", 0)
         self.metrics.set_metric(self.node_id, "empty_outbound_inventory_occurrences", 0)
+        self.metrics.set_metric(self.node_id, "batches_delivered", 0)
 
         self._attempt_log_recovery()
 

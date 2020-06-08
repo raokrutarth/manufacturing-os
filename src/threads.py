@@ -1,22 +1,20 @@
-import zmq
 import logging
 import pickle
 import messages
-from time import sleep
+from time import sleep, time
 from concurrent.futures import ThreadPoolExecutor
 
-from time import sleep, time
 from threading import Thread
-from nodes import NodeState
 
 log = logging.getLogger()
 
 
 class SubscribeThread(Thread):
-    def __init__(self, node_process: 'SocketBasedNodeProcess'):
+    def __init__(self, node_process):
         super(SubscribeThread, self).__init__()
 
         self.node_process = node_process
+        self.port = self.node_process.port
         self.node_id = node_process.node_id
         self.DELAY = 0.001
 
@@ -60,7 +58,7 @@ class SubscribeThread(Thread):
 
 class PublishThread(Thread):
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=0.001):
+    def __init__(self, node_process, delay=0.001):
         super(PublishThread, self).__init__()
 
         self.node_process = node_process

@@ -363,12 +363,13 @@ class MessageHandler(object):
             log.debug("sending message %s from node %s", message, self.node_id)
         else:
             log.info("sending message %s from node %s", message, self.node_id)
+
         self.node_process.message_queue.put(message)
         self.metrics.increase_metric(self.node_id, "sent_messages")
         self.metrics.increase_metric(self.node_id, "%s_sent" % (message.__class__.__name__))
 
         taken = time.time() - start
-        if taken > 0.1:
+        if taken > 0.5:
             log.warning("Node %d took %.2f seconds to send message", self.node_id, taken)
 
     def onMessage(self, message):

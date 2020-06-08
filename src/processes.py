@@ -117,7 +117,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
-        # self.startThread(self.heartbeat, 'heartbeat')
+        self.startThread(self.heartbeat, 'heartbeat')
         self.startThread(self.sc_stage, 'sc-stage')
         self.startThread(self.op_runner, 'ops-runner')
 
