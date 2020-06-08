@@ -151,7 +151,7 @@ class HeartbeatThread(Thread):
 
         while True:
             if self.node_process.node().state == NodeState.inactive:
-                sleep(0.01)
+                sleep(0.05)
                 continue
 
             message = messages.MessageHandler.getMsgForAction(

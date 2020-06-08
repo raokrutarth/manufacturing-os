@@ -112,7 +112,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
         self.startThread(self.heartbeat, 'heartbeat')
-        self.startThread(self.sc_stage, 'production-stage')
+        self.startThread(self.sc_stage, 'sc-stage')
         self.startThread(self.op_runner, 'ops-runner')
 
         # Wait for leader to be elected
@@ -180,12 +180,18 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
     def on_kill(self):
         log.warning("Crashing node %s", self.node_id)
-        self.node().state = NodeState.inactive
+        cluster = self.cluster()
+        cluster.nodes[self.node_id].state = NodeState.inactive
+        self.set_cluster(cluster)
         self.stop()
 
     def on_recover(self):
         log.warning("Restarting node %s", self.node_id)
-        self.node().state = NodeState.active
+
+        cluster = self.cluster()
+        cluster.nodes[self.node_id].state = NodeState.active
+        self.set_cluster(cluster)
+
         self._attempt_log_recovery()
 
         self.subscriber.recover()
@@ -200,7 +206,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
     def stop(self):
         # flush in-memory state
-        self.last_known_heartbeat = None
+        self.last_known_heartbeat = {}
         self.subscriber.stop()
         self.publisher.stop()
         self.heartbeat.stop()
@@ -217,10 +223,12 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
             return
 
         for node in self.cluster().nodes:
-            if node.node_id != self.node_id:
+            node_id = node.node_id
+            if node_id != self.node_id:
                 try:
-                    self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
-                except Exception:
-                    log.warning("Node %d unable to recover heartbeat details from WAL for node %s", self.node_id, node)
+                    self.last_known_heartbeat[node_id] = self.last_known_heartbeat_log[node_id]
+                except:
+                    log.warning(
+                        "Node %d unable to recover heartbeat details from WAL for node %s", self.node_id, node_id)
 
         log.debug("Node %d completed heartbeat WAL recovery", self.node_id)
