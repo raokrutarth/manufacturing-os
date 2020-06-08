@@ -129,7 +129,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         if self.node().state == NodeState.inactive:
             # no threads of the node should be sending messages
             # if the node is inactive.
-            raise Exception
+            log.warning("Race conditions hit: Skipping sending of message.")
+            return
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):

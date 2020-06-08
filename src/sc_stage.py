@@ -52,6 +52,7 @@ class SuppyChainStage(Thread):
         self.name = "sc-stage-{}".format(node_process.node_id)
         self.item_dep = node_process.node().get_dependency()
         self.inbound_material = {}  # map of item-type -> Queue()
+
         self.outbound_material = Queue()
         self.time_per_batch = time_per_batch
         self.state_helper = node_process.state_helper
@@ -183,11 +184,12 @@ class SuppyChainStage(Thread):
         # stop the production loop
         self.stage_active.clear()
 
-        # clear in-memory state
-        self.outbound_material = None
+        # clear in-memory state;
+        # Init to Queue() as it sometimes fails due to race condition
+        self.outbound_material = Queue()
         for item_type in self.inbound_material:
             # Set all inbound queues to null
-            self.inbound_material[item_type] = None
+            self.inbound_material[item_type] = Queue()
         self.manufacture_count = self.consumed_count = 0
 
     def restart(self):
