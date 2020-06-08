@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     blueprint = ctr.ClusterBlueprint(nodes)
     cluster = ctr.Cluster(blueprint)
-    flow = ctr.bootstrap_flow(cluster.nodes)
+    flow = ctr.bootstrap_flow(cluster.nodes, Metrics("ui-test"), 999999)  # HACK
 
     plotter = ClusterPlotter(cluster)
     plotter.plot_flow(flow)

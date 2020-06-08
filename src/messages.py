@@ -462,7 +462,7 @@ class MessageHandler(object):
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
             # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
-            new_flow = ctr.bootstrap_flow(self.node_process.cluster.nodes)
+            new_flow = ctr.bootstrap_flow(self.node_process.cluster.nodes, self.metrics, self.node_id)
             self.node_process.state_helper.update_flow(new_flow)
             log.debug("Received Update Dependency Request from %s", message.source)
 
