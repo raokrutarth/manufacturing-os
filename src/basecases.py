@@ -95,6 +95,64 @@ def bootstrap_dependencies_seven_nodes():
 
     return demo_nodes
 
+def bootstrap_demo():
+    """
+    initialize demo_node with the following dependencies
+    start -> | metal  --> | -> frame | -> | -> window
+             | screws --> | 
+             | metal  --> | -> frame | -> |
+             | screws --> |
+             | glass  ------------------> |
+             | glass  ------------------> |
+    """
+
+    # All item reqs here involve 1 unit of product. So we have redundant sources of materials.
+
+    demo_nodes = [
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(24)
+    ]
+
+    start = ItemReq(Item('start', None), 1)
+    metal = ItemReq(Item('metal', None), 1)
+    screws = ItemReq(Item('screws', None), 1)
+    glass = ItemReq(Item('glass', None), 1)
+    wood = ItemReq(Item('wood', None), 1)
+    window_frame = ItemReq(Item('window_frame', None), 1)
+    door_knob = ItemReq(Item('door_knob', None), 1)
+    door_frame = ItemReq(Item('door_frame', None), 1)
+    window = ItemReq(Item('window', None), 1)
+    hinge = ItemReq(Item('hinge', None), 1) 
+    casing = ItemReq(Item('casing', None), 1)
+    raw_door = ItemReq(Item('raw_door', None), 1)
+    finished_door = ItemReq(Item('finished_door', None), 1)
+    
+    demo_nodes[0].dependency = ItemDependency([], start)
+    demo_nodes[1].dependency = ItemDependency([start], metal)
+    demo_nodes[2].dependency = ItemDependency([start], metal)
+    demo_nodes[3].dependency = ItemDependency([start], screws)
+    demo_nodes[4].dependency = ItemDependency([start], screws)
+    demo_nodes[5].dependency = ItemDependency([start], wood)
+    demo_nodes[6].dependency = ItemDependency([start], wood)
+    demo_nodes[7].dependency = ItemDependency([start], glass)
+    demo_nodes[8].dependency = ItemDependency([start], glass)
+    demo_nodes[9].dependency = ItemDependency([screws, wood], window_frame)
+    demo_nodes[10].dependency = ItemDependency([screws, wood], window_frame)
+    demo_nodes[11].dependency = ItemDependency([metal, screws], door_knob)
+    demo_nodes[12].dependency = ItemDependency([metal, screws], door_knob)
+    demo_nodes[13].dependency = ItemDependency([screws, wood], door_frame)
+    demo_nodes[14].dependency = ItemDependency([screws, wood], door_frame)
+    demo_nodes[15].dependency = ItemDependency([window_frame, glass], window)
+    demo_nodes[16].dependency = ItemDependency([window_frame, glass], window)
+    demo_nodes[17].dependency = ItemDependency([metal], hinge)
+    demo_nodes[18].dependency = ItemDependency([metal], hinge)
+    demo_nodes[19].dependency = ItemDependency([screws, wood], casing)
+    demo_nodes[20].dependency = ItemDependency([screws, wood], casing)
+    demo_nodes[21].dependency = ItemDependency([door_knob, door_frame, window_frame], raw_door)
+    demo_nodes[22].dependency = ItemDependency([door_knob, door_frame, window_frame], raw_door)
+    demo_nodes[23].dependency = ItemDependency([hinge, casing, raw_door], finished_door)
+
+    return demo_nodes
+
 
 # Creates Random DAG!
 def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
@@ -144,7 +202,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
     log.debug("All nodes in Random DAG without outgoing edges %s will point to the end node", end_nodes)
 
     demo_nodes = []     # Create nodes_num demo_nodes
-    node_ids = list(range(0, type_num * nodes_per_type))
+    node_ids = list(range(0, type_num * nodes_per_type + 2))
 
     for i in range(type_num):
         if i == 0:
@@ -158,7 +216,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
             demo_nodes.append(node_tmp)
 
         else:
-            for j in range(1, random.randint(2, nodes_per_type)):
+            for j in range(nodes_per_type):
                 node_tmp = SingleItemNode(node_id=node_ids.pop(0), dependency=None)
                 node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
                 demo_nodes.append(node_tmp)
@@ -192,6 +250,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
+    random.seed()
     G = nx.DiGraph()
     for i in range(1, nodes+1):
         G.add_node(i)
