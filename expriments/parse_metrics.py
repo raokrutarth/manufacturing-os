@@ -19,12 +19,17 @@ log = logging.getLogger()
 class Metricparser:
 
     def __init__(self, metrics_dir):
-        log.info("Starting to parse exprimental metrics from {}".format(metrics_dir))
+        self.m_dir = metrics_dir
+        log.info("Starting to parse exprimental metrics from {}".format(self.m_dir))
         self.metrics_files = glob.glob(metrics_dir + "/*metrics*.csv")
         self.df = self._get_full_df()
 
     def _get_full_df(self):
-        return pd.concat([pd.read_csv(f) for f in self.metrics_files], ignore_index=True)
+        try:
+            return pd.concat([pd.read_csv(f) for f in self.metrics_files], ignore_index=True)
+        except pd.errors.EmptyDataError:
+            log.error("No metrics present in directory {} and files {}. Exiting.".format(self.m_dir, self.metrics_files))
+            sys.exit(1)
 
     def _print_all_data(self):
         self.df.round(2)

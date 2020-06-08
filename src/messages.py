@@ -359,6 +359,7 @@ class MessageHandler(object):
         log.info("sending message %s from node %s", message, self.node.node_id)
         self.node_process.message_queue.put(message)
         self.metrics.increase_metric(self.node.node_id, "sent_messages")
+        self.metrics.increase_metric(self.node.node_id, "%s_sent" % (type(message)))
 
     def onMessage(self, message):
         """
@@ -387,6 +388,7 @@ class MessageHandler(object):
             return None
         else:
             self.metrics.increase_metric(self.node.node_id, "received_messages")
+            self.metrics.increase_metric(self.node.node_id, "%s_received" % (type(message)))
             log.info("Received: %s from %s", message, message.source)
             return self.callbacks[message.type][message.action](message)
 
