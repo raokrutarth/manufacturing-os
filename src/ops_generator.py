@@ -86,6 +86,9 @@ def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_ra
     if recover_rate < failure_rate:
         log.critical("CRITICAL: Cluster may eventually die! Check this is what you want..")
 
+    # Turn off schedules massive logging
+    logging.getLogger('schedule').propagate = False
+
     # Recovery happens every K seconds instead of 1 second, we want nodes to stay killed for a while
     recover_step = 4
 

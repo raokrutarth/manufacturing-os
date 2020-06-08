@@ -355,7 +355,11 @@ class MessageHandler(object):
         return callbacks
 
     def sendMessage(self, message):
-        log.info("sending message %s from node %s", message, self.node_id)
+        is_msg_heartbeat = message.action == Action.Heartbeat
+        if is_msg_heartbeat:
+            log.debug("sending message %s from node %s", message, self.node_id)
+        else:
+            log.info("sending message %s from node %s", message, self.node_id)
         self.node_process.message_queue.put(message)
         self.metrics.increase_metric(self.node_id, "sent_messages")
 
@@ -386,7 +390,10 @@ class MessageHandler(object):
             return None
         else:
             self.metrics.increase_metric(self.node_id, "received_messages")
-            log.info("Received: %s from %s", message, message.source)
+            if is_msg_heartbeat:
+                log.debug("Received: %s from %s", message, message.source)
+            else:
+                log.info("Received: %s from %s", message, message.source)
             return self.callbacks[message.type][message.action](message)
 
     """

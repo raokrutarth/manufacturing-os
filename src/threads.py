@@ -157,7 +157,6 @@ class HeartbeatThread(Thread):
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )
-            log.info("Node %s sending heartbeat %s", self.node_id, message)
             self.node_process.sendMessage(message)
             self.metrics.increase_metric(self.node_id, "heartbeats_sent")
             self.send_message_for_dead_nodes()
