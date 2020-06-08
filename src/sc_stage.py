@@ -74,6 +74,18 @@ class SuppyChainStage(Thread):
 
         self.manufacture_count = 0
         self.consumed_count = 0
+
+        self.metrics.set_metric(self.node_id, "failed_flow_queries", 0)
+        self.metrics.set_metric(self.node_id, "skipped_manufacture_cycles", 0)
+        self.metrics.set_metric(self.node_id, "batch_unavailable_messages_sent", 0)
+        self.metrics.set_metric(self.node_id, "successful_manufacture_cycles", 0)
+        self.metrics.set_metric(self.node_id, "flow_queries", 0)
+        self.metrics.set_metric(self.node_id, "wal_recovered_inbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "wal_recovered_outbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "wal_ghost_outbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "wal_ghost_inbound_batches", 0)
+        self.metrics.set_metric(self.node_id, "empty_outbound_inventory_occurrences", 0)
+
         self._attempt_log_recovery()
 
         log.info("Node %d's stage bootstrap complete", self.node_id)
