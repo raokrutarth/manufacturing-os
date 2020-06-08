@@ -106,6 +106,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
     output: nodes that form a random DAG
     '''
+
     log.info("Creating random DAG with %d types of items, with max. %d nodes per type and cluster complexity %s", type_num, nodes_per_type, complexity)
 
     if type_num < 4:
