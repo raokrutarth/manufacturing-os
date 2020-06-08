@@ -139,8 +139,8 @@ class HeartbeatReq(Message):
     """
     Signal to every node to response with heartbeat
     """
-    def __init__(self, source):
-        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request)
+    def __init__(self, source, dest):
+        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request, dest)
 
 
 class HeartbeatResp(Message):
@@ -277,7 +277,36 @@ class MessageHandler(object):
     """
 
     @staticmethod
-    def getMsgForAction(source, action: Action, msg_type: MsgType, dest=Message.ALL, ctx=0):
+    def should_process_msg_for_node_id(message: Message, node_id: int):
+        """
+        Multiple checks to decide whether to process message
+            - Check recipient
+                - If message is broadcast, you are a recipient
+                - If not, check if you're recipient
+            - If not recipient, ignore
+            - Else,
+                - If message is heartbeat
+                    - If it is from self, ignore
+                    - else, process
+                - else process
+        Act according to the above
+        """
+
+        is_msg_only_for_me = message.dest == node_id
+        is_msg_for_all = message.dest == Message.ALL
+        is_msg_for_me = is_msg_only_for_me or is_msg_for_all
+        is_msg_heartbeat = message.action == Action.Heartbeat
+        is_msg_from_me = message.source == node_id
+
+        if not is_msg_for_me:
+            return False
+        elif is_msg_heartbeat and is_msg_from_me:
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def getMsgForAction(source: int, action: Action, msg_type: MsgType, dest: int, ctx=0):
         """
             returns an object of type Message for the specified message
         """
@@ -289,7 +318,7 @@ class MessageHandler(object):
             return AllocateReq(source)
         elif action == Action.Heartbeat:
             if msg_type == MsgType.Request:
-                return HeartbeatReq(source)
+                return HeartbeatReq(source, dest)
             else:
                 return HeartbeatResp(source, dest)
         elif action == Action.Update:
@@ -364,37 +393,13 @@ class MessageHandler(object):
         self.metrics.increase_metric(self.node_id, "sent_messages")
 
     def onMessage(self, message):
-        """
-        Multiple checks to decide whether to process message
-            - Check recipient
-                - If message is broadcast, you are a recipient
-                - If not, check if you're recipient
-            - If not recipient, ignore
-            - Else,
-                - If message is heartbeat
-                    - If it is from self, ignore
-                    - else, process
-                - else process
-        Act according to the above
-        """
-
-        is_msg_only_for_me = message.dest == self.node_id
-        is_msg_for_all = message.dest == Message.ALL
-        is_msg_for_me = is_msg_only_for_me or is_msg_for_all
-        is_msg_heartbeat = message.action == Action.Heartbeat
-        is_msg_from_me = message.source == self.node_id
-
-        if not is_msg_for_me:
-            return None
-        elif is_msg_heartbeat and is_msg_from_me:
-            return None
-        else:
+        should_process = self.should_process_msg_for_node_id(message, self.node_id)
+        if should_process:
             self.metrics.increase_metric(self.node_id, "received_messages")
-            if is_msg_heartbeat:
-                log.debug("Received: %s from %s", message, message.source)
-            else:
-                log.info("Received: %s from %s", message, message.source)
+            log.debug("Received: %s from %s", message, message.source)
             return self.callbacks[message.type][message.action](message)
+        else:
+            return None
 
     """
     Callback implementations of all possible messages and their requests/response variants

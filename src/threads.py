@@ -38,7 +38,11 @@ class SubscribeThread(Thread):
 
             message = self.node_process.comm_queues[self.node_id].get()
             message = pickle.loads(message)
-            self.node_process.onMessage(message)
+
+            # Add early skipping of messages based on destination
+            should_process = messages.MessageHandler.should_process_msg_for_node_id(message, self.node_id)
+            if should_process:
+                self.node_process.onMessage(message)
 
 
 class PublishThread(Thread):
