@@ -106,5 +106,6 @@ def run_generator(metrics, queues, cluster, failure_rate=0, recovery_rate=0.0, u
     schedule.every(1).seconds.do(kill_node, metrics, cluster, queues, failure_prob_per_sec, leader_can_fail)
 
     while True:
+        metrics.increase_metric(-1, "ops_generator_cycles")
         schedule.run_pending()
         time.sleep(0.01)
