@@ -141,5 +141,6 @@ class HeartbeatThread(Thread):
                 msg_type=messages.MsgType.Request,
             )
             self.node_process.sendMessage(message)
-            self.send_message_for_dead_nodes()
+
             sleep(self.delay)
+            self.send_message_for_dead_nodes()

@@ -161,7 +161,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
                   .format(self.node_id, curr_time, node_id))
         self.last_known_heartbeat[node_id] = curr_time
         # Removing as it takes a lot of time
-        # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
+        self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
 
     def detect_and_fetch_dead_nodes(self):
         """
