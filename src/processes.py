@@ -118,7 +118,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
         self.startThread(self.heartbeat, 'heartbeat')
-        self.startThread(self.sc_stage, 'sc-stage')
+        # self.startThread(self.sc_stage, 'sc-stage')
         self.startThread(self.op_runner, 'ops-runner')
 
         # Wait for leader to be elected
@@ -184,14 +184,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
 
-        for nid, lt in self.last_known_heartbeat.items():
-            if (lt < (curr_time - margin)) and (lt >= 0):
-                log.warning(
-                    'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
-                        self.node_id, nid, lt, curr_time))
-
         return [
-            nid for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
+            (nid, lt) for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
     def on_kill(self):

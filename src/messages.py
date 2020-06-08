@@ -292,6 +292,9 @@ class MessageHandler(object):
         Act according to the above
         """
 
+        assert type(message.dest) == int
+        assert type(node_id) == int
+
         is_msg_only_for_me = message.dest == node_id
         is_msg_for_all = message.dest == Message.ALL
         is_msg_for_me = is_msg_only_for_me or is_msg_for_all
@@ -511,7 +514,7 @@ class MessageHandler(object):
             print(message)
 
         is_leader = self.node_process.state_helper.am_i_leader()
-        if is_leader:
+        if False and is_leader:
             self.node_process.update_death_of_node(message.dead_node_id)
             self.node_process.update_flow()
             log.warning("Received Death information request from %s", message.source)

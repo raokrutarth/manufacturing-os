@@ -2,6 +2,7 @@ import zmq
 import logging
 import pickle
 import messages
+import time
 
 from copy import deepcopy
 from time import sleep
@@ -42,7 +43,12 @@ class SubscribeThread(Thread):
             # Add early skipping of messages based on destination
             should_process = messages.MessageHandler.should_process_msg_for_node_id(message, self.node_id)
             if should_process:
+                print(self.node_id, message.action, end=",")
                 self.node_process.onMessage(message)
+            else:
+                print(self.node_id, message.action, self.node_process.comm_queues[self.node_id], end=",")
+
+            sleep(0.1)
 
 
 class PublishThread(Thread):
@@ -69,7 +75,7 @@ class PublishThread(Thread):
 
         while True:
             if not self.node_process.is_active:
-                sleep(0.01)
+                sleep(0.1)
                 continue
 
             message = self.node_process.message_queue.get()
@@ -108,14 +114,21 @@ class HeartbeatThread(Thread):
         for nid in self.neighbor_ids:
             if nid not in old_neighbor_ids:
                 # Give some time to the newly added neighbor before assuming its dead
-                self.node_process.reinit_timestamp(nid)
+                self.node_process.reinit_last_timestamp(nid)
 
     def send_message_for_dead_nodes(self):
         dead_node_ids = self.node_process.detect_and_fetch_dead_nodes()
-        for node_id in dead_node_ids:
+        curr_time = time.time()
+
+        for node_id, lt in dead_node_ids:
             if node_id not in self.neighbor_ids:
                 # Do nothing if this is not a neighbor
                 pass
+
+            log.warning(
+                'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
+                    self.node_id, node_id, lt, curr_time))
+
             # Send a request to the leader informing of death
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node_id,
@@ -137,8 +150,18 @@ class HeartbeatThread(Thread):
     def _attempt_log_recovery(self):
         pass
 
+    def wait_for_flow_before_starting_heartbeats(self):
+        while 1:
+            flow = self.node_process.state_helper.get_flow(safe=False)
+            if flow is None:
+                sleep(0.5)
+            else:
+                return
+
     def run(self):
         log.debug('Node %s starting heartbeat thread', self.node_id)
+        self.wait_for_flow_before_starting_heartbeats()
+        log.critical('Node %s starting heartbeat thread after verifying flow', self.node_id)
 
         while True:
             if not self.node_process.is_active:
@@ -158,5 +181,6 @@ class HeartbeatThread(Thread):
                 )
                 self.node_process.sendMessage(message)
                 self.metrics.increase_metric(self.node_id, "heartbeats_sent")
+
             self.send_message_for_dead_nodes()
             sleep(self.delay)
