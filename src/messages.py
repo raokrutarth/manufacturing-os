@@ -477,7 +477,7 @@ class MessageHandler(object):
             dest=message.source
         )
         self.sendMessage(response)
-        # need to record the source is alive
+        self.node_process.update_heartbeat(message.source)
 
     def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat

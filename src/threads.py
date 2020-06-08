@@ -174,7 +174,9 @@ class HeartbeatThread(Thread):
                 continue
 
             message = messages.MessageHandler.getMsgForAction(
-                source=self.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
+                source=self.node_id,
+                action=messages.Action.Heartbeat,
+                msg_type=messages.MsgType.Request,
             )
             self.node_process.sendMessage(message)
             self.send_message_for_dead_nodes()

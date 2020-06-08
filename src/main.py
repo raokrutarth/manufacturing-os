@@ -207,7 +207,7 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=3,
+        default=2,
         type=int
     )
 

@@ -67,7 +67,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
         # Execution constants for the process
         self.heartbeat_delay = 2
-        self.num_unresponded_heartbeats_for_death = 10
+        self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = cluster.get_node_process_spec(self.node_id)
         self.port = self.process_spec.port
