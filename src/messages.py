@@ -2,7 +2,6 @@ import enum
 import logging
 import time
 
-import cluster as ctr
 from items import ItemDependency, ItemReq
 
 
@@ -316,6 +315,9 @@ class MessageHandler(object):
         self.callbacks = self.get_action_callbacks()
         self.metrics = self.node_process.metrics
 
+        self.metrics.set_metric(self.node_id, "sent_messages", 0)
+        self.metrics.set_metric(self.node_id, "received_messages", 0)
+
     def get_action_callbacks(self):
         """
             Returns the message type -> function nested map
@@ -364,13 +366,16 @@ class MessageHandler(object):
         else:
             log.info("sending message %s from node %s", message, self.node_id)
 
-        self.node_process.message_queue.put(message)
-        self.metrics.increase_metric(self.node_id, "sent_messages")
-        self.metrics.increase_metric(self.node_id, "%s_sent" % (message.__class__.__name__))
+        try:
+            self.node_process.message_queue.put_nowait(message)
+            self.metrics.increase_metric(self.node_id, "sent_messages")
+            self.metrics.increase_metric(self.node_id, "%s_sent" % (message.__class__.__name__))
 
-        taken = time.time() - start
-        if taken > 0.5:
-            log.warning("Node %d took %.2f seconds to send message", self.node_id, taken)
+            taken = time.time() - start
+            if taken > 0.5:
+                log.warning("Node %d took %.2f seconds to send message", self.node_id, taken)
+        except Exception:
+            log.error("Node %d unable to send message %d. Internal message queue full/closed", self.node_id, message)
 
     def onMessage(self, message):
         """
@@ -478,7 +483,7 @@ class MessageHandler(object):
             dest=message.source
         )
         self.sendMessage(response)
-        self.node_process.update_heartbeat(message.source)
+        # self.node_process.update_heartbeat(message.source)
 
     def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
@@ -507,9 +512,6 @@ class MessageHandler(object):
 
     def on_inform_death_req(self, message: InformLeaderOfDeathReq):
         assert message.action == Action.InformLeaderOfDeath
-
-        if message.dead_node_id is None:
-            print(message)
 
         is_leader = self.node_process.state_helper.am_i_leader()
         if is_leader:

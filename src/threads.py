@@ -1,8 +1,6 @@
 import logging
-import pickle
 import messages
 from time import sleep, time
-from concurrent.futures import ThreadPoolExecutor
 
 from threading import Thread
 
@@ -31,10 +29,12 @@ class SubscribeThread(Thread):
     def run(self):
         log.debug('Node %s starting subscriber thread', self.node_id)
 
-        worker_pool = ThreadPoolExecutor(
-            max_workers=12,
-            thread_name_prefix="subscriber-%d-worker" % (self.node_id),
-        )
+        def _process_msg(msg):
+            start = time()
+            self.node_process.onMessage(msg)
+            taken = time() - start
+            if taken > 0.5:
+                log.warn("Node %d took time %.2f sec to process %s", self.node_id, taken, msg.__class__.__name__)
 
         message_q = self.node_process.comm_queues[self.node_id]
         while True:
@@ -42,18 +42,7 @@ class SubscribeThread(Thread):
                 continue
 
             message = message_q.get()
-
-            def _process_msg(msg):
-                start = time()
-                msg = pickle.loads(msg)
-                self.node_process.onMessage(msg)
-                taken = time() - start
-                if taken > 0.5:
-                    log.warn("Node %d took time %.2f to process %s", self.node_id, taken, msg.__class__.__name__)
-
-            # process the message in a thread instead of blocking the subscriber
-            worker_pool.submit(_process_msg, (message,))
-            # _process_msg(message)
+            _process_msg(message)
 
 
 class PublishThread(Thread):
@@ -84,12 +73,18 @@ class PublishThread(Thread):
                 continue
 
             message = self.node_process.message_queue.get()
-            bmsg = pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL)
-            if message.dest == -1:
-                for nid in self.node_process.node_ids:
-                    self.node_process.comm_queues[nid].put(bmsg)
-            else:
-                self.node_process.comm_queues[message.dest].put(bmsg)
+            # bmsg = pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL)
+            bmsg = message
+            try:
+                if message.dest == -1:
+                    for nid in self.node_process.node_ids:
+                        if nid != self.node_id:
+                            self.node_process.comm_queues[nid].put_nowait(bmsg)
+                else:
+                    if message.dest != self.node_id:
+                        self.node_process.comm_queues[message.dest].put_nowait(bmsg)
+            except Exception:
+                log.error("Node's %d publisher dropping message %s instead of sending it", self.node_id, message)
 
 
 class HeartbeatThread(Thread):

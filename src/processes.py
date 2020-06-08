@@ -34,7 +34,7 @@ class FileDictBasedNodeProcess(object):
         self.set_cluster(cluster)
 
         # use a thread-safe queue as message queue to
-        # transfer messages from thread __ to the publisher thread
+        # transfer messages from inter-node threads to the node's publisher
         self.message_queue = Queue()
 
     def node(self):
@@ -46,15 +46,6 @@ class FileDictBasedNodeProcess(object):
 
     def cluster(self):
         return self.state_helper.get_cluster()
-
-    def sendMessage(self, message):
-        pass
-
-    def broadcastMessage(self, message):
-        pass
-
-    def onMessage(self, message):
-        pass
 
 
 class SocketBasedNodeProcess(FileDictBasedNodeProcess):
@@ -70,7 +61,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.is_active = True
 
         # Execution constants for the process
-        self.heartbeat_delay = 2
+        self.heartbeat_delay = 5
         self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = cluster.get_node_process_spec(self.node_id)
