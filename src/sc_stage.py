@@ -325,7 +325,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
+            sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE

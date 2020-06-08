@@ -117,7 +117,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')
-        self.startThread(self.heartbeat, 'heartbeat')
+        # self.startThread(self.heartbeat, 'heartbeat')
         self.startThread(self.sc_stage, 'sc-stage')
         self.startThread(self.op_runner, 'ops-runner')
 
@@ -166,7 +166,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         # precise synced distributed clocks
         assert type(node_id) == int
         curr_time = time.time()
-        log.warning("Node {} received a heartbeat response at {} from {}"
+        log.debug("Node {} received a heartbeat response at {} from {}"
                     .format(self.node_id, curr_time, node_id))
         self.last_known_heartbeat[node_id] = curr_time
         # Removing as it takes a lot of time
