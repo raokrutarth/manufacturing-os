@@ -56,8 +56,8 @@ log.addHandler(fileHandler)
 log.addHandler(consoleHandler)
 
 
-def run_node_routine(node, cluster, queue):
-    node_process = processes.SocketBasedNodeProcess(node, cluster, queue)
+def run_node_routine(node, cluster, queue, cqueues):
+    node_process = processes.SocketBasedNodeProcess(node, cluster, queue, cqueues)
     node_process.start()
     log.debug("Node %d started", node.node_id)
     while 1:
@@ -106,11 +106,14 @@ def main(args):
 
     process_list = list()
     queues = {}
+    comm_queues = {}
 
     # Create messaging queues to interact with cluster
     for node in cluster.nodes:
         queue = Queue()
         queues[node.node_id] = queue
+        cqueue = Queue()
+        comm_queues[node.node_id] = cqueue
 
     # Contain multiple misc threads which are useful
     main_metrics = Metrics("main-thread")
@@ -134,7 +137,7 @@ def main(args):
 
     try:
         for node in cluster.nodes:
-            node_args = (node, cluster, queues[node.node_id])
+            node_args = (node, cluster, queues[node.node_id], comm_queues)
             p = Process(target=run_node_routine, args=node_args)
             p.start()
             process_list.append(p)

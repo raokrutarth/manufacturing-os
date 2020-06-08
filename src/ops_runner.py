@@ -97,7 +97,7 @@ class OpsRunnerThread(Thread):
                 self.node_process.on_recover()
             else:
                 # node is being requested to run
-                if self.node_process.node().state == NodeState.active:
+                if not self.node_process.is_active:
                     msg = self.get_message_from_op(op)
                     log.debug('Node %s responding to operation %s with %s', self.node_id, op, msg)
                     self.node_process.sendMessage(msg)

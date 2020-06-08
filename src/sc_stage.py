@@ -50,7 +50,6 @@ class SuppyChainStage(Thread):
         super(SuppyChainStage, self).__init__()
         self.node_id = node_process.node_id
         self.name = "sc-stage-{}".format(node_process.node_id)
-        self.item_dep = node_process.node().get_dependency()
         self.inbound_material = {}  # map of item-type -> Queue()
 
         self.outbound_material = Queue()
@@ -89,6 +88,9 @@ class SuppyChainStage(Thread):
         self._attempt_log_recovery()
 
         log.info("Node %d's stage bootstrap complete", self.node_id)
+
+    def item_dep(self):
+        return self.node_process.node().get_dependency()
 
     def node(self):
         return self.node_process.node()
@@ -203,7 +205,7 @@ class SuppyChainStage(Thread):
         self.stage_active.set()
 
     def get_stage_result_type(self):
-        return self.item_dep.get_result_type()
+        return self.item_dep().get_result_type()
 
     def _add_batch_to_inbound_queue(self, batch):
         batch_type = batch.item.type
@@ -302,9 +304,9 @@ class SuppyChainStage(Thread):
         log.debug("Node %d received %s after batch request %s", self.node_id, response, response.request_id)
         if isinstance(response, BatchSentResponse):
             batch = response.item_req
-            if not self.item_dep.is_valid_material(batch):  # TODO (Nishant) this check will fail if the prereq is not updated
+            if not self.item_dep().is_valid_material(batch):
                 log.error("Node %d received invalid batch %s from node %d. Node %d's deps are %s. Ignoring received batch.",
-                          self.node_id, batch, response.source, self.node_id, self.item_dep)
+                          self.node_id, batch, response.source, self.node_id, self.item_dep())
                 return
 
             batch_seen_before = False
@@ -386,7 +388,7 @@ class SuppyChainStage(Thread):
         '''
             suppliers: list of (node_id, item_req) tuples obtained from the latest flow
         '''
-        prereqs = self.item_dep.get_prereq()  # [ItemReq(Item(type:0)...uantity:1)]
+        prereqs = self.item_dep().get_prereq()  # [ItemReq(Item(type:0)...uantity:1)]
         if prereqs:
             prereq_types = set([ir.item.type for ir in prereqs])
             supplier_types = set(suppliers.keys())
@@ -456,7 +458,7 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
 
-            if self.node().state == NodeState.inactive:
+            if not self.node_process.is_active:
                 log.error("Node %d's stage still running after node process was set to inactive", self.node_id)
                 continue
 
@@ -464,7 +466,7 @@ class SuppyChainStage(Thread):
             self.metrics.increase_metric(self.node_id, "flow_queries")
             if not flow:
                 log.error("Node %d unable to retrieve flow to acquire items %s. Skipping cycle.",
-                          self.node_id, self.item_dep.get_prereq())
+                          self.node_id, self.item_dep().get_prereq())
                 self.metrics.increase_metric(self.node_id, "skipped_manufacture_cycles")
                 self.metrics.increase_metric(self.node_id, "failed_flow_queries")
                 continue
