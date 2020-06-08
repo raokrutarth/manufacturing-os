@@ -22,8 +22,6 @@ class ClusterBlueprint(object):
     def __init__(self, nodes: List[SingleItemNode]):
         # Set of nodes to be used by this cluster
         self.nodes = nodes
-        # Stores the flags and options we'd be using finally in our setup
-        self.flags = {}
 
 
 class Cluster(object):

@@ -15,7 +15,7 @@ class SubscribeThread(Thread):
         super(SubscribeThread, self).__init__()
 
         self.node_process = node_process
-        self.node_id = node_process..node_id
+        self.node_id = node_process.node_id
         self.DELAY = 0.01
 
     def recover(self):
@@ -69,7 +69,7 @@ class PublishThread(Thread):
 
         self.node_process = node_process
         self.delay = delay
-        self.node_id = node_process..node_id
+        self.node_id = node_process.node_id
 
     def recover(self):
         self._attempt_log_recovery()
@@ -119,7 +119,7 @@ class HeartbeatThread(Thread):
 
         self.node_process = node_process
         self.delay = delay
-        self.node_id = node_process..node_id
+        self.node_id = node_process.node_id
         self.metrics = node_process.metrics
 
     def send_message_for_dead_nodes(self):

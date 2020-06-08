@@ -59,7 +59,7 @@ class FileDictBasedNodeProcess(object):
 
 class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
-    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue, flags=defaultdict(lambda: False)):
+    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue):
         """
             Takes node info as input
             cluster provides the state of the whole cluster, process_specs for other nodes
@@ -70,9 +70,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.heartbeat_delay = 1.0
         self.num_unresponded_heartbeats_for_death = 5
 
-        self.process_spec = self.cluster().get_node_process_spec(self.node_id)
+        self.process_spec = cluster.get_node_process_spec(self.node_id)
         self.port = self.process_spec.port
-        self.flags = flags
         self.op_queue = queue
         self.metrics = Metrics(self.node_id)
 
@@ -80,15 +79,12 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.msg_handler = messages.MessageHandler(self)
         self.subscriber = threads.SubscribeThread(self)
         self.publisher = threads.PublishThread(self)
+        self.op_runner = ops_runner.OpsRunnerThread(self)
 
         # Manage heartbeats and liveness between nodes
         self.last_known_heartbeat_log = FileDict(abspath("./tmp/node_" + str(self.node_id) + ".last_known_heartbeat.log"))
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
-
-        if self.flags['runOps']:
-            # run the ops runner, a testing utility. See doc for OpsRunnerThread class
-            self.testOpRunner = ops_runner.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
         thread.name = suffix + '-' + str(self.node_id)
@@ -108,7 +104,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         return self.state_helper.get_leader()
 
     def start(self):
-        log.info("Starting node %s", self.node_id())
+        log.info("Starting node %s", self.node_id)
 
         # Apply for leadership
         self.state_helper.apply_for_leadership()
@@ -117,8 +113,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.startThread(self.publisher, 'publisher')
         self.startThread(self.heartbeat, 'heartbeat')
         self.startThread(self.sc_stage, 'production-stage')
-        if self.flags['runOps']:
-            self.startThread(self.testOpRunner, 'test ops runner')
+        self.startThread(self.op_runner, 'ops-runner')
 
         # Wait for leader to be elected
         while not self.get_leader():
@@ -128,7 +123,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         if self.state_helper.am_i_leader():
             self.init_cluster_flow()
 
-        log.warning("Successfully started node %s", self.node_id())
+        log.warning("Successfully started node %s", self.node_id)
 
     def sendMessage(self, message):
         if self.node().state == NodeState.inactive:
@@ -189,7 +184,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.stop()
 
     def on_recover(self):
-        log.warning("Restarting node %s", self.node_id())
+        log.warning("Restarting node %s", self.node_id)
         self.node().state = NodeState.active
         self._attempt_log_recovery()
 

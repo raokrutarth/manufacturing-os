@@ -48,8 +48,8 @@ class SuppyChainStage(Thread):
             inbound_node_fetcher: function implemented by node that allows fetching incoming nodes
         '''
         super(SuppyChainStage, self).__init__()
-        self.node_id = node_process..node_id
-        self.name = "sc-stage-{}".format(node_process.node.get_id())
+        self.node_id = node_process.node_id
+        self.name = "sc-stage-{}".format(node_process.node_id)
         self.item_dep = node_process.node().get_dependency()
         self.inbound_material = {}  # map of item-type -> Queue()
         self.outbound_material = Queue()

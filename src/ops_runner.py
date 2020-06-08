@@ -58,7 +58,7 @@ class OpsRunnerThread(Thread):
         self.node_process = node_process
         self.delay = delay
 
-        self.node_id = node_process..node_id
+        self.node_id = node_process.node_id
 
     def get_message_from_op(self, op):
         log.debug('Node %s constructing message for operation %s', self.node_id, op)

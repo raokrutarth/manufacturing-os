@@ -311,7 +311,7 @@ class MessageHandler(object):
 
         self.node_process = node_process
         self.sc_stage = node_process.sc_stage
-        self.node_id = node_process.node_id()
+        self.node_id = node_process.node_id
         self.callbacks = self.get_action_callbacks()
         self.metrics = self.node_process.metrics
 
