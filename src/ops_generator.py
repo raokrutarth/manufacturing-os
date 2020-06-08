@@ -47,8 +47,6 @@ def kill_node(cluster, queues, failure_prob_per_sec, leader_can_fail=False):
         node_to_kill = get_random_node_to_kill(cluster, leader_can_fail)
         if node_to_kill is not None:
             if node_to_kill not in dead_node_list:
-                metrics.increase_metric(node_to_kill.node_id, "num_crash_signals_recv")
-                # queues[node_to_kill.node_id].put(Op.Kill)
 
                 pub_pipe, _ = queues[node_to_kill.node_id]
                 pub_pipe.send(Op.Kill)
