@@ -19,19 +19,33 @@ from file_dict import FileDict
 log = logging.getLogger()
 
 
-class NodeProcess(object):
+class FileDictBasedNodeProcess(object):
     """
     Base class for NodeProcess.
     All implementations: whether socket based or dummy classes extend from this
     """
 
     def __init__(self, node, cluster):
-        self.node = node
-        self.cluster = cluster
+        self.node_id = node.node_id
+
+        self.state_helper = FileBasedStateHelper(self.node_id)
+
+        # Persist the initial version of cluster
+        self.set_cluster(cluster)
 
         # use a thread-safe queue as message queue to
         # transfer messages from thread __ to the publisher thread
         self.message_queue = Queue()
+
+    def node(self):
+        cluster = self.cluster()
+        return cluster.nodes[self.node_id]
+
+    def set_cluster(self, cluster):
+        self.state_helper.set_cluster(cluster)
+
+    def cluster(self):
+        return self.state_helper.get_cluster()
 
     def sendMessage(self, message):
         pass
@@ -43,7 +57,7 @@ class NodeProcess(object):
         pass
 
 
-class SocketBasedNodeProcess(NodeProcess):
+class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
     def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue, flags=defaultdict(lambda: False)):
         """
@@ -56,20 +70,19 @@ class SocketBasedNodeProcess(NodeProcess):
         self.heartbeat_delay = 1.0
         self.num_unresponded_heartbeats_for_death = 5
 
-        self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
+        self.process_spec = self.cluster().get_node_process_spec(self.node_id)
         self.port = self.process_spec.port
         self.flags = flags
         self.op_queue = queue
-        self.metrics = Metrics(self.node.node_id)
+        self.metrics = Metrics(self.node_id)
 
-        self.state_helper = FileBasedStateHelper(self.node, self.cluster)
         self.sc_stage = SuppyChainStage(self)
         self.msg_handler = messages.MessageHandler(self)
-        self.subscriber = threads.SubscribeThread(self, self.cluster)
+        self.subscriber = threads.SubscribeThread(self)
         self.publisher = threads.PublishThread(self)
 
         # Manage heartbeats and liveness between nodes
-        self.last_known_heartbeat_log = FileDict(abspath("./tmp/node_" + str(self.node.node_id) + ".last_known_heartbeat.log"))
+        self.last_known_heartbeat_log = FileDict(abspath("./tmp/node_" + str(self.node_id) + ".last_known_heartbeat.log"))
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
 
@@ -78,7 +91,7 @@ class SocketBasedNodeProcess(NodeProcess):
             self.testOpRunner = ops_runner.OpsRunnerThread(self)
 
     def startThread(self, thread, suffix):
-        thread.name = suffix + '-' + str(self.node.node_id)
+        thread.name = suffix + '-' + str(self.node_id)
         thread.daemon = True
         thread.start()
 
@@ -88,14 +101,14 @@ class SocketBasedNodeProcess(NodeProcess):
         # Wait for confirmation of new leader
 
     def init_cluster_flow(self):
-        new_flow = ctr.bootstrap_flow(self.cluster.nodes, self.metrics, self.node.node_id)
+        new_flow = ctr.bootstrap_flow(self.cluster().nodes, self.metrics, self.node_id)
         self.state_helper.update_flow(new_flow)
 
     def get_leader(self):
         return self.state_helper.get_leader()
 
     def start(self):
-        log.info("Starting node %s", self.node.get_id())
+        log.info("Starting node %s", self.node_id())
 
         # Apply for leadership
         self.state_helper.apply_for_leadership()
@@ -115,20 +128,20 @@ class SocketBasedNodeProcess(NodeProcess):
         if self.state_helper.am_i_leader():
             self.init_cluster_flow()
 
-        log.warning("Successfully started node %s", self.node.get_id())
+        log.warning("Successfully started node %s", self.node_id())
 
     def sendMessage(self, message):
-        if self.node.state == NodeState.inactive:
+        if self.node().state == NodeState.inactive:
             # no threads of the node should be sending messages
             # if the node is inactive.
             raise Exception
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
-        if self.node.state == NodeState.inactive:
+        if self.node().state == NodeState.inactive:
             # if the node is inactive (i.e. a simulated crash state) then
             # it should not reply to any messages
-            log.warning("Node {} got message {} but node is marked inactive so ignoring message".format(self.node.node_id, message))
+            log.warning("Node {} got message {} but node is marked inactive so ignoring message".format(self.node_id, message))
             return
         self.msg_handler.onMessage(message)
 
@@ -139,11 +152,11 @@ class SocketBasedNodeProcess(NodeProcess):
     def init_liveness_state(self):
         # -1 means no last known connection timestamp
         self.last_known_heartbeat = {
-            node.node_id: time.time() for node in self.cluster.nodes if node != self.node
+            node.node_id: time.time() for node in self.cluster().nodes if node.node_id != self.node_id
         }
 
-        for node in self.cluster.nodes:
-            if node != self.node:
+        for node in self.cluster().nodes:
+            if node.node_id != self.node_id:
                 self.last_known_heartbeat_log[node.node_id] = self.last_known_heartbeat[node.node_id]
 
     def update_heartbeat(self, node_id):
@@ -164,20 +177,20 @@ class SocketBasedNodeProcess(NodeProcess):
             if (lt < (curr_time - margin)) and (lt >= 0):
                 log.warning(
                     'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
-                        self.node.node_id, nid, lt, curr_time))
+                        self.node_id, nid, lt, curr_time))
 
         return [
             nid for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
     def on_kill(self):
-        log.warning("Crashing node %s", self.node.get_id())
-        self.node.state = NodeState.inactive
+        log.warning("Crashing node %s", self.node_id)
+        self.node().state = NodeState.inactive
         self.stop()
 
     def on_recover(self):
-        log.warning("Restarting node %s", self.node.get_id())
-        self.node.state = NodeState.active
+        log.warning("Restarting node %s", self.node_id())
+        self.node().state = NodeState.active
         self._attempt_log_recovery()
 
         self.subscriber.recover()
@@ -187,7 +200,7 @@ class SocketBasedNodeProcess(NodeProcess):
         self.sc_stage.restart()
 
     def update_flow(self):
-        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes, self.metrics, self.node.node_id)
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster().nodes, self.metrics, self.node_id)
         self.state_helper.update_flow(new_flow)
 
     def stop(self):
@@ -199,20 +212,20 @@ class SocketBasedNodeProcess(NodeProcess):
         self.sc_stage.stop()
 
     def _attempt_log_recovery(self):
-        log.debug("Node %d starting heartbeat WAL recovery", self.node.node_id)
+        log.debug("Node %d starting heartbeat WAL recovery", self.node_id)
 
         # -1 means no last known connection timestamp
-        self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
+        self.last_known_heartbeat = {node: time.time() for node in self.cluster().nodes if node.node_id != self.node_id}
 
         if not len(self.last_known_heartbeat):
-            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node.node_id)
+            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node_id)
             return
 
-        for node in self.cluster.nodes:
-            if node.node_id != self.node.node_id:
+        for node in self.cluster().nodes:
+            if node.node_id != self.node_id:
                 try:
                     self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
                 except Exception:
-                    log.warning("Node %d unable to recover heartbeat details from WAL for node %s", self.node.node_id, node)
+                    log.warning("Node %d unable to recover heartbeat details from WAL for node %s", self.node_id, node)
 
-        log.debug("Node %d completed heartbeat WAL recovery", self.node.node_id)
+        log.debug("Node %d completed heartbeat WAL recovery", self.node_id)

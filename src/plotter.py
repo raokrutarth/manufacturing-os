@@ -16,15 +16,17 @@ from metrics import Metrics
 
 class ClusterPlotter(object):
 
-    def __init__(self, cluster: ctr.Cluster):
-        self.reader = state.StateReader(cluster)
-        self.cluster = self.reader.cluster
-        self.nodes = self.cluster.nodes
+    def __init__(self):
+        self.reader = state.StateReader()
         self.rand_color = randomcolor.RandomColor()
+        self.colors = self.rand_color.generate(hue="blue", count=len(self.item_type_to_id))
+
+    def init_states(self):
+        self.cluster = self.reader.get_cluster()
+        self.nodes = self.cluster.nodes
 
         # TODO: Add number of colors based on output item type
         self.item_type_to_id = self.cluster.get_distinct_item_types_mapping()
-        self.colors = self.rand_color.generate(hue="blue", count=len(self.item_type_to_id))
         self.node_ids_to_colors = {
             n.node_id: self.colors[self.item_type_to_id[self.get_item_type(n.node_id)]] for n in self.nodes
         }
@@ -107,6 +109,7 @@ class ClusterPlotter(object):
         """
         flow = self.reader.get_flow()
         leader = self.reader.get_leader()
+        self.init_states()
 
         if flow is None:
             return
@@ -126,13 +129,15 @@ class ClusterPlotter(object):
 
 if __name__ == "__main__":
 
+    assert False, "This will not work right now"
+
     nodes = bcs.bootstrap_dependencies_seven_nodes()
 
     blueprint = ctr.ClusterBlueprint(nodes)
     cluster = ctr.Cluster(blueprint)
     flow = ctr.bootstrap_flow(cluster.nodes, Metrics("ui-test"), 999999)  # HACK
 
-    plotter = ClusterPlotter(cluster)
+    plotter = ClusterPlotter()
     plotter.plot_flow(flow)
     plotter.plot_current_state()
     sleep(10000)

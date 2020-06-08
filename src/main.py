@@ -84,7 +84,7 @@ def run_cluster_plotter(cluster: ctr.Cluster):
     num_nodes = len(cluster.nodes)
     delay = 0.25 * (num_nodes ** 0.5)
     sleep(delay)
-    plotter = pltr.ClusterPlotter(cluster)
+    plotter = pltr.ClusterPlotter()
     while 1:
         plotter.plot_current_state()
         sleep(delay)
@@ -101,10 +101,9 @@ def main(args):
     SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
     demo_ops = {n.node_id: [SU] for n in nodes}
 
-    cluster_level_metrics = Metrics("cluster-wide")
     # build the cluster object
     blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
-    cluster = ctr.Cluster(cluster_level_metrics, blueprint)
+    cluster = ctr.Cluster(blueprint)
 
     log.critical("Starting %s", cluster)
 
@@ -126,9 +125,6 @@ def main(args):
     # Create messaging queues to interact with cluster
     for node in cluster.nodes:
         queue = Queue()
-        # Add the pre-planned operations
-        for op in cluster.blueprint.node_specific_ops[node.node_id]:
-            queue.put(op)
         queues[node.node_id] = queue
 
     # Start all the threads

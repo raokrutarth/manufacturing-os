@@ -310,9 +310,8 @@ class MessageHandler(object):
         super(MessageHandler, self).__init__()
 
         self.node_process = node_process
-        self.node = node_process.node
         self.sc_stage = node_process.sc_stage
-        self.node_id = node_process.node.get_id()
+        self.node_id = node_process.node_id()
         self.callbacks = self.get_action_callbacks()
         self.metrics = self.node_process.metrics
 
@@ -356,9 +355,9 @@ class MessageHandler(object):
         return callbacks
 
     def sendMessage(self, message):
-        log.info("sending message %s from node %s", message, self.node.node_id)
+        log.info("sending message %s from node %s", message, self.node_id)
         self.node_process.message_queue.put(message)
-        self.metrics.increase_metric(self.node.node_id, "sent_messages")
+        self.metrics.increase_metric(self.node_id, "sent_messages")
 
     def onMessage(self, message):
         """
@@ -386,7 +385,7 @@ class MessageHandler(object):
         elif is_msg_heartbeat and is_msg_from_me:
             return None
         else:
-            self.metrics.increase_metric(self.node.node_id, "received_messages")
+            self.metrics.increase_metric(self.node_id, "received_messages")
             log.info("Received: %s from %s", message, message.source)
             return self.callbacks[message.type][message.action](message)
 
@@ -459,7 +458,7 @@ class MessageHandler(object):
     def on_heartbeat_req(self, message):
         assert message.action == Action.Heartbeat
         response = MessageHandler.getMsgForAction(
-            source=self.node.node_id,
+            source=self.node_id,
             action=message.action,
             msg_type=MsgType.Response,
             dest=message.source
@@ -478,13 +477,14 @@ class MessageHandler(object):
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
+            # TODO RIGHTNOW
             self.node_process.cluster.update_deps(message.source, message.dependency)
             self.node_process.update_flow()
             log.debug("Received Update Dependency Request from %s", message.source)
 
             # Send an ack
             response = MessageHandler.getMsgForAction(
-                source=self.node.node_id,
+                source=self.node_id,
                 action=Action.Ack,
                 msg_type=MsgType.Response,
                 dest=message.source
@@ -496,6 +496,7 @@ class MessageHandler(object):
 
         is_leader = self.node_process.state_helper.am_i_leader()
         if is_leader:
+            # TODO: RIGHTNOW
             self.node_process.cluster.update_deps_for_dead_node(message.dead_node)
             self.node_process.update_flow()
             log.warning("Received Death information request from %s", message.source)

@@ -48,17 +48,16 @@ class SuppyChainStage(Thread):
             inbound_node_fetcher: function implemented by node that allows fetching incoming nodes
         '''
         super(SuppyChainStage, self).__init__()
-        self.node_id = node_process.node.get_id()
+        self.node_id = node_process..node_id
         self.name = "sc-stage-{}".format(node_process.node.get_id())
-        self.item_dep = node_process.node.get_dependency()  # TODO (Nishant) verify this is up to date with latest prereqs
+        self.item_dep = node_process.node().get_dependency()
         self.inbound_material = {}  # map of item-type -> Queue()
         self.outbound_material = Queue()
         self.time_per_batch = time_per_batch
         self.state_helper = node_process.state_helper
-        # self.cluster = node_process.cluster
         self.metrics = node_process.metrics
+        self.node_process = node_process
 
-        self.node = node_process.node
         self.send_message = node_process.sendMessage  # function to send messages to cluster
 
         self.inbound_log = FileDict(abspath("./tmp/" + self.name + ".inbound.log"))
@@ -89,6 +88,9 @@ class SuppyChainStage(Thread):
         self._attempt_log_recovery()
 
         log.info("Node %d's stage bootstrap complete", self.node_id)
+
+    def node(self):
+        return self.node_process.node()
 
     def _attempt_log_recovery(self):
         '''
@@ -449,7 +451,7 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
 
-            if self.node.state == NodeState.inactive:
+            if self.node().state == NodeState.inactive:
                 log.error("Node %d's stage still running after node process was set to inactive", self.node_id)
                 continue
 
