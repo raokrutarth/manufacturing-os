@@ -50,10 +50,6 @@ class SubscribeThread(Thread):
         #     # - a subscriber shouldn't connect to itself
         #     socket.connect("tcp://127.0.0.1:%d" % port)
 
-        # worker_pool = ThreadPoolExecutor(
-        #     max_workers=12,
-        #     thread_name_prefix="subscriber-%d-worker" % (self.node_id),
-        # )
 
         # state = self.node_process.node().state
         # sc_i = 0
@@ -68,25 +64,31 @@ class SubscribeThread(Thread):
 
         #     message = socket.recv()
 
-        #     def _process_msg(msg):
-        #         start = time()
-        #         msg = pickle.loads(msg)
-        #         self.node_process.onMessage(msg)
-        #         taken = time() - start
-        #         if taken > 0.5:
-        #             log.warn("Node %d took time %.2f to process %s", self.node_id, taken, msg.__class__.__name__)
 
-        #     # process the message in a thread instead of blocking the subscriber
-        #     worker_pool.submit(_process_msg, (message,))
         #     # _process_msg(message)
+
+        # worker_pool = ThreadPoolExecutor(
+        #     max_workers=12,
+        #     thread_name_prefix="subscriber-%d-worker" % (self.node_id),
+        # )
 
         while True:
             if not self.node_process.is_active:
                 continue
 
             message = self.node_process.comm_queues[self.node_id].get()
-            message = pickle.loads(message)
-            self.node_process.onMessage(message)
+
+            def _process_msg(msg):
+                start = time()
+                msg = pickle.loads(msg)
+                self.node_process.onMessage(msg)
+                taken = time() - start
+                if taken > 0.5:
+                    log.warn("Node %d took time %.2f to process %s", self.node_id, taken, msg.__class__.__name__)
+
+            # process the message in a thread instead of blocking the subscriber
+            # worker_pool.submit(_process_msg, (message,))
+            _process_msg(message)
 
 
 class PublishThread(Thread):
