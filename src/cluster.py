@@ -282,6 +282,9 @@ def _test():
     complexity = "medium"
     nodes_per_type = 10
     demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
+    
+    # demo_nodes = basecases.bootstrap_demo()
+    
     print("Nodes have been created.")
     print(demo_nodes)
     cluster_flow_obj = bootstrap_flow(demo_nodes, Metrics("flow-test"), 98989898)
