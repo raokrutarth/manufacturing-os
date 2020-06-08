@@ -35,7 +35,7 @@ class SubscribeThread(Thread):
 
         # set the subscriber socket to listen to all messages
         # by any publisher. (can be optimized later)
-        socket.setsockopt(zmq.SUBSCRIBE, b'')
+        # socket.setsockopt(zmq.SUBSCRIBE, b'')
 
         cluster = self.node_process.cluster()
 
@@ -50,7 +50,7 @@ class SubscribeThread(Thread):
             socket.connect("tcp://127.0.0.1:%d" % port)
 
         while True:
-            if self.node_process.node().state == NodeState.inactive:
+            if not self.node_process.is_active:
                 continue
 
             message = socket.recv()
@@ -97,7 +97,7 @@ class PublishThread(Thread):
         log.info("Node %d successfully binded message publisher to port %d", self.node_id, self.node_process.port)
 
         while True:
-            if self.node_process.node().state == NodeState.inactive:
+            if not self.node_process.is_active:
                 sleep(0.01)
                 continue
 
@@ -149,7 +149,7 @@ class HeartbeatThread(Thread):
         log.debug('Node %s starting heartbeat thread', self.node_id)
 
         while True:
-            if self.node_process.node().state == NodeState.inactive:
+            if not self.node_process.is_active:
                 sleep(0.05)
                 continue
 
