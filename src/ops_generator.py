@@ -32,7 +32,6 @@ def get_random_node_to_kill(cluster, leader_can_fail=False):
 
 
 def get_random_node_to_recover(cluster):
-    num_of_dead_nodes = len(dead_node_list)
     if len(dead_node_list) == 0:
         return None
 

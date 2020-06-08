@@ -101,15 +101,15 @@ def main(args):
     SU, BD, RC = Op.SendUpdateDep, Op.Kill, Op.Recover
     demo_ops = {n.node_id: [SU] for n in nodes}
 
+    cluster_level_metrics = Metrics("cluster-wide")
     # build the cluster object
     blueprint = ctr.ClusterBlueprint(nodes, demo_ops)
-    cluster = ctr.Cluster(blueprint)
+    cluster = ctr.Cluster(cluster_level_metrics, blueprint)
 
     log.critical("Starting %s", cluster)
 
     # start the nodes with operations runner based on what's specified
-    flags = {'runOps': args.run_test_ops,
-    }
+    flags = {'runOps': args.run_test_ops}
 
     process_list = list()
     queues = {}
@@ -178,6 +178,7 @@ def main(args):
                 log.warning('Terminating %r', process)
                 process.terminate()
 
+
 """
 Utilities for argument parsing. Helps provide easy running of experiments.
 """
@@ -215,7 +216,12 @@ def get_cluster_run_args():
         type=int
     )
 
-    parser.add_argument('--leader_can_fail', default=False, type=str2bool, help='kill leader or not')
+    parser.add_argument(
+        '--leader_can_fail',
+        default=False,
+        type=str2bool,
+        help='kill leader or not'
+    )
 
     parser.add_argument(
         '--failure_rate',
@@ -235,13 +241,6 @@ def get_cluster_run_args():
         default=0,
         type=int,
         help='# of update dependence per minute'
-    )
-
-    parser.add_argument(
-        '--topology',
-        default="simple",
-        type=str,
-        help='Type of graph topology to use',
     )
 
     # Options to interact and simulate the system

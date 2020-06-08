@@ -95,7 +95,7 @@ class OpsRunnerThread(Thread):
                 # node is being asked to crash
                 self.node_process.on_kill()
             elif op == Op.Recover:
-                # node is being asked to waken from a crash
+                # node is being asked to wake-up from a crash
                 self.node_process.on_recover()
             else:
                 # node is being requested to run
