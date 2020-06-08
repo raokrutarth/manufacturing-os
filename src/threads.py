@@ -2,6 +2,7 @@ import zmq
 import logging
 import pickle
 import messages
+import random
 
 from time import sleep
 from threading import Thread
@@ -118,6 +119,9 @@ class HeartbeatThread(Thread):
 
     def run(self):
         log.debug('Node %s starting heartbeat thread', self.node_id)
+
+        # Add random delay between threads
+        sleep(random.uniform(0, self.delay))
 
         while True:
             if not self.node_process.is_active:

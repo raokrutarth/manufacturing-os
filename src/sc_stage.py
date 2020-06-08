@@ -230,7 +230,8 @@ class SuppyChainStage(Thread):
         batch = message.item_req
         curr_status = self.outbound_log[batch]
         if curr_status != BatchStatus.IN_TRANSIT:
-            log.warning("Node %d's outbound log for item %s was at status %s, expected %s", self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
+            log.info("Node %d's outbound log for item %s was at status %s, expected %s",
+                     self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
             self.outbound_log[batch] = BatchStatus.IN_TRANSIT
 
     def process_batch_request(self, request: Message):
@@ -342,8 +343,8 @@ class SuppyChainStage(Thread):
                          self.node_id, response.item_req, response.source)
         else:
             self.metrics.increase_metric(self.node_id, "batch_unavailable_messages_received")
-            log.warning("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. Request ID: %s",
-                        self.node_id, response.item_req.item.type, response.source, response.request_id)
+            log.info("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. "
+                     "Request ID: %s",  self.node_id, response.item_req.item.type, response.source, response.request_id)
 
         self._mark_request_complete(response)
 
