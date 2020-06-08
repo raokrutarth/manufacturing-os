@@ -15,6 +15,7 @@ from collections import defaultdict
 from sc_stage import SuppyChainStage
 from metrics import Metrics
 from file_dict import FileDict
+from typing import Dict
 
 log = logging.getLogger()
 
@@ -59,12 +60,15 @@ class FileDictBasedNodeProcess(object):
 
 class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
-    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue):
+    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue, comm_queues: Dict[int, mp.Queue]):
         """
             Takes node info as input
             cluster provides the state of the whole cluster, process_specs for other nodes
         """
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
+
+        # Represents whether the node is simulating a crash
+        self.is_active = True
 
         # Execution constants for the process
         self.heartbeat_delay = 1.0
@@ -74,6 +78,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.port = self.process_spec.port
         self.op_queue = queue
         self.metrics = Metrics(self.node_id)
+        self.comm_queues = comm_queues
+        self.node_ids = [n.node_id for n in cluster.nodes]
 
         self.sc_stage = SuppyChainStage(self)
         self.msg_handler = messages.MessageHandler(self)
@@ -126,7 +132,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         log.warning("Successfully started node %s", self.node_id)
 
     def sendMessage(self, message):
-        if self.node().state == NodeState.inactive:
+        if not self.is_active:
             # no threads of the node should be sending messages
             # if the node is inactive.
             log.warning("Race conditions hit: Skipping sending of message.")
@@ -134,7 +140,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.msg_handler.sendMessage(message)
 
     def onMessage(self, message):
-        if self.node().state == NodeState.inactive:
+        if not self.is_active:
             # if the node is inactive (i.e. a simulated crash state) then
             # it should not reply to any messages
             log.warning("Node {} got message {} but node is marked inactive so ignoring message".format(self.node_id, message))
@@ -161,7 +167,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         assert type(node_id) == int
         curr_time = time.time()
         self.last_known_heartbeat[node_id] = curr_time
-        self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
+        # Removing as it takes a lot of time
+        # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
 
     def detect_and_fetch_dead_nodes(self):
         """
@@ -182,19 +189,12 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
     def on_kill(self):
         log.warning("Crashing node %s", self.node_id)
-        cluster = self.cluster()
-        cluster.nodes[self.node_id].state = NodeState.inactive
-        self.set_cluster(cluster)
+        self.is_active = False
         self.stop()
 
     def on_recover(self):
         log.warning("Restarting node %s", self.node_id)
-
-        # TODO (Chen): We should not be giving this information to other nodes. We need to change this design
-        cluster = self.cluster()
-        cluster.nodes[self.node_id].state = NodeState.active
-        self.set_cluster(cluster)
-
+        self.is_active = True
         self._attempt_log_recovery()
 
         self.subscriber.recover()
@@ -210,7 +210,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
     def update_death_of_node(self, dead_node_id: int):
         cluster: ctr.Cluster = self.cluster()
-        cluster.nodes[dead_node_id].state = NodeState.active
+        cluster.nodes[dead_node_id].state = NodeState.inactive
         self.set_cluster(cluster)
 
     def update_flow(self):

@@ -250,7 +250,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
 def random_dag(nodes, edges):
     """Generate a random Directed Acyclic Graph (DAG) with a given number of nodes and edges."""
-    random.seed()
+    random.seed(0)
     G = nx.DiGraph()
     for i in range(1, nodes+1):
         G.add_node(i)
