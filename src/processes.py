@@ -15,6 +15,7 @@ from collections import defaultdict
 from sc_stage import SuppyChainStage
 from metrics import Metrics
 from file_dict import FileDict
+from typing import Dict
 
 log = logging.getLogger()
 
@@ -59,7 +60,7 @@ class FileDictBasedNodeProcess(object):
 
 class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
-    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue):
+    def __init__(self, node: BaseNode, cluster: Cluster, queue: mp.Queue, comm_queues: Dict[int, mp.Queue]):
         """
             Takes node info as input
             cluster provides the state of the whole cluster, process_specs for other nodes
@@ -77,6 +78,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.port = self.process_spec.port
         self.op_queue = queue
         self.metrics = Metrics(self.node_id)
+        self.comm_queues = comm_queues
+        self.node_ids = [n.node_id for n in cluster.nodes]
 
         self.sc_stage = SuppyChainStage(self)
         self.msg_handler = messages.MessageHandler(self)

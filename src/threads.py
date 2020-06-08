@@ -31,34 +31,13 @@ class SubscribeThread(Thread):
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
 
-        socket = zmq.Context().socket(zmq.SUB)
-
-        # set the subscriber socket to listen to all messages
-        # by any publisher. (can be optimized later)
-        # socket.setsockopt(zmq.SUBSCRIBE, b'')
-
-        cluster = self.node_process.cluster()
-
-        other_node_ports = \
-            [spec.port for spec in cluster.process_specs.values() if spec.port != self.node_process.port]
-        log.debug("subscriber in node %d connecting to sockets %s", self.node_id, other_node_ports)
-
-        for port in other_node_ports:
-            # NOTE:
-            # - connect() can be called on multiple ports in zmq.
-            # - a subscriber shouldn't connect to itself
-            socket.connect("tcp://127.0.0.1:%d" % port)
-
         while True:
             if not self.node_process.is_active:
                 continue
 
-            message = socket.recv()
+            message = self.node_process.comm_queues[self.node_id].get()
             message = pickle.loads(message)
             self.node_process.onMessage(message)
-
-            # Polling based approach to receive messages. Can convert to blocking call if needed
-            sleep(self.DELAY)
 
 
 class PublishThread(Thread):
@@ -82,19 +61,6 @@ class PublishThread(Thread):
 
     def run(self):
         log.debug('node %s starting publisher thread', self.node_id)
-        socket = zmq.Context().socket(zmq.PUB)
-        binded = False
-
-        while not binded:
-            try:
-                socket.bind("tcp://127.0.0.1:%d" % self.node_process.port)
-                binded = True
-            except Exception as e:
-                log.error("Node %d unable to bind port %d for message publisher with exception %s. Trying again.",
-                          self.node_id, self.node_process.port, e)
-            sleep(self.delay)
-
-        log.info("Node %d successfully binded message publisher to port %d", self.node_id, self.node_process.port)
 
         while True:
             if not self.node_process.is_active:
@@ -102,7 +68,12 @@ class PublishThread(Thread):
                 continue
 
             message = self.node_process.message_queue.get()
-            socket.send(pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL))
+            bmsg = pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL)
+            if message.dest == -1:
+                for nid in self.node_process.node_ids:
+                    self.node_process.comm_queues[nid].put(bmsg)
+            else:
+                self.node_process.comm_queues[message.dest].put(bmsg)
 
 
 class HeartbeatThread(Thread):
