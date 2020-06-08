@@ -2,7 +2,6 @@ import logging
 import random
 import multiprocessing
 from operations import Operations as Op
-from time import sleep
 from nodes import NodeState
 import schedule
 import time
@@ -96,7 +95,7 @@ def run_generator(metrics, queues, cluster, failure_rate=0, recovery_rate=0.0, u
     recover_step = 4
 
     # TODO (Chen): Use the state reader initialized here to get cluster object
-    reader = state.StateReader()
+    # reader = state.StateReader()
 
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)

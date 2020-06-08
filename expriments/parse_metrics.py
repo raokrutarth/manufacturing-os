@@ -24,8 +24,8 @@ class Metricparser:
     def _get_full_df(self):
         try:
             return pd.concat([pd.read_csv(f) for f in self.metrics_files], ignore_index=True)
-        except pd.errors.EmptyDataError:
-            log.error("No metrics present in directory {} and files {}. Exiting.".format(self.m_dir, self.metrics_files))
+        except Exception as e:
+            log.error("Unable to read metrics in directory {} and files {} with exception {}. Exiting.".format(self.m_dir, e, self.metrics_files))
             sys.exit(1)
 
     def _augment_results(self):

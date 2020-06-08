@@ -2,8 +2,9 @@ import zmq
 import logging
 import pickle
 import messages
+from concurrent.futures import ThreadPoolExecutor
 
-from time import sleep
+from time import sleep, time
 from threading import Thread
 from nodes import NodeState
 
@@ -29,7 +30,7 @@ class SubscribeThread(Thread):
         pass
 
     def run(self):
-        log.debug('node %s starting subscriber thread', self.node_id)
+        log.debug('Node %s starting subscriber thread', self.node_id)
 
         socket = zmq.Context().socket(zmq.SUB)
 
@@ -49,16 +50,35 @@ class SubscribeThread(Thread):
             # - a subscriber shouldn't connect to itself
             socket.connect("tcp://127.0.0.1:%d" % port)
 
+        worker_pool = ThreadPoolExecutor(
+            max_workers=12,
+            thread_name_prefix="subscriber-%d-worker" % (self.node_id),
+        )
+
+        state = self.node_process.node().state
+        sc_i = 0
         while True:
-            if self.node_process.node().state == NodeState.inactive:
+            if not sc_i % 50:
+                # reduce the prequency of checking doing file IO
+                state = self.node_process.node().state
+
+            if state == NodeState.inactive:
+                sleep(0.1)
                 continue
 
             message = socket.recv()
-            message = pickle.loads(message)
-            self.node_process.onMessage(message)
 
-            # Polling based approach to receive messages. Can convert to blocking call if needed
-            sleep(self.DELAY)
+            def _process_msg(msg):
+                start = time()
+                msg = pickle.loads(msg)
+                self.node_process.onMessage(msg)
+                taken = time() - start
+                if taken > 0.5:
+                    log.warn("Node %d took time %.2f to process %s", self.node_id, taken, msg.__class__.__name__)
+
+            # process the message in a thread instead of blocking the subscriber
+            worker_pool.submit(_process_msg, (message,))
+            # _process_msg(message)
 
 
 class PublishThread(Thread):
@@ -98,7 +118,7 @@ class PublishThread(Thread):
 
         while True:
             if self.node_process.node().state == NodeState.inactive:
-                sleep(0.01)
+                sleep(0.1)
                 continue
 
             message = self.node_process.message_queue.get()
@@ -157,6 +177,5 @@ class HeartbeatThread(Thread):
                 source=self.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
             )
             self.node_process.sendMessage(message)
-            self.metrics.increase_metric(self.node_id, "heartbeats_sent")
             self.send_message_for_dead_nodes()
             sleep(self.delay)

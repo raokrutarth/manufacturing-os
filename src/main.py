@@ -154,7 +154,7 @@ def main(args):
             except KeyboardInterrupt:
                 # Handle Ctrl-C and send kill to threads
                 for p in process_list:
-                        p.terminate()
+                    p.terminate()
                 sys.exit()
 
         # Stopping the queue worker

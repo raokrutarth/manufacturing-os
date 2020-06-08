@@ -1,5 +1,6 @@
 import enum
 import logging
+import time
 
 import cluster as ctr
 from items import ItemDependency, ItemReq
@@ -355,6 +356,8 @@ class MessageHandler(object):
         return callbacks
 
     def sendMessage(self, message):
+        start = time.time()
+
         is_msg_heartbeat = message.action == Action.Heartbeat
         if is_msg_heartbeat:
             log.debug("sending message %s from node %s", message, self.node_id)
@@ -362,7 +365,11 @@ class MessageHandler(object):
             log.info("sending message %s from node %s", message, self.node_id)
         self.node_process.message_queue.put(message)
         self.metrics.increase_metric(self.node_id, "sent_messages")
-        self.metrics.increase_metric(self.node_id, "%s_sent" % (type(message)))
+        self.metrics.increase_metric(self.node_id, "%s_sent" % (message.__class__.__name__))
+
+        taken = time.time() - start
+        if taken > 0.1:
+            log.warning("Node %d took %.2f seconds to send message", self.node_id, taken)
 
     def onMessage(self, message):
         """
@@ -392,7 +399,7 @@ class MessageHandler(object):
         else:
             log.debug("Received: %s from %s", message, message.source)
             self.metrics.increase_metric(self.node_id, "received_messages")
-            self.metrics.increase_metric(self.node_id, "%s_received" % (type(message)))
+            self.metrics.increase_metric(self.node_id, "%s_received" % (message.__class__.__name__))
             return self.callbacks[message.type][message.action](message)
 
     """
@@ -470,12 +477,11 @@ class MessageHandler(object):
             dest=message.source
         )
         self.sendMessage(response)
+        # need to record the source is alive
 
     def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
         log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
-        if message.source is None:
-            print(message)
         self.node_process.update_heartbeat(message.source)
 
     def on_update_req(self, message):

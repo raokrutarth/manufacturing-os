@@ -28,6 +28,7 @@ class Metrics:
         self._df.node_id = self._df.node_id.astype(int)
         self._df.metric_name = self._df.metric_name.astype(str)
         self._df.value = self._df.value.astype("float64")
+        self._updates_until_persist = 0
 
     def _persist_metrics(self):
         self._df.to_csv(self._metrics_file)
@@ -49,7 +50,9 @@ class Metrics:
                 "metric_name": metric_name,
                 "value": value if mode != DFOperation.Decrease else (-1 * value),
             }, ignore_index=True)
-        self._persist_metrics()
+        self._updates_until_persist += 1
+        if not self._updates_until_persist % 10000:
+            self._persist_metrics()
 
     def increase_metric(self, node_id: int, metric_name: str, value: float = 1.0):
         self._modify_or_add_to_df(node_id, metric_name, value, DFOperation.Increase)
