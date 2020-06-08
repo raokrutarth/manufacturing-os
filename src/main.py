@@ -11,7 +11,7 @@ import cluster as ctr
 import plotter as pltr
 
 from time import sleep
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pipe
 from threading import Thread
 from metrics import Metrics
 from operations import Operations as Op
@@ -110,10 +110,15 @@ def main(args):
 
     # Create messaging queues to interact with cluster
     for node in cluster.nodes:
-        queue = Queue()
-        queues[node.node_id] = queue
-        cqueue = Queue()
-        comm_queues[node.node_id] = cqueue
+        # queue = Queue(1000)
+        p, s = Pipe()
+        # queues[node.node_id] = queue
+        queues[node.node_id] = (p, s)
+
+        # cqueue = Queue()
+        # comm_queues[node.node_id] = cqueue
+        pub, sub = Pipe()
+        comm_queues[node.node_id] = (pub, sub)
 
     # Contain multiple misc threads which are useful
     ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)

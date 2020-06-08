@@ -3,7 +3,7 @@ import logging
 import pickle
 import messages
 
-from time import sleep
+from time import sleep, time
 from threading import Thread
 from nodes import NodeState
 
@@ -31,13 +31,24 @@ class SubscribeThread(Thread):
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
 
+        # message_q = self.node_process.comm_queues[self.node_id]
+        _, sub_pipe = self.node_process.comm_queues[self.node_id]
         while True:
             if not self.node_process.is_active:
                 continue
 
-            message = self.node_process.comm_queues[self.node_id].get()
-            message = pickle.loads(message)
-            self.node_process.onMessage(message)
+            # message = message_q.get()
+            message = sub_pipe.recv()
+
+            def _process_msg(msg):
+                start = time()
+                msg = pickle.loads(msg)
+                self.node_process.onMessage(msg)
+                taken = time() - start
+                if taken > 0.5:
+                    log.warn("Node %d took time %.2f to process %s", self.node_id, taken, msg.__class__.__name__)
+
+            _process_msg(message)
 
 
 class PublishThread(Thread):
@@ -71,9 +82,11 @@ class PublishThread(Thread):
             bmsg = pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL)
             if message.dest == -1:
                 for nid in self.node_process.node_ids:
-                    self.node_process.comm_queues[nid].put(bmsg)
+                    n_pub, _ = self.node_process.comm_queues[nid]
+                    n_pub.send(bmsg)
             else:
-                self.node_process.comm_queues[message.dest].put(bmsg)
+                n_pub, _ = self.node_process.comm_queues[message.dest]
+                n_pub.send(bmsg)
 
 
 class HeartbeatThread(Thread):

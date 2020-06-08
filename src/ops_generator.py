@@ -47,7 +47,12 @@ def kill_node(cluster, queues, failure_prob_per_sec, leader_can_fail=False):
         node_to_kill = get_random_node_to_kill(cluster, leader_can_fail)
         if node_to_kill is not None:
             if node_to_kill not in dead_node_list:
-                queues[node_to_kill.node_id].put(Op.Kill)
+                metrics.increase_metric(node_to_kill.node_id, "num_crash_signals_recv")
+                # queues[node_to_kill.node_id].put(Op.Kill)
+
+                pub_pipe, _ = queues[node_to_kill.node_id]
+                pub_pipe.send(Op.Kill)
+
                 log.critical("Node %d to be killed", node_to_kill.node_id)
             else:
                 return None
@@ -57,7 +62,10 @@ def recover_node(cluster, queues, recover_prob_per_sec):
     if random.random() < recover_prob_per_sec:
         node_to_recover = get_random_node_to_recover(cluster)
         if node_to_recover is not None:
-            queues[node_to_recover.node_id].put(Op.Recover)
+
+            pub_pipe, _ = queues[node_to_recover.node_id]
+            pub_pipe.send(Op.Recover)
+
             log.critical("Node %d to be recovered", node_to_recover.node_id)
 
 
@@ -69,7 +77,8 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             return None
         else:
             node = random.choice(active_nodes)
-            queues[node.node_id].put(Op.SendUpdateDep)
+            pub_pipe, _ = queues[node.node_id]
+            pub_pipe.send(Op.SendUpdateDep)
             log.warning("Node %d to update dependency", node.node_id)
 
 

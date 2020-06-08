@@ -87,8 +87,11 @@ class OpsRunnerThread(Thread):
         # Add an initial delay in order for the cluster to be setup (raftos and other dependencies)
         sleep(self.delay)
 
+        _, sub_pipe = self.node_process.op_queue
+
         while True:
-            op = self.node_process.op_queue.get()
+            # op = .get()
+            op = sub_pipe.recv()
             if op == Op.Kill:
                 # node is being asked to crash
                 self.node_process.on_kill()
