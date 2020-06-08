@@ -91,10 +91,22 @@ class HeartbeatThread(Thread):
         self.delay = delay
         self.node_id = node_process.node_id
         self.metrics = node_process.metrics
+        self.loop_counter = 0
+        self.refresh_rate = 10
+        self.neighbor_ids = []
+
+    def refresh_neighbors_from_flow(self):
+        self.old_neighbor_ids = 
+        flow = self.node_process.state_helper.get_flow()
+        flows = flow.getIncomingFlowsForNode(self.node_id) + flow.getOutgoingFlowsForNode(self.node_id)
+        self.neighbor_ids = set([x[0] for x in flows])
 
     def send_message_for_dead_nodes(self):
         dead_node_ids = self.node_process.detect_and_fetch_dead_nodes()
         for node_id in dead_node_ids:
+            if node_id not in self.neighbor_ids:
+                # Do nothing if this is not a neighbor
+                pass
             # Send a request to the leader informing of death
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node_id,
@@ -124,10 +136,17 @@ class HeartbeatThread(Thread):
                 sleep(0.05)
                 continue
 
-            message = messages.MessageHandler.getMsgForAction(
-                source=self.node_id, action=messages.Action.Heartbeat, msg_type=messages.MsgType.Request
-            )
-            self.node_process.sendMessage(message)
-            self.metrics.increase_metric(self.node_id, "heartbeats_sent")
+            if self.loop_counter % self.refresh_rate == 0:
+                self.refresh_neighbors_from_flow()
+
+            for neighbor_id in self.neighbor_ids:
+                message = messages.MessageHandler.getMsgForAction(
+                    source=self.node_id,
+                    action=messages.Action.Heartbeat,
+                    msg_type=messages.MsgType.Request,
+                    dest=neighbor_id
+                )
+                self.node_process.sendMessage(message)
+                self.metrics.increase_metric(self.node_id, "heartbeats_sent")
             self.send_message_for_dead_nodes()
             sleep(self.delay)
