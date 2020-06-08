@@ -1,8 +1,5 @@
-from os.path import abspath
 import sys
 import pandas as pd
-from datetime import datetime
-from typing import List
 import logging
 import glob
 
@@ -31,6 +28,14 @@ class Metricparser:
             log.error("No metrics present in directory {} and files {}. Exiting.".format(self.m_dir, self.metrics_files))
             sys.exit(1)
 
+    def _augment_results(self):
+        # compute messages sent - heartbeats
+        # TODO
+
+        # compute messages received - heartbeats
+        # TODO
+        pass
+
     def _print_all_data(self):
         self.df.round(2)
         log.info("Full Exprimental results:\n\n%s\n\n===\n", self.df.to_string(float_format="%.0f"))
@@ -44,4 +49,5 @@ class Metricparser:
 if __name__ == "__main__":
     mp = Metricparser("../tmp")
     mp._print_all_data()
+    mp._augment_results()
     mp._print_all_metric_stats()

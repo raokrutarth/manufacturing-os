@@ -48,17 +48,17 @@ class SuppyChainStage(Thread):
             inbound_node_fetcher: function implemented by node that allows fetching incoming nodes
         '''
         super(SuppyChainStage, self).__init__()
-        self.node_id = node_process.node.get_id()
-        self.name = "sc-stage-{}".format(node_process.node.get_id())
-        self.item_dep = node_process.node.get_dependency()  # TODO (Nishant) verify this is up to date with latest prereqs
+        self.node_id = node_process.node_id
+        self.name = "sc-stage-{}".format(node_process.node_id)
+        self.item_dep = node_process.node().get_dependency()
         self.inbound_material = {}  # map of item-type -> Queue()
+
         self.outbound_material = Queue()
         self.time_per_batch = time_per_batch
         self.state_helper = node_process.state_helper
-        # self.cluster = node_process.cluster
         self.metrics = node_process.metrics
+        self.node_process = node_process
 
-        self.node = node_process.node
         self.send_message = node_process.sendMessage  # function to send messages to cluster
 
         self.inbound_log = FileDict(abspath("./tmp/" + self.name + ".inbound.log"))
@@ -89,6 +89,9 @@ class SuppyChainStage(Thread):
         self._attempt_log_recovery()
 
         log.info("Node %d's stage bootstrap complete", self.node_id)
+
+    def node(self):
+        return self.node_process.node()
 
     def _attempt_log_recovery(self):
         '''
@@ -181,11 +184,12 @@ class SuppyChainStage(Thread):
         # stop the production loop
         self.stage_active.clear()
 
-        # clear in-memory state
-        self.outbound_material = None
+        # clear in-memory state;
+        # Init to Queue() as it sometimes fails due to race condition
+        self.outbound_material = Queue()
         for item_type in self.inbound_material:
             # Set all inbound queues to null
-            self.inbound_material[item_type] = None
+            self.inbound_material[item_type] = Queue()
         self.manufacture_count = self.consumed_count = 0
 
     def restart(self):
@@ -452,7 +456,7 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
 
-            if self.node.state == NodeState.inactive:
+            if self.node().state == NodeState.inactive:
                 log.error("Node %d's stage still running after node process was set to inactive", self.node_id)
                 continue
 

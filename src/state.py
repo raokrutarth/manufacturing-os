@@ -13,11 +13,7 @@ class StateReader(object):
     This can only allow reads
     """
 
-    def __init__(self, cluster):
-        # extract addresses of other nodes in the cluster
-        self.cluster = cluster
-        self.nodes = cluster.nodes
-
+    def __init__(self):
         # Constructs for maintaining source of truth
         self.leader_file = fd.FileDict(filename="state:leader")
         self.consensus_file = fd.FileDict(filename="state:consensus")
@@ -66,10 +62,10 @@ class FileBasedStateHelper(StateReader):
     Helper class abstracting out the underlying file ops for leader election, flow consensus
     """
 
-    def __init__(self, node, cluster):
-        super(FileBasedStateHelper, self).__init__(cluster)
+    def __init__(self, node_id):
+        super(FileBasedStateHelper, self).__init__()
         # Establish node specific fields
-        self.node_id = node.node_id
+        self.node_id = node_id
 
     def apply_for_leadership(self):
         '''
@@ -93,3 +89,10 @@ class FileBasedStateHelper(StateReader):
             log.info("Node {} (leader) updated flow to: {}".format(self.node_id, new_cluster_flow))
             return True
         return False
+
+    def set_cluster(self, cluster: ctr.Cluster):
+        """
+            Utility to persist cluster; every node can do this
+        """
+        self.cluster_file[self.cluster_key] = cluster
+        log.debug("Node {} updated cluster".format(self.node_id))

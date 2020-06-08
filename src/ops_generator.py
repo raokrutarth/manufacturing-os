@@ -6,7 +6,8 @@ from time import sleep
 from nodes import NodeState
 import schedule
 import time
-from state import FileBasedStateHelper
+import state
+
 
 log = logging.getLogger()
 manager = multiprocessing.Manager()
@@ -19,7 +20,9 @@ def get_random_node_to_kill(cluster, leader_can_fail=False):
 
     if not leader_can_fail:
         for node in active_nodes:
-            state_helper = FileBasedStateHelper(node, cluster)
+            # TODO (Chen): We CANNOT initialize one state helper per call
+            # We do not need state_helper for this
+            state_helper = state.FileBasedStateHelper(node)
             if state_helper.am_i_leader():
                 active_nodes.remove(node)
 
@@ -86,8 +89,14 @@ def run_generator(metrics, queues, cluster, failure_rate=0, recovery_rate=0.0, u
         log.critical("CRITICAL: Cluster may eventually die because recovery rate (%.0f) < fail rate (%.0f)",
                      recovery_rate, failure_rate)
 
+    # Turn off schedules massive logging
+    logging.getLogger('schedule').propagate = False
+
     # Recovery happens every K seconds instead of 1 second, we want nodes to stay killed for a while
     recover_step = 4
+
+    # TODO (Chen): Use the state reader initialized here to get cluster object
+    reader = state.StateReader()
 
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
