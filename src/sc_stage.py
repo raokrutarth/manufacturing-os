@@ -6,7 +6,7 @@ from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
 from uuid import uuid4
-from random import randint
+from random import random
 
 from nodes import NodeState
 from items import Item, ItemReq
@@ -329,9 +329,7 @@ class SuppyChainStage(Thread):
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
             # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
-            sleep(randint(1, 3))  # HACK simulated transit time
-
-            sleep(randint(1, 3))
+            sleep(random())  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
