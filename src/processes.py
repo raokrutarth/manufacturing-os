@@ -53,7 +53,7 @@ class SocketBasedNodeProcess(NodeProcess):
         super(SocketBasedNodeProcess, self).__init__(node, cluster)
 
         # Execution constants for the process
-        self.heartbeat_delay = 10.0
+        self.heartbeat_delay = 1.0
         self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = self.cluster.get_node_process_spec(self.node.node_id)
@@ -88,8 +88,11 @@ class SocketBasedNodeProcess(NodeProcess):
         # Wait for confirmation of new leader
 
     def init_cluster_flow(self):
-        new_flow = ctr.bootstrap_flow(self.cluster.nodes)
+        new_flow = ctr.bootstrap_flow(self.cluster.nodes, self.metrics, self.node.node_id)
         self.state_helper.update_flow(new_flow)
+
+    def get_leader(self):
+        return self.state_helper.get_leader()
 
     def start(self):
         log.info("Starting node %s", self.node.get_id())
@@ -105,7 +108,7 @@ class SocketBasedNodeProcess(NodeProcess):
             self.startThread(self.testOpRunner, 'test ops runner')
 
         # Wait for leader to be elected
-        while not self.state_helper.get_leader():
+        while not self.get_leader():
             time.sleep(0.1)
 
         # Initialize the flow if this node is the leader
@@ -135,18 +138,20 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def init_liveness_state(self):
         # -1 means no last known connection timestamp
-        self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
+        self.last_known_heartbeat = {
+            node.node_id: time.time() for node in self.cluster.nodes if node != self.node
+        }
 
         for node in self.cluster.nodes:
             if node != self.node:
-                self.last_known_heartbeat_log[node] = self.last_known_heartbeat[node]
+                self.last_known_heartbeat_log[node.node_id] = self.last_known_heartbeat[node.node_id]
 
-    def update_heartbeat(self, node):
+    def update_heartbeat(self, node_id):
         # NOTE: This is a VERY strong assumption; we usually don't have
         # precise synced distributed clocks
         curr_time = time.time()
-        self.last_known_heartbeat[node] = curr_time
-        self.last_known_heartbeat_log[node] = self.last_known_heartbeat[node]
+        self.last_known_heartbeat[node_id] = curr_time
+        self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
 
     def detect_and_fetch_dead_nodes(self):
         """
@@ -154,31 +159,36 @@ class SocketBasedNodeProcess(NodeProcess):
         """
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
+
+        for nid, lt in self.last_known_heartbeat.items():
+            if (lt < (curr_time - margin)) and (lt >= 0):
+                log.warning(
+                    'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
+                        self.node.node_id, nid, lt, curr_time))
+
         return [
-            n for n, lt in self.last_known_heartbeat.items()
-            if (lt < (curr_time - margin)) and (lt >= 0)
+            nid for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
     def on_kill(self):
-        log.warning("Killing node %s", self.node.get_id())
+        log.warning("Crashing node %s", self.node.get_id())
         self.node.state = NodeState.inactive
         self.stop()
 
     def on_recover(self):
-        log.warning("Recovering node %s", self.node.get_id())
+        log.warning("Restarting node %s", self.node.get_id())
+        self.node.state = NodeState.active
         self._attempt_log_recovery()
+
         self.subscriber.recover()
         self.publisher.recover()
         self.heartbeat.recover()
-        self.node.state = NodeState.active
-        self.update_flow(self.node.get_id())
-        log.warning("Recovering node %s", self.node.get_id())
+
         self.sc_stage.restart()
 
-    def update_flow(self, node_id):
-        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes)
+    def update_flow(self):
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster.nodes, self.metrics, self.node.node_id)
         self.state_helper.update_flow(new_flow)
-        log.info("Node {} updated flow due to node {}".format(self.node.node_id, node_id))
 
     def stop(self):
         # flush in-memory state
@@ -189,17 +199,20 @@ class SocketBasedNodeProcess(NodeProcess):
         self.sc_stage.stop()
 
     def _attempt_log_recovery(self):
+        log.debug("Node %d starting heartbeat WAL recovery", self.node.node_id)
+
         # -1 means no last known connection timestamp
         self.last_known_heartbeat = {node: -1 for node in self.cluster.nodes if node != self.node}
 
         if not len(self.last_known_heartbeat):
-            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node_id)
+            log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node.node_id)
             return
 
         for node in self.cluster.nodes:
-            if node != self.node:
+            if node.node_id != self.node.node_id:
                 try:
                     self.last_known_heartbeat[node] = self.last_known_heartbeat_log[node]
-                except:
-                    log.warning("### Node %d has issues to recovery from log ", self.node.node_id)
-        log.debug("Node %d succeeds in recovery heartbeat from log ", self.node.node_id)
+                except Exception:
+                    log.warning("Node %d unable to recover heartbeat details from WAL for node %s", self.node.node_id, node)
+
+        log.debug("Node %d completed heartbeat WAL recovery", self.node.node_id)

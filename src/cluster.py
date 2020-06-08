@@ -1,12 +1,14 @@
 import logging
 import items
 import networkx as nx
+import time
 
 from typing import List
 from collections import defaultdict
 
 from nodes import BaseNode, ProcessSpec, SingleItemNode, NodeState
 import basecases
+from metrics import Metrics
 
 log = logging.getLogger()
 
@@ -32,11 +34,12 @@ class Cluster(object):
     Represents the set of nodes interacting
     """
 
-    def __init__(self, blueprint, port_range_start=40000):
+    def __init__(self, metrics, blueprint, port_range_start=40000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.node_ids_to_nodes = {node.node_id: node for node in self.nodes}
         self.process_specs = None
+        self.metrics = metrics
         self.init_process_specs(port_range_start)
 
     def get_distinct_item_types_mapping(self):
@@ -58,6 +61,10 @@ class Cluster(object):
         for idx in range(len(self.nodes)):
             if self.nodes[idx].node_id == node_id:
                 self.nodes[idx].dependency = new_dependency
+
+    def update_deps_for_dead_node(self, dead_node: int):
+        # TODO: need to persist and reflect that the node is dead
+        pass
 
     def deactivate_node(self, node_id: int):
         '''
@@ -178,7 +185,7 @@ class ClusterWideFlow(object):
         return graph
 
 
-def bootstrap_all_paths(nodes: List[SingleItemNode]):
+def _bootstrap_all_paths(nodes: List[SingleItemNode]):
     """
     Create a flow with all possible dependency paths
     """
@@ -235,17 +242,25 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
     return path
 
 
-def bootstrap_flow(nodes: List[SingleItemNode]):
+def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     """
     Create a flow with a possible path
+
+    metrics: metrics object from the calling node
+    node_id: node ID of the calling node
     """
+    start_time = time.time()
     # Create a cluster_flow with all possible paths first
-    log.debug("Bootstrapping flow has started.")
-    cluster_flow = bootstrap_all_paths(nodes)
+    log.debug("Bootstrapping flow has started. Will calculate time taken.")
+    cluster_flow = _bootstrap_all_paths(nodes)
+
+    metrics.set_metric(node_id, "bootstrap_all_paths_time_sec", time.time() - start_time)
+
     start_node = nodes[0].node_id
     end_node = nodes[len(nodes)-1].node_id
 
-    log.debug("Cluster flow with all possible paths created: {}".format(cluster_flow))
+    log.debug("Cluster flow with all possible paths created: {}, time taken: {}"
+              .format(cluster_flow, time.time() - start_time))
 
     # Create a new ClusterWideFlow object containing only one possible paths.
     cluster_flow_final = ClusterWideFlow(nodes)
@@ -261,16 +276,20 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
             edge[0], edge[1], node.dependency.result_item_req
         )
 
-    log.debug("Cluster flow with one specific path created: {}".format(cluster_flow_final))
+    metrics.set_metric(node_id, "full_flow_bootstrap_time_sec", time.time() - start_time)
+    log.debug("Cluster flow with one specific path created: {}, time taken final: {}"
+              .format(cluster_flow_final, time.time() - start_time))
 
     return cluster_flow_final
 
-def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode]):
+
+def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode], metrics, node_id):
     """
     Create a flow with a possible path
     """
     active_nodes = [active_node for active_node in nodes if active_node.state == NodeState.active]
-    return bootstrap_flow(active_nodes)
+    return bootstrap_flow(active_nodes, metrics, node_id)
+
 
 # for testing purposes
 def _test():
@@ -283,8 +302,7 @@ def _test():
     
     print("Nodes have been created.")
     print(demo_nodes)
-
-    cluster_flow_obj = bootstrap_flow(demo_nodes)
+    cluster_flow_obj = bootstrap_flow(demo_nodes, Metrics("flow-test"), 98989898)
     print("ClusterWideFlow Object has created.")
     print(cluster_flow_obj)
     return cluster_flow_obj

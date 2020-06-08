@@ -23,21 +23,16 @@ class Action(enum.Enum):
 
     # Inits a heartbeat from a node
     Heartbeat = 1
-
     # Signals death of node
     Death = 2
-
     # Signals to perform re-allocation; different from allocate in case we use a
     # different optimized algorithm for
     # re-allocation
     ReAllocate = 3
-
     # Signals to initiate initial flow allocation consensus
     Allocate = 4
-
     # Signals a generic Ack
     Ack = 5
-
     # Signals to update dependency i.e. production-consumption requirements
     Update = 6
 
@@ -57,6 +52,9 @@ class Action(enum.Enum):
 
     Recover = 13
 
+    # Informs leader about death of node
+    InformLeaderOfDeath = 14
+
 
 class Message(object):
     """
@@ -65,14 +63,14 @@ class Message(object):
 
     ALL = -1  # assumes a node id is always an int > 0
 
-    def __init__(self, source, action: Action, typeVal: MsgType, dest=ALL):
+    def __init__(self, source, action: Action, type_val: MsgType, dest=ALL):
         '''
             source: node_id of the node sending the message.
             dest: node_id of the intended recepient.
             type: can be response/request.
             action: determines the purpose of the message.
         '''
-        self.type = typeVal
+        self.type = type_val
         self.action = action
 
         # NOTE
@@ -258,6 +256,17 @@ class BatchDeliveryConfirmResponse(Message):
         )
 
 
+class InformLeaderOfDeathReq(Message):
+    def __init__(self, source: int, dest: int, dead_node: int):
+        super(InformLeaderOfDeathReq, self).__init__(source, Action.InformLeaderOfDeath, MsgType.Request, dest)
+        self.dead_node = dead_node
+
+    def __repr__(self):
+        return "InformLeaderOfDeathReq(from:{}, to:{}, dead_node:{})".format(
+            self.source, self.dest, self.dead_node,
+        )
+
+
 class MessageHandler(object):
     """
         Message Handler responsible for managing and manipulating state mutations upon sending and receiving messages
@@ -268,10 +277,14 @@ class MessageHandler(object):
     """
 
     @staticmethod
-    def getMsgForAction(source, action: Action, msg_type: MsgType, dest=""):
+    def getMsgForAction(source, action: Action, msg_type: MsgType, dest=Message.ALL, ctx=0):
         """
             returns an object of type Message for the specified message
         """
+
+        assert type(source) == int, "Invalid source: {}".format(source)
+        assert type(dest) == int, "Invalid dest: {}".format(dest)
+
         if action == Action.Allocate:
             return AllocateReq(source)
         elif action == Action.Heartbeat:
@@ -287,6 +300,9 @@ class MessageHandler(object):
             return RecoverReq(source)
         elif action == Action.Ack:
             return AckResp(source, dest)
+        elif action == Action.InformLeaderOfDeath:
+            assert type(ctx) == int, "Invalid ctx: {}".format(ctx)
+            return InformLeaderOfDeathReq(source, dest, ctx)
         else:
             assert False, "Invalid action: {}".format(action.name)
 
@@ -313,6 +329,7 @@ class MessageHandler(object):
             Action.Allocate: self.none_fn,
             Action.Ack: self.none_fn,
             Action.Update: self.on_update_req,
+            Action.InformLeaderOfDeath: self.on_inform_death_req,
 
             Action.RequestMaterialBatch: self.on_request_material_req,
             Action.Recover: self.none_fn,
@@ -324,6 +341,7 @@ class MessageHandler(object):
             Action.Allocate: self.none_fn,
             Action.Ack: self.none_fn,
             Action.Update: self.on_update_resp,
+            Action.InformLeaderOfDeath: self.none_fn,
 
             Action.SentItemBatch: self.on_item_sent_resp,
             Action.ItemBatchNotAvailable: self.on_batch_unavailable_resp,
@@ -460,10 +478,8 @@ class MessageHandler(object):
         # TODO: add handling when this is not the leader; Simple fail and retry on source?
         if is_leader:
             # TODO: Create efficient restructure strategy once Andrej's flow algorithm handles more complex topologies
-            # flow = self.node_process.raft_helper.get_flow()
             self.node_process.cluster.update_deps(message.source, message.dependency)
-            new_flow = ctr.bootstrap_flow(self.node_process.cluster.nodes)
-            self.node_process.state_helper.update_flow(new_flow)
+            self.node_process.update_flow()
             log.debug("Received Update Dependency Request from %s", message.source)
 
             # Send an ack
@@ -474,6 +490,15 @@ class MessageHandler(object):
                 dest=message.source
             )
             self.sendMessage(response)
+
+    def on_inform_death_req(self, message: InformLeaderOfDeathReq):
+        assert message.action == Action.InformLeaderOfDeath
+
+        is_leader = self.node_process.state_helper.am_i_leader()
+        if is_leader:
+            self.node_process.cluster.update_deps_for_dead_node(message.dead_node)
+            self.node_process.update_flow()
+            log.warning("Received Death information request from %s", message.source)
 
     def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)
