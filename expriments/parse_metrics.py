@@ -27,12 +27,13 @@ class Metricparser:
         return pd.concat([pd.read_csv(f) for f in self.metrics_files], ignore_index=True)
 
     def _print_all_data(self):
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-            log.info("Full Exprimental results:\n\n%s\n\n===\n", self.df.to_string())
+        self.df.round(2)
+        log.info("Full Exprimental results:\n\n%s\n\n===\n", self.df.to_string(float_format="%.0f"))
 
     def _print_all_metric_stats(self):
         res = self.df.groupby('metric_name').agg({'value': ['min', 'max', 'mean', 'median', 'std', 'var']})
-        log.info("Metric-wise breakdown:\n\n%s\n\n===\n", res.to_string())
+        res.round(2)
+        log.info("Metric-wise breakdown:\n\n%s\n\n===\n", res.to_string(float_format="%.2f"))
 
 
 if __name__ == "__main__":
