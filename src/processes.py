@@ -167,7 +167,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         assert type(node_id) == int
         curr_time = time.time()
         log.debug("Node {} received a heartbeat response at {} from {}"
-                    .format(self.node_id, curr_time, node_id))
+                  .format(self.node_id, curr_time, node_id))
         self.last_known_heartbeat[node_id] = curr_time
         # Removing as it takes a lot of time
         # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
