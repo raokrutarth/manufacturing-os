@@ -265,12 +265,14 @@ def bootstrap_flow(nodes: List[SingleItemNode]):
 
     return cluster_flow_final
 
+
 def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode]):
     """
     Create a flow with a possible path
     """
     active_nodes = [active_node for active_node in nodes if active_node.state == NodeState.active]
     return bootstrap_flow(active_nodes)
+
 
 # for testing purposes
 def _test():

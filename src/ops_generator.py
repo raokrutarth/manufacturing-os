@@ -33,11 +33,11 @@ def get_random_node_to_kill(cluster, leader_can_fail=False):
 
 def get_random_node_to_recover(cluster):
     num_of_dead_nodes = len(dead_node_list)
-    if len(dead_node_list) == 0:
+    if num_of_dead_nodes == 0:
         return None
 
-    recover_node = dead_node_list.pop(0)
-    return recover_node
+    recovered_node = dead_node_list.pop(0)
+    return recovered_node
 
 
 def kill_node(cluster, queues, failure_prob_per_sec, leader_can_fail=False):
@@ -70,6 +70,7 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             queues[node.node_id].put(Op.SendUpdateDep)
             log.warning("Node %d to update dependency", node.node_id)
 
+
 def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
     '''
     :param queues:
@@ -80,14 +81,19 @@ def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_ra
     :return:
     '''
 
-    failure_prob_per_sec = min(1.0, failure_rate / 60.0)
-    recover_prob_per_sec = min(1.0, recover_rate / 60.0)
-    update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
+    if recover_rate < failure_rate:
+        log.critical("CRITICAL: Cluster may eventually die! Check this is what you want..")
 
-    schedule.every().second.do(kill_node, cluster, queues, failure_prob_per_sec, leader_can_fail)
-    sleep(2)
-    schedule.every().second.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
-    schedule.every().second.do(recover_node, cluster, queues, recover_prob_per_sec)
+    # Recovery happens every K seconds instead of 1 second, we want nodes to stay killed for a while
+    recover_step = 4
+
+    failure_prob_per_sec = min(1.0, failure_rate / 60.0)
+    update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
+    recover_prob_per_step = min(1.0, recover_rate / 60.0) * recover_step
+
+    schedule.every(recover_step).second.do(recover_node, cluster, queues, recover_prob_per_step)
+    schedule.every(1).second.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
+    schedule.every(1).second.do(kill_node, cluster, queues, failure_prob_per_sec, leader_can_fail)
 
     while True:
         schedule.run_pending()
