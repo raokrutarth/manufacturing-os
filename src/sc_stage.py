@@ -39,7 +39,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=5):
+    def __init__(self, node_process, time_per_batch=1):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -84,6 +84,7 @@ class SuppyChainStage(Thread):
         self.metrics.set_metric(self.node_id, "wal_ghost_outbound_batches", 0)
         self.metrics.set_metric(self.node_id, "wal_ghost_inbound_batches", 0)
         self.metrics.set_metric(self.node_id, "empty_outbound_inventory_occurrences", 0)
+        self.metrics.set_metric(self.node_id, "batches_delivered", 0)
 
         self._attempt_log_recovery()
 
