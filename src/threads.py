@@ -16,7 +16,7 @@ class SubscribeThread(Thread):
 
         self.node_process = node_process
         self.node_id = node_process.node_id
-        self.DELAY = 0.01
+        self.DELAY = 0.001
 
     def recover(self):
         self._attempt_log_recovery()
@@ -31,8 +31,7 @@ class SubscribeThread(Thread):
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
 
-        context = zmq.Context()
-        socket = context.socket(zmq.SUB)
+        socket = zmq.Context().socket(zmq.SUB)
 
         # set the subscriber socket to listen to all messages
         # by any publisher. (can be optimized later)
@@ -64,7 +63,7 @@ class SubscribeThread(Thread):
 
 class PublishThread(Thread):
 
-    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=0.1):
+    def __init__(self, node_process: 'SocketBasedNodeProcess', delay=0.001):
         super(PublishThread, self).__init__()
 
         self.node_process = node_process
@@ -83,27 +82,27 @@ class PublishThread(Thread):
 
     def run(self):
         log.debug('node %s starting publisher thread', self.node_id)
-
-        context = zmq.Context()
-        socket = context.socket(zmq.PUB)
+        socket = zmq.Context().socket(zmq.PUB)
         binded = False
+
         while not binded:
             try:
                 socket.bind("tcp://127.0.0.1:%d" % self.node_process.port)
                 binded = True
-            except Exception:
-                self.node_process.port += 1
+            except Exception as e:
+                log.error("Node %d unable to bind port %d for message publisher with exception %s. Trying again.",
+                          self.node_id, self.node_process.port, e)
+            sleep(self.delay)
+
+        log.info("Node %d successfully binded message publisher to port %d", self.node_id, self.node_process.port)
 
         while True:
             if self.node_process.node().state == NodeState.inactive:
                 sleep(0.01)
                 continue
 
-            if not self.node_process.message_queue.empty():
-                message = self.node_process.message_queue.get()
-                socket.send(pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL))
-            else:
-                sleep(self.delay)
+            message = self.node_process.message_queue.get()
+            socket.send(pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL))
 
 
 class HeartbeatThread(Thread):

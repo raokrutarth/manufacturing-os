@@ -2,6 +2,7 @@ import logging
 import items
 import networkx as nx
 import time
+import socket
 
 from typing import List
 from collections import defaultdict
@@ -24,12 +25,28 @@ class ClusterBlueprint(object):
         self.nodes = nodes
 
 
+def _is_port_available(ip, port):
+    '''
+        HACK [last-minute]
+        returns true if the port is available. Will be used by the
+        publisher thread to bind to publish messages to the subscribers
+        of zmq
+    '''
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind((ip, port))
+        s.close()
+        return True
+    except Exception:
+        return False
+
+
 class Cluster(object):
     """
     Represents the set of nodes interacting
     """
 
-    def __init__(self, blueprint, port_range_start=40000):
+    def __init__(self, blueprint, port_range_start=30000):
         self.blueprint = blueprint
         self.nodes = self.blueprint.nodes
         self.node_ids_to_nodes = {node.node_id: node for node in self.nodes}
@@ -45,11 +62,19 @@ class Cluster(object):
         # assign a process name and port to process
         self.process_specs = {}
 
+        port = port_range_start
         for node in self.nodes:
+
+            while not _is_port_available('127.0.0.1', port):
+                # keep loooking for an open port
+                port += 1
+
             self.process_specs[node.node_id] = ProcessSpec(
                 'process-{}'.format(node.node_id),
-                port_range_start + node.node_id,
+                port,
             )
+
+            port += 1
 
     def update_deps(self, node_id: int, new_dependency: items.ItemDependency):
         for idx in range(len(self.nodes)):
