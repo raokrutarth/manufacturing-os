@@ -115,13 +115,15 @@ def main(args):
     queues = {}
 
     # Contain multiple misc threads which are useful
-    ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
+    main_metrics = Metrics("main-thread")
+    ops_args = (main_metrics, queues, cluster, args.failure_rate, args.recovery_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {
         # 'cluster-plotter': plotter_thread,
         'ops-runner': ops_generator_thread
     }
+    main_metrics.set_metric(-1, "node_count", len(cluster.nodes))
 
     # Create messaging queues to interact with cluster
     for node in cluster.nodes:
@@ -230,7 +232,7 @@ def get_cluster_run_args():
         help='# of failed nodes per minute'
     )
     parser.add_argument(
-        '--recover_rate',
+        '--recovery_rate',
         default=0,
         type=float,
         help='# of recovered nodes per minute'
