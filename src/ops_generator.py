@@ -91,9 +91,9 @@ def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_ra
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
     recover_prob_per_step = min(1.0, recover_rate / 60.0) * recover_step
 
-    schedule.every(recover_step).second.do(recover_node, cluster, queues, recover_prob_per_step)
-    schedule.every(1).second.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
-    schedule.every(1).second.do(kill_node, cluster, queues, failure_prob_per_sec, leader_can_fail)
+    schedule.every(recover_step).seconds.do(recover_node, cluster, queues, recover_prob_per_step)
+    schedule.every(1).seconds.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
+    schedule.every(1).seconds.do(kill_node, cluster, queues, failure_prob_per_sec, leader_can_fail)
 
     while True:
         schedule.run_pending()

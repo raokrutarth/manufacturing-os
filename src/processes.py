@@ -138,18 +138,20 @@ class SocketBasedNodeProcess(NodeProcess):
 
     def init_liveness_state(self):
         # -1 means no last known connection timestamp
-        self.last_known_heartbeat = {node: time.time() for node in self.cluster.nodes if node != self.node}
+        self.last_known_heartbeat = {
+            node.node_id: time.time() for node in self.cluster.nodes if node != self.node
+        }
 
         for node in self.cluster.nodes:
             if node != self.node:
-                self.last_known_heartbeat_log[node] = self.last_known_heartbeat[node]
+                self.last_known_heartbeat_log[node.node_id] = self.last_known_heartbeat[node.node_id]
 
-    def update_heartbeat(self, node):
+    def update_heartbeat(self, node_id):
         # NOTE: This is a VERY strong assumption; we usually don't have
         # precise synced distributed clocks
         curr_time = time.time()
-        self.last_known_heartbeat[node] = curr_time
-        self.last_known_heartbeat_log[node] = self.last_known_heartbeat[node]
+        self.last_known_heartbeat[node_id] = curr_time
+        self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
 
     def detect_and_fetch_dead_nodes(self):
         """
@@ -158,15 +160,14 @@ class SocketBasedNodeProcess(NodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
 
-        for n, lt in self.last_known_heartbeat.items():
+        for nid, lt in self.last_known_heartbeat.items():
             if (lt < (curr_time - margin)) and (lt >= 0):
                 log.warning(
                     'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
-                        self.node.node_id, n.node_id, lt, curr_time))
+                        self.node.node_id, nid, lt, curr_time))
 
         return [
-            n for n, lt in self.last_known_heartbeat.items()
-            if (lt < (curr_time - margin)) and (lt >= 0)
+            nid for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
     def on_kill(self):

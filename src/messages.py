@@ -277,7 +277,7 @@ class MessageHandler(object):
     """
 
     @staticmethod
-    def getMsgForAction(source, action: Action, msg_type: MsgType, dest=Message.ALL, ctx=""):
+    def getMsgForAction(source, action: Action, msg_type: MsgType, dest=Message.ALL, ctx=0):
         """
             returns an object of type Message for the specified message
         """
@@ -329,7 +329,7 @@ class MessageHandler(object):
             Action.Allocate: self.none_fn,
             Action.Ack: self.none_fn,
             Action.Update: self.on_update_req,
-            Action.InformLeaderOfDeath: self.none_fn,
+            Action.InformLeaderOfDeath: self.on_inform_death_req,
 
             Action.RequestMaterialBatch: self.on_request_material_req,
             Action.Recover: self.none_fn,
@@ -498,7 +498,7 @@ class MessageHandler(object):
         if is_leader:
             self.node_process.cluster.update_deps_for_dead_node(message.dead_node)
             self.node_process.update_flow()
-            log.debug("Received Death information request from %s", message.source)
+            log.warning("Received Death information request from %s", message.source)
 
     def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)

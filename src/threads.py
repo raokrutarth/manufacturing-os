@@ -122,19 +122,18 @@ class HeartbeatThread(Thread):
         self.node_id = node_process.node.get_id()
 
     def send_message_for_dead_nodes(self):
-        dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
-        for node in dead_nodes:
-            log.critical('Node %d determined neighbor node %s has crashed.', node, self.node_id)
+        dead_node_ids = self.node_process.detect_and_fetch_dead_nodes()
+        for node_id in dead_node_ids:
             # Send a request to the leader informing of death
             message = messages.MessageHandler.getMsgForAction(
                 source=self.node.node_id,
                 action=messages.Action.InformLeaderOfDeath,
                 msg_type=messages.MsgType.Request,
                 dest=self.node_process.get_leader(),
-                ctx=node.node_id
+                ctx=node_id
             )
             log.info("Node %s informing leader of death %s", self.node_id, message)
-            self.node_process.sendMessage(messages)
+            self.node_process.sendMessage(message)
 
     def recover(self):
         self._attempt_log_recovery()
