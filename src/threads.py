@@ -2,6 +2,7 @@ import zmq
 import logging
 import pickle
 import messages
+import random
 import time
 
 from copy import deepcopy
@@ -162,6 +163,9 @@ class HeartbeatThread(Thread):
         log.debug('Node %s starting heartbeat thread', self.node_id)
         self.wait_for_flow_before_starting_heartbeats()
         log.critical('Node %s starting heartbeat thread after verifying flow', self.node_id)
+
+        # Add random delay between threads
+        sleep(random.uniform(0, self.delay))
 
         while True:
             if not self.node_process.is_active:
