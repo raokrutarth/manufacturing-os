@@ -155,9 +155,10 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
             if node.node_id != self.node_id:
                 self.last_known_heartbeat_log[node.node_id] = self.last_known_heartbeat[node.node_id]
 
-    def update_heartbeat(self, node_id):
+    def update_heartbeat(self, node_id: int):
         # NOTE: This is a VERY strong assumption; we usually don't have
         # precise synced distributed clocks
+        assert type(node_id) == int
         curr_time = time.time()
         self.last_known_heartbeat[node_id] = curr_time
         self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
@@ -189,6 +190,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
     def on_recover(self):
         log.warning("Restarting node %s", self.node_id)
 
+        # TODO (Chen): We should not be giving this information to other nodes. We need to change this design
         cluster = self.cluster()
         cluster.nodes[self.node_id].state = NodeState.active
         self.set_cluster(cluster)
@@ -200,6 +202,16 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.heartbeat.recover()
 
         self.sc_stage.restart()
+
+    def update_node_deps(self, node_id, new_deps):
+        cluster: ctr.Cluster = self.cluster()
+        cluster.update_deps(node_id, new_deps)
+        self.set_cluster(cluster)
+
+    def update_death_of_node(self, dead_node_id: int):
+        cluster: ctr.Cluster = self.cluster()
+        cluster.nodes[dead_node_id].state = NodeState.active
+        self.set_cluster(cluster)
 
     def update_flow(self):
         new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster().nodes, self.metrics, self.node_id)
@@ -217,7 +229,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         log.debug("Node %d starting heartbeat WAL recovery", self.node_id)
 
         # -1 means no last known connection timestamp
-        self.last_known_heartbeat = {node: time.time() for node in self.cluster().nodes if node.node_id != self.node_id}
+        self.last_known_heartbeat = {
+            node.node_id: time.time() for node in self.cluster().nodes if node.node_id != self.node_id}
 
         if not len(self.last_known_heartbeat):
             log.info("Node %d's Heartbeat status WALs are empty. Recount neighbor's heartbeat", self.node_id)

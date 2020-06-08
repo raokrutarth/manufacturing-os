@@ -55,35 +55,6 @@ class Cluster(object):
         for idx in range(len(self.nodes)):
             if self.nodes[idx].node_id == node_id:
                 self.nodes[idx].dependency = new_dependency
-                # TODO RIGHTNOW: Fix node_ids_to_node
-
-    def update_deps_for_dead_node(self, dead_node: int):
-        # TODO: need to persist and reflect that the node is dead
-        pass
-
-    def deactivate_node(self, node_id: int):
-        '''
-            deactivate dead node from the graph
-        :param node_id:
-        :return:
-        '''
-        self.get_node(node_id).state = NodeState.inactive
-        log.info("Node %s is successfully deactivated", node_id)
-
-    def activate_node(self, node_id: int):
-        '''
-            reactivate dead node from the graph during recovery
-        :param node_id:
-        :return:
-        '''
-        self.get_node(node_id).state = NodeState.active
-        log.info("Node %s is successfully activated", node_id)
-
-    def get_node(self, node_id):
-        '''
-            Given a node_id, returns the node object that contains
-        '''
-        return self.nodes[node_id]
 
     def get_node_process_spec(self, node_id: int):
         '''
