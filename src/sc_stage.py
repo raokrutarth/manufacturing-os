@@ -216,7 +216,10 @@ class SuppyChainStage(Thread):
             i.e. The request ID was created when this stage made a request and
             the rid was added to the pending_requests until a response was received.
         '''
-        self.pending_requests.remove(response.request_id)
+        try:
+            self.pending_requests.remove(response.request_id)
+        except Exception:
+            pass
 
     def process_item_waiting_response(self, message):
         log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)

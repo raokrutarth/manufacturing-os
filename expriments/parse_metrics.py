@@ -30,9 +30,12 @@ class Metricparser:
         with pd.option_context('display.max_rows', None, 'display.max_columns', None):
             log.info("Full Exprimental results:\n\n%s\n\n===\n", self.df.to_string())
 
-
+    def _print_all_metric_stats(self):
+        res = self.df.groupby('metric_name').agg({'value': ['min', 'max', 'mean', 'median', 'std', 'var']})
+        log.info("Metric-wise breakdown:\n\n%s\n\n===\n", res.to_string())
 
 
 if __name__ == "__main__":
     mp = Metricparser("../tmp")
     mp._print_all_data()
+    mp._print_all_metric_stats()
