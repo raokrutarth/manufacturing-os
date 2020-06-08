@@ -19,7 +19,14 @@ class ClusterPlotter(object):
     def __init__(self):
         self.reader = state.StateReader()
         self.rand_color = randomcolor.RandomColor()
+
+        sleep(5.0)
+
+        self.cluster = self.reader.get_cluster()
+        self.nodes = self.cluster.nodes
+        self.item_type_to_id = self.cluster.get_distinct_item_types_mapping()
         self.colors = self.rand_color.generate(hue="blue", count=len(self.item_type_to_id))
+        self.init_states()
 
     def init_states(self):
         self.cluster = self.reader.get_cluster()
@@ -32,7 +39,7 @@ class ClusterPlotter(object):
         }
 
     def get_item_type(self, node_id):
-        return self.cluster.node_ids_to_nodes[node_id].dependency.get_result_item_type()
+        return self.cluster.node_ids_to_nodes[str(node_id)].dependency.get_result_item_type()
 
     def get_color_for_node_id(self, node_id):
         return self.node_ids_to_colors[node_id]

@@ -73,7 +73,6 @@ class PublishThread(Thread):
                 continue
 
             message = self.node_process.message_queue.get()
-            # bmsg = pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL)
             bmsg = message
             try:
                 if message.dest == -1:
