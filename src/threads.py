@@ -3,6 +3,7 @@ import logging
 import pickle
 import messages
 
+from copy import deepcopy
 from time import sleep
 from threading import Thread
 from nodes import NodeState
@@ -93,13 +94,17 @@ class HeartbeatThread(Thread):
         self.metrics = node_process.metrics
         self.loop_counter = 0
         self.refresh_rate = 10
-        self.neighbor_ids = []
+        self.neighbor_ids = set([])
 
     def refresh_neighbors_from_flow(self):
-        self.old_neighbor_ids = 
+        old_neighbor_ids = deepcopy(self.neighbor_ids)
         flow = self.node_process.state_helper.get_flow()
         flows = flow.getIncomingFlowsForNode(self.node_id) + flow.getOutgoingFlowsForNode(self.node_id)
         self.neighbor_ids = set([x[0] for x in flows])
+        for nid in self.neighbor_ids:
+            if nid not in old_neighbor_ids:
+                # Give some time to the newly added neighbor before assuming its dead
+                self.node_process.reinit_timestamp(nid)
 
     def send_message_for_dead_nodes(self):
         dead_node_ids = self.node_process.detect_and_fetch_dead_nodes()
@@ -138,6 +143,7 @@ class HeartbeatThread(Thread):
 
             if self.loop_counter % self.refresh_rate == 0:
                 self.refresh_neighbors_from_flow()
+            self.loop_counter += 1
 
             for neighbor_id in self.neighbor_ids:
                 message = messages.MessageHandler.getMsgForAction(

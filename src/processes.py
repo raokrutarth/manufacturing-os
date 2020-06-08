@@ -170,6 +170,13 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         # Removing as it takes a lot of time
         # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
 
+    def reinit_last_timestamp(self, node_id: int):
+        assert type(node_id) == int
+        curr_time = time.time()
+        self.last_known_heartbeat[node_id] = curr_time
+        # Removing as it takes a lot of time
+        # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
+
     def detect_and_fetch_dead_nodes(self):
         """
         Goes over the last_known_heartbeat dict and finds which nodes are probably dead
