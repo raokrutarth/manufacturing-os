@@ -62,6 +62,10 @@ class Cluster(object):
             if self.nodes[idx].node_id == node_id:
                 self.nodes[idx].dependency = new_dependency
 
+    def update_deps_for_dead_node(self, dead_node: int):
+        # TODO: need to persist and reflect that the node is dead
+        pass
+
     def deactivate_node(self, node_id: int):
         '''
             deactivate dead node from the graph

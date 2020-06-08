@@ -1,5 +1,6 @@
 import enum
 
+
 class Operations(enum.Enum):
 
     def __repr__(self):
