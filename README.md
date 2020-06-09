@@ -123,10 +123,6 @@ python3.5 src/main.py
 
     ```
 
-
-
-
-
 - large-no-fail `--num_types 20 --nodes_per_type 2 --failure_rate 0 --recover_rate 0`
 
     ```csv 
@@ -160,5 +156,57 @@ python3.5 src/main.py
 
 
 
+
+- small-low-failure `--num_types 5 --nodes_per_type 2 --failure_rate 1 --recover_rate 1`
+
+    ```csv                                      
+                                             min    max   mean median    std       var
+    metric_name                                                                       
+    BatchDeliveryConfirmResponse_received  18.00  54.00  35.50  35.00  19.14    366.33
+    BatchDeliveryConfirmResponse_sent      22.00  50.00  35.50  35.00  11.70    137.00
+    BatchRequest_received                  30.00 341.00 146.75 108.00 141.91  20138.92
+    BatchRequest_sent                      52.00 193.00 145.50 168.50  63.40   4019.00
+    BatchSentResponse_received             23.00  50.00  35.75  35.00  11.32    128.25
+    BatchSentResponse_sent                 18.00  66.00  38.50  35.00  23.46    550.33
+    BatchUnavailableResponse_received       4.00 155.00 105.75 132.00  68.93   4751.58
+    BatchUnavailableResponse_sent           4.00 275.00 108.50  77.50 128.68  16559.00
+    HeartbeatReq_received                  39.00 180.00 114.80 110.00  51.84   2687.70
+    HeartbeatReq_sent                      40.00 140.00 115.00 138.00  42.91   1841.00
+    HeartbeatResp_received                 40.00 139.00 112.80 132.00  41.82   1748.70
+    HeartbeatResp_sent                     39.00 180.00 114.40 109.00  51.92   2695.30
+    InformLeaderOfDeathReq_received        68.00  68.00  68.00  68.00    NaN       NaN
+    InformLeaderOfDeathReq_sent             4.00  32.00  22.67  32.00  16.17    261.33
+    WaitingForBatchResponse_received       18.00  55.00  35.75  35.00  19.47    378.92
+    WaitingForBatchResponse_sent           23.00  50.00  35.75  35.00  11.32    128.25
+    batch_unavailable_messages_received     4.00 155.00 106.00 132.50  69.09   4774.00
+    batch_unavailable_messages_sent         0.00 275.00  54.25   2.00 102.28  10460.21
+    batches_consumed_total                  0.00  36.00  11.12   0.00  16.28    264.98
+    batches_delivered                       0.00  54.00  17.75   9.00  22.74    517.07
+    batches_produced_total                  0.00 239.00 109.62  98.00  86.79   7531.70
+    batches_received                       21.00  48.00  34.50  34.50  11.39    129.67
+    batches_requested                      51.00 193.00 145.50 169.00  64.01   4097.67
+    bootstrap_all_paths_time_sec            0.00   0.00   0.00   0.00   0.00      0.00
+    empty_inbound_inventory_occurrences     0.00 192.00  72.88  26.00  88.27   7791.84
+    empty_outbound_inventory_occurrences    0.00 276.00  54.38   2.00 102.58  10523.41
+    failed_flow_queries                     0.00   0.00   0.00   0.00   0.00      0.00
+    failed_flow_update                      0.00  64.00   8.00   0.00  22.63    512.00
+    flow_queries                          115.00 504.00 281.75 251.50 123.58  15272.50
+    full_flow_bootstrap_time_sec            0.01   0.02   0.01   0.01   0.01      0.00
+    heartbeats_sent                        40.00 140.00 115.00 138.00  43.03   1852.00
+    inbound_wal_size                        0.00 109.00  35.62  39.50  36.95   1365.41
+    nodes_determined_crashed                0.00   0.00   0.00   0.00   0.00      0.00
+    outbound_material_buildup               0.00 261.00 118.12 102.50  89.95   8091.55
+    outbound_wal_size                      24.00 261.00 137.00 111.00  80.13   6421.43
+    received_messages                       0.00 796.00 330.25 343.50 315.48  99529.36
+    sent_messages                           0.00 793.00 333.38 326.50 334.04 111579.98
+    skipped_manufacture_cycles              0.00 170.00  70.00  26.00  84.12   7075.43
+    successful_manufacture_cycles          24.00 262.00 137.88 112.00  80.34   6453.84
+    total_manufacture_cycles              115.00 263.00 208.75 217.50  56.26   3164.79
+    unanswered_batch_requests_current       0.00  22.00   2.75   0.00   7.78     60.50
+    wal_ghost_inbound_batches               0.00  35.00   8.12   0.00  15.10    228.12
+    wal_ghost_outbound_batches              0.00   0.00   0.00   0.00   0.00      0.00
+    wal_recovered_inbound_batches           0.00  31.00   3.88   0.00  10.96    120.12
+    wal_recovered_outbound_batches          0.00 103.00  31.38  14.50  40.99   1679.98
+     ```
 
 
