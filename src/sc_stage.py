@@ -7,6 +7,7 @@ from random import choice
 from os.path import abspath
 from uuid import uuid4
 from random import randint
+import random
 
 from nodes import NodeState
 from items import Item, ItemReq
@@ -39,7 +40,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=2):
+    def __init__(self, node_process, time_per_batch=1.0):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -228,7 +229,10 @@ class SuppyChainStage(Thread):
     def process_item_waiting_response(self, message):
         log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)
         batch = message.item_req
-        curr_status = self.outbound_log[batch]
+        try:
+            curr_status = self.outbound_log[batch]
+        except:
+            return
         if curr_status != BatchStatus.IN_TRANSIT:
             log.info("Node %d's outbound log for item %s was at status %s, expected %s",
                      self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
@@ -327,7 +331,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            sleep(randint(1, 3) * 0.05)  # HACK simulated transit time
+            # sleep(randint(1, 3) * 0.2)  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
@@ -454,7 +458,7 @@ class SuppyChainStage(Thread):
 
         while True:
             self.stage_active.wait()  # Blocks until the stage is set to active
-            sleep(self.time_per_batch)
+            sleep(random.uniform(0.5, self.time_per_batch))
 
             self.metrics.increase_metric(self.node_id, "total_manufacture_cycles")
             self.metrics.set_metric(self.node_id, "batches_produced_total", self.manufacture_count)

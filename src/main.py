@@ -99,7 +99,7 @@ def has_live_threads(threads):
 def main(args):
 
     # nodes = basecases.bootstrap_demo()
-    nodes = basecases.bootstrap_demo_mid()
+    nodes = basecases.bootstrap_demo_mid_2()
     # nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     # build the cluster object

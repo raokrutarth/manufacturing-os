@@ -118,6 +118,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
         # Apply for leadership
         self.state_helper.apply_for_leadership()
+        time.sleep(0.5)
 
         self.startThread(self.subscriber, 'subscriber')
         self.startThread(self.publisher, 'publisher')

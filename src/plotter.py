@@ -140,7 +140,7 @@ class ClusterPlotter(object):
                 graph.add_edge(edge)
 
         isolates = list(nx.isolates(nx_graph))
-        num_rows = int(len(isolates) ** 0.5)
+        num_rows = max(1, int(len(isolates) ** 0.5))
         for idx in range(0, len(isolates), num_rows):
             for idy in range(idx, idx + num_rows - 1):
                 if (idy + 1) >= len(isolates):
