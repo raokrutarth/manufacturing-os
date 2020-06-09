@@ -350,6 +350,7 @@ class MessageHandler(object):
         self.metrics = self.node_process.metrics
         self.metrics.set_metric(self.node_id, "sent_messages", 0)
         self.metrics.set_metric(self.node_id, "received_messages", 0)
+        self.metrics.set_metric(self.node_id, "failed_flow_update", 0)
 
     def get_action_callbacks(self):
         """
@@ -521,9 +522,13 @@ class MessageHandler(object):
 
         is_leader = self.node_process.state_helper.am_i_leader()
         if is_leader:
-            self.node_process.update_death_of_node(message.dead_node_id)
-            self.node_process.update_flow()
-            log.warning("Received Death information request from %s", message.source)
+            try:
+                log.warning("Received Death information request from %s", message.source)
+                self.node_process.update_death_of_node(message.dead_node_id)
+                self.node_process.update_flow()
+            except Exception as e:
+                log.error("Node %d : Unable to update flow with exception %s ", self.node_id, e)
+                self.metrics.increase_metric(self.node_id, "failed_flow_update")
 
     def on_update_resp(self, message):
         log.debug("%s : Update Resp received: {}", message.source)

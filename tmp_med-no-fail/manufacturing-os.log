@@ -1,0 +1,32 @@
+CRITICAL  00:47:34 MainThread   main.py:105::main                 | Starting Cluster:
+	Nodes: [SingleItemNode(id: 0, deps: ItemDependency(in:[], out:ItemReq(Item(type:0), qty:1))), SingleItemNode(id: 1, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:1), qty:1))), SingleItemNode(id: 2, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:1), qty:1))), SingleItemNode(id: 3, deps: ItemDependency(in:[ItemReq(Item(type:3), qty:1), ItemReq(Item(type:5), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:2), qty:1))), SingleItemNode(id: 4, deps: ItemDependency(in:[ItemReq(Item(type:3), qty:1), ItemReq(Item(type:5), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:2), qty:1))), SingleItemNode(id: 5, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:3), qty:1))), SingleItemNode(id: 6, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:3), qty:1))), SingleItemNode(id: 7, deps: ItemDependency(in:[ItemReq(Item(type:0), qty:1)], out:ItemReq(Item(type:4), qty:1))), SingleItemNode(id: 8, deps: ItemDependency(in:[ItemReq(Item(type:0), qty:1)], out:ItemReq(Item(type:4), qty:1))), SingleItemNode(id: 9, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1), ItemReq(Item(type:3), qty:1), ItemReq(Item(type:4), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:5), qty:1))), SingleItemNode(id: 10, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1), ItemReq(Item(type:3), qty:1), ItemReq(Item(type:4), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:5), qty:1))), SingleItemNode(id: 11, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1)], out:ItemReq(Item(type:6), qty:1))), SingleItemNode(id: 12, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1)], out:ItemReq(Item(type:6), qty:1))), SingleItemNode(id: 13, deps: ItemDependency(in:[ItemReq(Item(type:2), qty:1)], out:ItemReq(Item(type:7), qty:1)))]
+	Processes: dict_values([ProcessSpec(name='process-0', port=30000), ProcessSpec(name='process-1', port=30001), ProcessSpec(name='process-2', port=30002), ProcessSpec(name='process-3', port=30003), ProcessSpec(name='process-4', port=30004), ProcessSpec(name='process-5', port=30005), ProcessSpec(name='process-6', port=30006), ProcessSpec(name='process-7', port=30007), ProcessSpec(name='process-8', port=30008), ProcessSpec(name='process-9', port=30009), ProcessSpec(name='process-10', port=30010), ProcessSpec(name='process-11', port=30011), ProcessSpec(name='process-12', port=30012), ProcessSpec(name='process-13', port=30013)])
+CRITICAL  00:47:34 MainThread   main.py:142::main                 | All nodes started
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 2
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 0
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 1
+CRITICAL  00:47:35 heartbeat-5  threads.py:169::run                  | Node 5 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-3  threads.py:169::run                  | Node 3 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-9  threads.py:169::run                  | Node 9 starting heartbeat thread after verifying flow
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 3
+CRITICAL  00:47:35 heartbeat-8  threads.py:169::run                  | Node 8 starting heartbeat thread after verifying flow
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 9
+CRITICAL  00:47:35 heartbeat-4  threads.py:169::run                  | Node 4 starting heartbeat thread after verifying flow
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 5
+CRITICAL  00:47:35 heartbeat-10 threads.py:169::run                  | Node 10 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-13 threads.py:169::run                  | Node 13 starting heartbeat thread after verifying flow
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 10
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 4
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 13
+CRITICAL  00:47:35 heartbeat-6  threads.py:169::run                  | Node 6 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-7  threads.py:169::run                  | Node 7 starting heartbeat thread after verifying flow
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 6
+CRITICAL  00:47:35 heartbeat-11 threads.py:169::run                  | Node 11 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-12 threads.py:169::run                  | Node 12 starting heartbeat thread after verifying flow
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 11
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 8
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 7
+WARNING  00:47:35 MainThread   processes.py:133::start                | Successfully started node 12
+CRITICAL  00:47:35 heartbeat-0  threads.py:169::run                  | Node 0 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-2  threads.py:169::run                  | Node 2 starting heartbeat thread after verifying flow
+CRITICAL  00:47:35 heartbeat-1  threads.py:169::run                  | Node 1 starting heartbeat thread after verifying flow

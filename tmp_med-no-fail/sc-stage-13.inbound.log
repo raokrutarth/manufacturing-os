@@ -1,0 +1,15 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-EFOXJ753\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-TSPFZ170\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-WVEFN487\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-WLVNQ711\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-UNJIA345\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-LVURE196\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-TNHIG941\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-BUPPA401\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-UQLDO595\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-YRAHF436\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-UKRCZ994\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-HXUCJ432\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-OUOQU269\"}, \"quantity\": 1}": "in-transit"
+}
