@@ -225,7 +225,10 @@ class SuppyChainStage(Thread):
             i.e. The request ID was created when this stage made a request and
             the rid was added to the pending_requests until a response was received.
         '''
-        self.pending_requests.remove(response.request_id)
+        try:
+            self.pending_requests.remove(response.request_id)
+        except Exception:
+            return
 
     def process_item_waiting_response(self, message):
         log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)
@@ -437,7 +440,7 @@ class SuppyChainStage(Thread):
 
         # Log production of important items differently
         if self.am_i_a_finale_item():
-            log.critical("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
+            log.debug("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
         else:
             log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue",
                       self.node_id, new_batch)
