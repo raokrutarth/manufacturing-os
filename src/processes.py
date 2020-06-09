@@ -197,11 +197,18 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
     def on_kill(self):
         log.warning("Crashing node %s", self.node_id)
         self.is_active = False
+        cluster: ctr.Cluster = self.cluster()
+        cluster.nodes[self.node_id].is_active = NodeState.inactive
+        self.set_cluster(cluster)
         self.stop()
 
     def on_recover(self):
         log.warning("Restarting node %s", self.node_id)
         self.is_active = True
+        cluster: ctr.Cluster = self.cluster()
+        cluster.nodes[self.node_id].is_active = NodeState.active
+        self.set_cluster(cluster)
+
         self._attempt_log_recovery()
 
         self.subscriber.recover()

@@ -33,8 +33,6 @@ def get_random_node_to_kill_id(state_helper, leader_can_fail):
 
     active_node_ids = [nid for nid in active_node_ids if flow.is_node_part_of_flow(nid)]
 
-    print(active_node_ids, dead_node_id_list)
-
     if len(active_node_ids) == 0:
         return None
     else:
@@ -107,8 +105,6 @@ def run_generator(queues, failure_rate=0, recover_rate=0, update_dep_rate=0, lea
 
     # Delay before starting ops
     sleep(2.0)
-
-    random.seed(0)
 
     state_helper = state.StateReader()
 

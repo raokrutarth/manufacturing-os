@@ -35,6 +35,7 @@ class BaseNode(object):
     def __init__(self, node_id):
         self.node_id = node_id
         self.state = NodeState.active
+        self.is_active = NodeState.active
 
     def __repr__(self):
         return "BaseNode(id:{})".format(self.node_id)

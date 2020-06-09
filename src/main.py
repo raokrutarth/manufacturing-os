@@ -7,6 +7,7 @@ import shutil
 import processes
 import operations
 import basecases
+import time
 import cluster as ctr
 import plotter as pltr
 
@@ -82,7 +83,7 @@ def run_cluster_client(queues):
 
 def run_cluster_plotter(cluster: ctr.Cluster):
     num_nodes = len(cluster.nodes)
-    delay = 0.25 * (num_nodes ** 0.5)
+    delay = 0.25 * (num_nodes ** 0.3)
     sleep(delay)
     plotter = pltr.ClusterPlotter()
     while 1:
@@ -96,7 +97,10 @@ def has_live_threads(threads):
 
 
 def main(args):
-    nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
+
+    # nodes = basecases.bootstrap_demo()
+    nodes = basecases.bootstrap_demo_mid()
+    # nodes = basecases.bootstrap_random_dag(args.num_types, args.complexity, args.nodes_per_type)
 
     # build the cluster object
     blueprint = ctr.ClusterBlueprint(nodes)

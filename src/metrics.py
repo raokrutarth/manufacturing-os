@@ -28,9 +28,12 @@ class Metrics:
         self._df.node_id = self._df.node_id.astype(int)
         self._df.metric_name = self._df.metric_name.astype(str)
         self._df.value = self._df.value.astype("float64")
+        self.counter = 0
 
     def _persist_metrics(self):
-        self._df.to_csv(self._metrics_file)
+        if self.counter % 1 == 0:
+            self._df.to_csv(self._metrics_file)
+        self.counter += 1
 
     def _modify_or_add_to_df(self, node_id: int, metric_name: str, value: float, mode: DFOperation):
         if ((self._df.node_id == node_id) & (self._df.metric_name == metric_name)).any():
@@ -71,6 +74,20 @@ class Metrics:
             raise ValueError
         result = column.value.iloc[0]
         return result
+
+    def get_metrics_for_all(self, metric_name: str):
+        all_metrics_file = glob.glob('./tmp/*metrics*.csv')
+
+        try:
+            df = pd.concat([pd.read_csv(f) for f in all_metrics_file], ignore_index=True)
+        except:
+            return None
+
+        column = df.loc[(df["metric_name"] == metric_name)]
+
+        if column.empty:
+            raise LookupError
+        return column
 
     def plot_metrics(self, node_id: int, metric_names: List[str]):
         pass

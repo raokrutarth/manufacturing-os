@@ -95,6 +95,60 @@ def bootstrap_dependencies_seven_nodes():
 
     return demo_nodes
 
+
+def bootstrap_demo_mid():
+    """
+    initialize demo_node with the following dependencies
+    start -> | metal  --> | -> frame | -> | -> window
+             | screws --> |
+             | metal  --> | -> frame | -> |
+             | screws --> |
+             | glass  ------------------> |
+             | glass  ------------------> |
+    """
+
+    # All item reqs here involve 1 unit of product. So we have redundant sources of materials.
+
+    demo_nodes = [
+        SingleItemNode(node_id=i, dependency=ItemDependency([], "")) for i in range(20)
+    ]
+
+    start = ItemReq(Item('start', None), 1)
+    metal = ItemReq(Item('metal', None), 1)
+    screws = ItemReq(Item('screws', None), 1)
+    glass = ItemReq(Item('glass', None), 1)
+    wood = ItemReq(Item('wood', None), 1)
+    window_frame = ItemReq(Item('window_frame', None), 1)
+    door_knob = ItemReq(Item('door_knob', None), 1)
+    window = ItemReq(Item('window', None), 1)
+    casing = ItemReq(Item('casing', None), 1)
+    raw_door = ItemReq(Item('raw_door', None), 1)
+    finished_door = ItemReq(Item('finished_door', None), 1)
+
+    demo_nodes[0].dependency = ItemDependency([], start)
+    demo_nodes[1].dependency = ItemDependency([start], metal)
+    demo_nodes[2].dependency = ItemDependency([start], metal)
+    demo_nodes[3].dependency = ItemDependency([start], screws)
+    demo_nodes[4].dependency = ItemDependency([start], screws)
+    demo_nodes[5].dependency = ItemDependency([start], wood)
+    demo_nodes[6].dependency = ItemDependency([start], wood)
+    demo_nodes[7].dependency = ItemDependency([start], glass)
+    demo_nodes[8].dependency = ItemDependency([start], glass)
+    demo_nodes[9].dependency = ItemDependency([screws, wood], window_frame)
+    demo_nodes[10].dependency = ItemDependency([screws, wood], window_frame)
+    demo_nodes[11].dependency = ItemDependency([metal, screws], door_knob)
+    demo_nodes[12].dependency = ItemDependency([metal, screws], door_knob)
+    demo_nodes[13].dependency = ItemDependency([window_frame, glass], window)
+    demo_nodes[14].dependency = ItemDependency([window_frame, glass], window)
+    demo_nodes[15].dependency = ItemDependency([screws, wood], casing)
+    demo_nodes[16].dependency = ItemDependency([screws, wood], casing)
+    demo_nodes[17].dependency = ItemDependency([door_knob, window_frame], raw_door)
+    demo_nodes[18].dependency = ItemDependency([door_knob, window_frame], raw_door)
+    demo_nodes[19].dependency = ItemDependency([casing, raw_door], finished_door)
+
+    return demo_nodes
+
+
 def bootstrap_demo():
     """
     initialize demo_node with the following dependencies
