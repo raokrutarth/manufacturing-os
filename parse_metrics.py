@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import logging
 import glob
+import sys
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -56,7 +57,11 @@ class Metricparser:
 
 
 if __name__ == "__main__":
-    mp = Metricparser("./tmp")
+    if len(sys.argv) > 1:
+        m_dir = sys.argv[1]
+    else:
+        m_dir = "./tmp"
+    mp = Metricparser(m_dir)
     mp._print_all_data()
     mp._augment_results()
     mp._print_all_metric_stats()
