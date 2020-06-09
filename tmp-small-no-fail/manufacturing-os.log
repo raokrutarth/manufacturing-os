@@ -1,0 +1,137 @@
+CRITICAL  08:41:01 MainThread   main.py:104::main                 | Starting Cluster:
+	Nodes: [SingleItemNode(active: NodeState.active, id: 0, deps: ItemDependency(in:[], out:ItemReq(Item(type:0), qty:1))), SingleItemNode(active: NodeState.active, id: 1, deps: ItemDependency(in:[ItemReq(Item(type:2), qty:1)], out:ItemReq(Item(type:1), qty:1))), SingleItemNode(active: NodeState.active, id: 2, deps: ItemDependency(in:[ItemReq(Item(type:2), qty:1)], out:ItemReq(Item(type:1), qty:1))), SingleItemNode(active: NodeState.active, id: 3, deps: ItemDependency(in:[ItemReq(Item(type:0), qty:1)], out:ItemReq(Item(type:2), qty:1))), SingleItemNode(active: NodeState.active, id: 4, deps: ItemDependency(in:[ItemReq(Item(type:0), qty:1)], out:ItemReq(Item(type:2), qty:1))), SingleItemNode(active: NodeState.active, id: 5, deps: ItemDependency(in:[ItemReq(Item(type:2), qty:1)], out:ItemReq(Item(type:3), qty:1))), SingleItemNode(active: NodeState.active, id: 6, deps: ItemDependency(in:[ItemReq(Item(type:2), qty:1)], out:ItemReq(Item(type:3), qty:1))), SingleItemNode(active: NodeState.active, id: 7, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1), ItemReq(Item(type:3), qty:1)], out:ItemReq(Item(type:4), qty:1)))]
+	Processes: dict_values([ProcessSpec(name='process-0', port=30000), ProcessSpec(name='process-1', port=30001), ProcessSpec(name='process-2', port=30002), ProcessSpec(name='process-3', port=30003), ProcessSpec(name='process-4', port=30004), ProcessSpec(name='process-5', port=30005), ProcessSpec(name='process-6', port=30006), ProcessSpec(name='process-7', port=30007)])
+CRITICAL  08:41:01 MainThread   main.py:142::main                 | All nodes started
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 2
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 3
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 1
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 0
+CRITICAL  08:41:01 heartbeat-4  threads.py:169::run                  | Node 4 starting heartbeat thread after verifying flow
+CRITICAL  08:41:01 heartbeat-5  threads.py:169::run                  | Node 5 starting heartbeat thread after verifying flow
+CRITICAL  08:41:01 heartbeat-7  threads.py:169::run                  | Node 7 starting heartbeat thread after verifying flow
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 4
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 5
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 7
+CRITICAL  08:41:01 heartbeat-6  threads.py:169::run                  | Node 6 starting heartbeat thread after verifying flow
+WARNING  08:41:01 MainThread   processes.py:137::start                | Successfully started node 6
+CRITICAL  08:41:02 heartbeat-0  threads.py:169::run                  | Node 0 starting heartbeat thread after verifying flow
+CRITICAL  08:41:02 heartbeat-1  threads.py:169::run                  | Node 1 starting heartbeat thread after verifying flow
+CRITICAL  08:41:02 heartbeat-2  threads.py:169::run                  | Node 2 starting heartbeat thread after verifying flow
+CRITICAL  08:41:02 heartbeat-3  threads.py:169::run                  | Node 3 starting heartbeat thread after verifying flow
+CRITICAL  08:41:15 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HIDQY534), qty:1) which is a finale item
+CRITICAL  08:41:19 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FMUEA464), qty:1) which is a finale item
+CRITICAL  08:41:28 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-PPARA695), qty:1) which is a finale item
+CRITICAL  08:41:34 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FSVAZ704), qty:1) which is a finale item
+CRITICAL  08:41:44 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-SQRRR129), qty:1) which is a finale item
+CRITICAL  08:41:48 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-QWRMP452), qty:1) which is a finale item
+CRITICAL  08:41:54 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VBMRN525), qty:1) which is a finale item
+CRITICAL  08:41:59 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-NPIFW375), qty:1) which is a finale item
+CRITICAL  08:42:03 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-GOZNW141), qty:1) which is a finale item
+CRITICAL  08:42:13 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ZOOTL257), qty:1) which is a finale item
+CRITICAL  08:42:17 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-LZJRZ504), qty:1) which is a finale item
+CRITICAL  08:42:21 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-TMADS237), qty:1) which is a finale item
+CRITICAL  08:42:31 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-OZPOY918), qty:1) which is a finale item
+CRITICAL  08:42:41 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-PTXKF303), qty:1) which is a finale item
+CRITICAL  08:42:44 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-GTSJE961), qty:1) which is a finale item
+CRITICAL  08:42:49 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-LSUYI114), qty:1) which is a finale item
+CRITICAL  08:42:57 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-SZIRX070), qty:1) which is a finale item
+CRITICAL  08:43:03 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-RIRXM169), qty:1) which is a finale item
+CRITICAL  08:43:07 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VHWWI043), qty:1) which is a finale item
+CRITICAL  08:43:16 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ELWLA075), qty:1) which is a finale item
+CRITICAL  08:43:21 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WPPOY463), qty:1) which is a finale item
+CRITICAL  08:43:26 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-DDTOA401), qty:1) which is a finale item
+CRITICAL  08:43:34 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-PZQFI503), qty:1) which is a finale item
+CRITICAL  08:43:38 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-MBXKY799), qty:1) which is a finale item
+CRITICAL  08:43:47 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ZEWVE162), qty:1) which is a finale item
+CRITICAL  08:43:55 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-MLLKB107), qty:1) which is a finale item
+CRITICAL  08:44:01 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VMMPN257), qty:1) which is a finale item
+CRITICAL  08:44:08 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-UGDCY299), qty:1) which is a finale item
+CRITICAL  08:44:12 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WIVQT932), qty:1) which is a finale item
+CRITICAL  08:44:15 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-LDMGD662), qty:1) which is a finale item
+CRITICAL  08:44:21 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VVQDG615), qty:1) which is a finale item
+CRITICAL  08:44:27 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-RHYFP785), qty:1) which is a finale item
+CRITICAL  08:44:34 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-NZJVM886), qty:1) which is a finale item
+CRITICAL  08:44:40 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-SOMZG236), qty:1) which is a finale item
+CRITICAL  08:44:49 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VALPS611), qty:1) which is a finale item
+CRITICAL  08:44:55 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-KPJIL902), qty:1) which is a finale item
+CRITICAL  08:45:02 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-EXCUG242), qty:1) which is a finale item
+CRITICAL  08:45:13 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FSPGD725), qty:1) which is a finale item
+CRITICAL  08:45:22 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-AYPDK456), qty:1) which is a finale item
+CRITICAL  08:45:27 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-CGKIQ037), qty:1) which is a finale item
+CRITICAL  08:45:36 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-XMXSO159), qty:1) which is a finale item
+CRITICAL  08:45:44 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-DMZWA866), qty:1) which is a finale item
+CRITICAL  08:45:49 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-QQHBR706), qty:1) which is a finale item
+CRITICAL  08:45:52 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-MFBCJ518), qty:1) which is a finale item
+CRITICAL  08:46:00 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-MVSCY408), qty:1) which is a finale item
+CRITICAL  08:46:07 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-PGGDY051), qty:1) which is a finale item
+CRITICAL  08:46:13 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-OYXRI895), qty:1) which is a finale item
+CRITICAL  08:46:20 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-KYQCF941), qty:1) which is a finale item
+CRITICAL  08:46:25 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ECRLY094), qty:1) which is a finale item
+CRITICAL  08:46:32 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ALMQC187), qty:1) which is a finale item
+CRITICAL  08:46:38 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-SVPXY810), qty:1) which is a finale item
+CRITICAL  08:46:43 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-AHDOL000), qty:1) which is a finale item
+CRITICAL  08:46:48 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HZUUE597), qty:1) which is a finale item
+CRITICAL  08:46:55 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-MWEDN385), qty:1) which is a finale item
+CRITICAL  08:46:59 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-AEWYO234), qty:1) which is a finale item
+CRITICAL  08:47:04 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-DXUCA315), qty:1) which is a finale item
+CRITICAL  08:47:11 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FEIEZ647), qty:1) which is a finale item
+CRITICAL  08:47:19 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-JGAFJ474), qty:1) which is a finale item
+CRITICAL  08:47:23 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-OEPDD358), qty:1) which is a finale item
+CRITICAL  08:47:27 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-BESRE931), qty:1) which is a finale item
+CRITICAL  08:47:32 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-DKTXP491), qty:1) which is a finale item
+CRITICAL  08:47:39 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-UHMAL286), qty:1) which is a finale item
+CRITICAL  08:47:45 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-EZJKB555), qty:1) which is a finale item
+CRITICAL  08:47:50 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-QGFKV567), qty:1) which is a finale item
+CRITICAL  08:47:53 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-TXJVG691), qty:1) which is a finale item
+CRITICAL  08:48:00 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-CWOWH374), qty:1) which is a finale item
+CRITICAL  08:48:05 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-USQEL838), qty:1) which is a finale item
+CRITICAL  08:48:09 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-TBPOS754), qty:1) which is a finale item
+CRITICAL  08:48:13 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-XWZLK186), qty:1) which is a finale item
+CRITICAL  08:48:16 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-LJWZV102), qty:1) which is a finale item
+CRITICAL  08:48:19 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-RLXHC899), qty:1) which is a finale item
+CRITICAL  08:48:22 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WVLEN633), qty:1) which is a finale item
+CRITICAL  08:48:24 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ZXBJE412), qty:1) which is a finale item
+CRITICAL  08:48:28 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-BVUXK213), qty:1) which is a finale item
+CRITICAL  08:48:34 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FBAMH785), qty:1) which is a finale item
+CRITICAL  08:48:37 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-LECVP875), qty:1) which is a finale item
+CRITICAL  08:48:41 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-CFBJH789), qty:1) which is a finale item
+CRITICAL  08:48:46 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-ZMBAZ292), qty:1) which is a finale item
+CRITICAL  08:48:51 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-QYKEZ217), qty:1) which is a finale item
+CRITICAL  08:48:54 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-DPSXK837), qty:1) which is a finale item
+CRITICAL  08:48:55 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-MGXRD831), qty:1) which is a finale item
+CRITICAL  08:48:59 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-EVEUM253), qty:1) which is a finale item
+CRITICAL  08:49:02 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-IDXAY078), qty:1) which is a finale item
+CRITICAL  08:49:06 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-PMGLU181), qty:1) which is a finale item
+CRITICAL  08:49:10 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HYOYR848), qty:1) which is a finale item
+CRITICAL  08:49:13 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WNZXH442), qty:1) which is a finale item
+CRITICAL  08:49:17 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-AFGNM061), qty:1) which is a finale item
+CRITICAL  08:49:22 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-XLQGT968), qty:1) which is a finale item
+CRITICAL  08:49:25 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WVBCG938), qty:1) which is a finale item
+CRITICAL  08:49:26 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-OYAWV670), qty:1) which is a finale item
+CRITICAL  08:49:29 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HUWPE430), qty:1) which is a finale item
+CRITICAL  08:49:32 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FAMJD033), qty:1) which is a finale item
+CRITICAL  08:49:36 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-EENKF794), qty:1) which is a finale item
+CRITICAL  08:49:39 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-BLRYW729), qty:1) which is a finale item
+CRITICAL  08:49:42 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-QAJCO982), qty:1) which is a finale item
+CRITICAL  08:49:44 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-RUBTT885), qty:1) which is a finale item
+CRITICAL  08:49:49 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-BHAXA332), qty:1) which is a finale item
+CRITICAL  08:49:50 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-FWVNW249), qty:1) which is a finale item
+CRITICAL  08:49:54 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HFOXJ491), qty:1) which is a finale item
+CRITICAL  08:49:57 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-NVKGF618), qty:1) which is a finale item
+CRITICAL  08:49:59 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-QXXBP868), qty:1) which is a finale item
+CRITICAL  08:50:04 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-TMLWR057), qty:1) which is a finale item
+CRITICAL  08:50:05 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-RKRJP489), qty:1) which is a finale item
+CRITICAL  08:50:10 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VTLTN946), qty:1) which is a finale item
+CRITICAL  08:50:11 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-PFMEU716), qty:1) which is a finale item
+CRITICAL  08:50:15 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-NULBG531), qty:1) which is a finale item
+CRITICAL  08:50:20 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-YSTIQ297), qty:1) which is a finale item
+CRITICAL  08:50:21 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-RKXIO248), qty:1) which is a finale item
+CRITICAL  08:50:25 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-AIYZC425), qty:1) which is a finale item
+CRITICAL  08:50:29 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-OCJCY389), qty:1) which is a finale item
+CRITICAL  08:50:31 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WHGMB211), qty:1) which is a finale item
+CRITICAL  08:50:35 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HXAXR684), qty:1) which is a finale item
+CRITICAL  08:50:39 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-HEIXI379), qty:1) which is a finale item
+CRITICAL  08:50:43 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-NONBN455), qty:1) which is a finale item
+CRITICAL  08:50:50 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-WABYC924), qty:1) which is a finale item
+CRITICAL  08:50:51 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VYVFW268), qty:1) which is a finale item
+CRITICAL  08:50:54 sc-stage-7   sc_stage.py:454::_attempt_manufacture_cycle | Node 7 successfully manufactured batch ItemReq(Item(type:4, id:4-VZKMH794), qty:1) which is a finale item

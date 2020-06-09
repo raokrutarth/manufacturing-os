@@ -1,0 +1,4 @@
+,timestamp,node_id,metric_name,value
+0,2020-06-09 10:08:44.082684,-1,crash_signals_sent,3.0
+1,2020-06-09 10:09:01.217371,-1,recover_signals_sent,3.0
+2,2020-06-09 10:16:26.535141,-1,op_generator_cycles,542.0

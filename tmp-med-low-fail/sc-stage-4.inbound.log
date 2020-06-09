@@ -1,0 +1,5 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-OFSAF979\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-PLIWH677\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 5, \"id\": \"5-ZYADU620\"}, \"quantity\": 1}": "in-queue"
+}

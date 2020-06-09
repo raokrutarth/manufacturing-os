@@ -1,0 +1,12 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-QDNZP628\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 10, \"id\": \"10-NRQRK643\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-VEZJJ133\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 10, \"id\": \"10-VPAJQ741\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-BSKYW666\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-FFFDE481\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-GJKHH867\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-YBHMJ398\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-RBEMG208\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 0, \"id\": \"0-WKRWN396\"}, \"quantity\": 1}": "in-queue"
+}

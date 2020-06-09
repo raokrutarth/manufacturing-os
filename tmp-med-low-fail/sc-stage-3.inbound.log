@@ -1,0 +1,22 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-UIUKH273\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 6, \"id\": \"6-KOOJY845\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 5, \"id\": \"5-ZPHMT163\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-JKSHL361\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 6, \"id\": \"6-MTWZW486\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-ZKVYD488\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 5, \"id\": \"5-UXPSC680\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-CUDPG030\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-JSTVI739\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 6, \"id\": \"6-ZHAAQ403\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 5, \"id\": \"5-URDFY044\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-QLLTQ255\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 6, \"id\": \"6-YUJSN090\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 6, \"id\": \"6-NQFRY412\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-JLZUH304\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 5, \"id\": \"5-TWAFV066\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-QYFMQ961\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 3, \"id\": \"3-VTUXT345\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 5, \"id\": \"5-GFNET005\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-GFGIA682\"}, \"quantity\": 1}": "in-transit"
+}

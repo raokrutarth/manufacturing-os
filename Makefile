@@ -30,12 +30,29 @@ large-no-fail:
 	-mv ./tmp ./tmp-large-no-fail
 
 large-low-fail:
-	-timeout $(RT) $(PY) ../src/main.py --log_level warn --num_types 20 --nodes_per_type 2 --failure_rate 2 --recovery_rate 2
+	-timeout $(RT) $(PY) ./src/main.py --log_level warn --num_types 20 --nodes_per_type 2 --failure_rate 1 --recover_rate 1
 	@printf "\n\n============\n"
 	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
 	@printf "============\n"
 	-$(PY) ./src/parse_metrics.py
 	-mv ./tmp ./tmp-large-low-fail
+
+med-large-no-fail:
+	-timeout $(RT) $(PY) ./src/main.py --log_level warn --num_types 15 --nodes_per_type 2 --failure_rate 0 --recover_rate 0
+	@printf "\n\n============\n"
+	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
+	@printf "============\n"
+	-$(PY) ./src/parse_metrics.py
+	-mv ./tmp ./tmp-med-large-no-fail
+
+med-large-low-fail:
+	-timeout $(RT) $(PY) ./src/main.py --log_level warn --num_types 15 --nodes_per_type 2 --failure_rate 1 --recover_rate 1
+	@printf "\n\n============\n"
+	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
+	@printf "============\n"
+	-$(PY) ./src/parse_metrics.py
+	-mv ./tmp ./tmp-med-large-low-fail
+
 
 med-no-fail:
 	# compare with large-no-fail

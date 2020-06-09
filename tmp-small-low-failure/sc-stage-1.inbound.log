@@ -1,0 +1,16 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-CORHO230\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-JMQUC851\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-AAZBU247\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-EFHMI711\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-SNJPE521\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-IMDJU137\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-PGUMG060\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-GSRHY173\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-ZMPSG347\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-MYIPU747\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-MJIAS135\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-DDJCI696\"}, \"quantity\": 1}": "in-transit",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 2, \"id\": \"2-DNSJQ609\"}, \"quantity\": 1}": "consumed",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 1, \"id\": \"1-OORVD845\"}, \"quantity\": 1}": "in-transit"
+}

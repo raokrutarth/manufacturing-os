@@ -1,0 +1,1943 @@
+{
+    "cluster": {
+        "py/object": "cluster.Cluster",
+        "blueprint": {
+            "py/object": "cluster.ClusterBlueprint",
+            "nodes": [
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 0,
+                    "state": {
+                        "py/reduce": [
+                            {
+                                "py/type": "nodes.NodeState"
+                            },
+                            {
+                                "py/tuple": [
+                                    0
+                                ]
+                            }
+                        ]
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 0,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": []
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 1,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 1,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 2,
+                    "state": {
+                        "py/reduce": [
+                            {
+                                "py/type": "nodes.NodeState"
+                            },
+                            {
+                                "py/tuple": [
+                                    1
+                                ]
+                            }
+                        ]
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 1,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 3,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 2,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 1,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 4,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 2,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 1,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 5,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 3,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 9,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 6,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 3,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 9,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 7,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 4,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 1,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 6,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 8,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 4,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 1,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 6,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 9,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 5,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 10,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 5,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 11,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 6,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 2,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 12,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 6,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 2,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 13,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 7,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 14,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 7,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 15,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 8,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 16,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 8,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 17,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 9,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 1,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 4,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 18,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 9,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 1,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 4,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 5,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 13,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 19,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 10,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 0,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 20,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 10,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 0,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 21,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 11,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 22,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 11,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 8,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 23,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 12,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 24,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 12,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 11,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 25,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 13,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 26,
+                    "state": {
+                        "py/id": 4
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 13,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 7,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 10,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            },
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 12,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "py/object": "nodes.SingleItemNode",
+                    "node_id": 27,
+                    "state": {
+                        "py/id": 23
+                    },
+                    "dependency": {
+                        "py/object": "items.ItemDependency",
+                        "result_item_req": {
+                            "py/object": "items.ItemReq",
+                            "item": {
+                                "py/object": "items.Item",
+                                "type": 14,
+                                "id": null
+                            },
+                            "quantity": 1
+                        },
+                        "input_item_reqs": [
+                            {
+                                "py/object": "items.ItemReq",
+                                "item": {
+                                    "py/object": "items.Item",
+                                    "type": 3,
+                                    "id": null
+                                },
+                                "quantity": 1
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "nodes": {
+            "py/id": 2
+        },
+        "node_ids_to_nodes": {
+            "0": {
+                "py/id": 3
+            },
+            "1": {
+                "py/id": 9
+            },
+            "2": {
+                "py/id": 22
+            },
+            "3": {
+                "py/id": 36
+            },
+            "4": {
+                "py/id": 53
+            },
+            "5": {
+                "py/id": 70
+            },
+            "6": {
+                "py/id": 85
+            },
+            "7": {
+                "py/id": 100
+            },
+            "8": {
+                "py/id": 115
+            },
+            "9": {
+                "py/id": 130
+            },
+            "10": {
+                "py/id": 143
+            },
+            "11": {
+                "py/id": 156
+            },
+            "12": {
+                "py/id": 175
+            },
+            "13": {
+                "py/id": 194
+            },
+            "14": {
+                "py/id": 205
+            },
+            "15": {
+                "py/id": 216
+            },
+            "16": {
+                "py/id": 223
+            },
+            "17": {
+                "py/id": 230
+            },
+            "18": {
+                "py/id": 247
+            },
+            "19": {
+                "py/id": 264
+            },
+            "20": {
+                "py/id": 271
+            },
+            "21": {
+                "py/id": 278
+            },
+            "22": {
+                "py/id": 287
+            },
+            "23": {
+                "py/id": 296
+            },
+            "24": {
+                "py/id": 303
+            },
+            "25": {
+                "py/id": 310
+            },
+            "26": {
+                "py/id": 321
+            },
+            "27": {
+                "py/id": 332
+            }
+        },
+        "process_specs": {
+            "0": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-0",
+                        30000
+                    ]
+                },
+                "py/seq": [
+                    "process-0",
+                    30000
+                ]
+            },
+            "1": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-1",
+                        30001
+                    ]
+                },
+                "py/seq": [
+                    "process-1",
+                    30001
+                ]
+            },
+            "2": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-2",
+                        30002
+                    ]
+                },
+                "py/seq": [
+                    "process-2",
+                    30002
+                ]
+            },
+            "3": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-3",
+                        30003
+                    ]
+                },
+                "py/seq": [
+                    "process-3",
+                    30003
+                ]
+            },
+            "4": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-4",
+                        30004
+                    ]
+                },
+                "py/seq": [
+                    "process-4",
+                    30004
+                ]
+            },
+            "5": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-5",
+                        30005
+                    ]
+                },
+                "py/seq": [
+                    "process-5",
+                    30005
+                ]
+            },
+            "6": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-6",
+                        30006
+                    ]
+                },
+                "py/seq": [
+                    "process-6",
+                    30006
+                ]
+            },
+            "7": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-7",
+                        30007
+                    ]
+                },
+                "py/seq": [
+                    "process-7",
+                    30007
+                ]
+            },
+            "8": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-8",
+                        30008
+                    ]
+                },
+                "py/seq": [
+                    "process-8",
+                    30008
+                ]
+            },
+            "9": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-9",
+                        30009
+                    ]
+                },
+                "py/seq": [
+                    "process-9",
+                    30009
+                ]
+            },
+            "10": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-10",
+                        30010
+                    ]
+                },
+                "py/seq": [
+                    "process-10",
+                    30010
+                ]
+            },
+            "11": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-11",
+                        30011
+                    ]
+                },
+                "py/seq": [
+                    "process-11",
+                    30011
+                ]
+            },
+            "12": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-12",
+                        30012
+                    ]
+                },
+                "py/seq": [
+                    "process-12",
+                    30012
+                ]
+            },
+            "13": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-13",
+                        30013
+                    ]
+                },
+                "py/seq": [
+                    "process-13",
+                    30013
+                ]
+            },
+            "14": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-14",
+                        30014
+                    ]
+                },
+                "py/seq": [
+                    "process-14",
+                    30014
+                ]
+            },
+            "15": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-15",
+                        30015
+                    ]
+                },
+                "py/seq": [
+                    "process-15",
+                    30015
+                ]
+            },
+            "16": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-16",
+                        30016
+                    ]
+                },
+                "py/seq": [
+                    "process-16",
+                    30016
+                ]
+            },
+            "17": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-17",
+                        30017
+                    ]
+                },
+                "py/seq": [
+                    "process-17",
+                    30017
+                ]
+            },
+            "18": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-18",
+                        30018
+                    ]
+                },
+                "py/seq": [
+                    "process-18",
+                    30018
+                ]
+            },
+            "19": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-19",
+                        30019
+                    ]
+                },
+                "py/seq": [
+                    "process-19",
+                    30019
+                ]
+            },
+            "20": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-20",
+                        30020
+                    ]
+                },
+                "py/seq": [
+                    "process-20",
+                    30020
+                ]
+            },
+            "21": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-21",
+                        30021
+                    ]
+                },
+                "py/seq": [
+                    "process-21",
+                    30021
+                ]
+            },
+            "22": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-22",
+                        30022
+                    ]
+                },
+                "py/seq": [
+                    "process-22",
+                    30022
+                ]
+            },
+            "23": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-23",
+                        30023
+                    ]
+                },
+                "py/seq": [
+                    "process-23",
+                    30023
+                ]
+            },
+            "24": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-24",
+                        30024
+                    ]
+                },
+                "py/seq": [
+                    "process-24",
+                    30024
+                ]
+            },
+            "25": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-25",
+                        30025
+                    ]
+                },
+                "py/seq": [
+                    "process-25",
+                    30025
+                ]
+            },
+            "26": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-26",
+                        30026
+                    ]
+                },
+                "py/seq": [
+                    "process-26",
+                    30026
+                ]
+            },
+            "27": {
+                "py/object": "nodes.ProcessSpec",
+                "py/newargs": {
+                    "py/tuple": [
+                        "process-27",
+                        30027
+                    ]
+                },
+                "py/seq": [
+                    "process-27",
+                    30027
+                ]
+            }
+        }
+    }
+}

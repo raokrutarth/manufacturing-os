@@ -1,0 +1,50 @@
+CRITICAL  09:01:00 MainThread   main.py:104::main                 | Starting Cluster:
+	Nodes: [SingleItemNode(active: NodeState.active, id: 0, deps: ItemDependency(in:[], out:ItemReq(Item(type:0), qty:1))), SingleItemNode(active: NodeState.active, id: 1, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:1), qty:1))), SingleItemNode(active: NodeState.active, id: 2, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:1), qty:1))), SingleItemNode(active: NodeState.active, id: 3, deps: ItemDependency(in:[ItemReq(Item(type:3), qty:1), ItemReq(Item(type:5), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:2), qty:1))), SingleItemNode(active: NodeState.active, id: 4, deps: ItemDependency(in:[ItemReq(Item(type:3), qty:1), ItemReq(Item(type:5), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:2), qty:1))), SingleItemNode(active: NodeState.active, id: 5, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:3), qty:1))), SingleItemNode(active: NodeState.active, id: 6, deps: ItemDependency(in:[ItemReq(Item(type:4), qty:1)], out:ItemReq(Item(type:3), qty:1))), SingleItemNode(active: NodeState.active, id: 7, deps: ItemDependency(in:[ItemReq(Item(type:0), qty:1)], out:ItemReq(Item(type:4), qty:1))), SingleItemNode(active: NodeState.active, id: 8, deps: ItemDependency(in:[ItemReq(Item(type:0), qty:1)], out:ItemReq(Item(type:4), qty:1))), SingleItemNode(active: NodeState.active, id: 9, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1), ItemReq(Item(type:3), qty:1), ItemReq(Item(type:4), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:5), qty:1))), SingleItemNode(active: NodeState.active, id: 10, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1), ItemReq(Item(type:3), qty:1), ItemReq(Item(type:4), qty:1), ItemReq(Item(type:6), qty:1)], out:ItemReq(Item(type:5), qty:1))), SingleItemNode(active: NodeState.active, id: 11, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1)], out:ItemReq(Item(type:6), qty:1))), SingleItemNode(active: NodeState.active, id: 12, deps: ItemDependency(in:[ItemReq(Item(type:1), qty:1)], out:ItemReq(Item(type:6), qty:1))), SingleItemNode(active: NodeState.active, id: 13, deps: ItemDependency(in:[ItemReq(Item(type:2), qty:1)], out:ItemReq(Item(type:7), qty:1)))]
+	Processes: dict_values([ProcessSpec(name='process-0', port=30000), ProcessSpec(name='process-1', port=30001), ProcessSpec(name='process-2', port=30002), ProcessSpec(name='process-3', port=30003), ProcessSpec(name='process-4', port=30004), ProcessSpec(name='process-5', port=30005), ProcessSpec(name='process-6', port=30006), ProcessSpec(name='process-7', port=30007), ProcessSpec(name='process-8', port=30008), ProcessSpec(name='process-9', port=30009), ProcessSpec(name='process-10', port=30010), ProcessSpec(name='process-11', port=30011), ProcessSpec(name='process-12', port=30012), ProcessSpec(name='process-13', port=30013)])
+CRITICAL  09:01:00 MainThread   main.py:142::main                 | All nodes started
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 2
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 0
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 1
+CRITICAL  09:01:01 heartbeat-3  threads.py:169::run                  | Node 3 starting heartbeat thread after verifying flow
+CRITICAL  09:01:01 heartbeat-4  threads.py:169::run                  | Node 4 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 4
+CRITICAL  09:01:01 heartbeat-5  threads.py:169::run                  | Node 5 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 3
+CRITICAL  09:01:01 heartbeat-7  threads.py:169::run                  | Node 7 starting heartbeat thread after verifying flow
+CRITICAL  09:01:01 heartbeat-6  threads.py:169::run                  | Node 6 starting heartbeat thread after verifying flow
+CRITICAL  09:01:01 heartbeat-8  threads.py:169::run                  | Node 8 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 8
+CRITICAL  09:01:01 heartbeat-9  threads.py:169::run                  | Node 9 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 9
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 6
+CRITICAL  09:01:01 heartbeat-10 threads.py:169::run                  | Node 10 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 10
+CRITICAL  09:01:01 heartbeat-12 threads.py:169::run                  | Node 12 starting heartbeat thread after verifying flow
+CRITICAL  09:01:01 heartbeat-11 threads.py:169::run                  | Node 11 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 12
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 11
+CRITICAL  09:01:01 heartbeat-13 threads.py:169::run                  | Node 13 starting heartbeat thread after verifying flow
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 5
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 7
+WARNING  09:01:01 MainThread   processes.py:137::start                | Successfully started node 13
+CRITICAL  09:01:01 heartbeat-0  threads.py:169::run                  | Node 0 starting heartbeat thread after verifying flow
+CRITICAL  09:01:01 heartbeat-2  threads.py:169::run                  | Node 2 starting heartbeat thread after verifying flow
+CRITICAL  09:01:01 heartbeat-1  threads.py:169::run                  | Node 1 starting heartbeat thread after verifying flow
+CRITICAL  09:01:31 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-MLZTI837), qty:1) which is a finale item
+CRITICAL  09:01:47 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-GYRNJ316), qty:1) which is a finale item
+CRITICAL  09:02:05 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-COPLJ823), qty:1) which is a finale item
+CRITICAL  09:03:18 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-HVOVO439), qty:1) which is a finale item
+CRITICAL  09:03:29 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-HGSSS322), qty:1) which is a finale item
+CRITICAL  09:03:43 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-AMSCB675), qty:1) which is a finale item
+CRITICAL  09:04:15 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-RABEA419), qty:1) which is a finale item
+CRITICAL  09:04:30 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-REOVD938), qty:1) which is a finale item
+CRITICAL  09:04:37 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-ZZTUH478), qty:1) which is a finale item
+CRITICAL  09:04:43 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-BBYIY691), qty:1) which is a finale item
+CRITICAL  09:05:12 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-UBVJV512), qty:1) which is a finale item
+CRITICAL  09:05:19 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-OMXSP521), qty:1) which is a finale item
+CRITICAL  09:07:52 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-PMQTR835), qty:1) which is a finale item
+CRITICAL  09:07:58 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-AWTIN686), qty:1) which is a finale item
+CRITICAL  09:08:05 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-BXYBC566), qty:1) which is a finale item
+CRITICAL  09:08:14 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-DGGJD549), qty:1) which is a finale item
+CRITICAL  09:08:19 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-TZZXT809), qty:1) which is a finale item
+CRITICAL  09:08:45 sc-stage-13  sc_stage.py:454::_attempt_manufacture_cycle | Node 13 successfully manufactured batch ItemReq(Item(type:7, id:7-OLQKI388), qty:1) which is a finale item

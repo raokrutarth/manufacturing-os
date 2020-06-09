@@ -1,0 +1,7 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 7, \"id\": \"7-CXWWH331\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 7, \"id\": \"7-JMZFT699\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 7, \"id\": \"7-TOTHZ318\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 7, \"id\": \"7-YKCWZ242\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 7, \"id\": \"7-JBNBB098\"}, \"quantity\": 1}": "in-queue"
+}

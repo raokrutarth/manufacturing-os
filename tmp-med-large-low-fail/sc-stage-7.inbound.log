@@ -1,0 +1,4 @@
+{
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 10, \"id\": \"10-NSIBN398\"}, \"quantity\": 1}": "in-queue",
+    "{\"py/object\": \"items.ItemReq\", \"item\": {\"py/object\": \"items.Item\", \"type\": 10, \"id\": \"10-UQJXB193\"}, \"quantity\": 1}": "in-queue"
+}
