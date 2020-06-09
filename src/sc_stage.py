@@ -233,7 +233,7 @@ class SuppyChainStage(Thread):
     def process_item_waiting_response(self, message):
         log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)
         batch = message.item_req
-        curr_status = self.outbound_log[batch]
+        curr_status = self.outbound_log[batch] if batch in self.outbound_log else None
         if curr_status != BatchStatus.IN_TRANSIT:
             log.info("Node %d's outbound log for item %s was at status %s, expected %s",
                      self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
