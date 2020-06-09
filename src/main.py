@@ -13,7 +13,6 @@ import plotter as pltr
 from time import sleep
 from multiprocessing import Process, Queue
 from threading import Thread
-from metrics import Metrics
 from operations import Operations as Op
 from ops_generator import run_generator
 from metrics import Metrics
@@ -115,8 +114,9 @@ def main(args):
         cqueue = Queue()
         comm_queues[node.node_id] = cqueue
 
+    main_metrics = Metrics("main")
     # Contain multiple misc threads which are useful
-    ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
+    ops_args = (main_metrics, queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {}
