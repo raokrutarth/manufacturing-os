@@ -242,7 +242,7 @@ def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     metrics.set_metric(node_id, "bootstrap_all_paths_time_sec", time.time() - start_time)
 
     start_node = nodes[0].node_id
-    end_node = nodes[len(nodes)-1].node_id
+    end_node = nodes[-1].node_id
 
     log.debug("Cluster flow with all possible paths created: {}, time taken: {}"
               .format(cluster_flow, time.time() - start_time))
@@ -272,7 +272,9 @@ def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode], metrics, node_
     """
     Create a flow with a possible path
     """
+    print(nodes)
     active_nodes = [active_node for active_node in nodes if active_node.state == NodeState.active]
+    print(active_nodes)
     return bootstrap_flow(active_nodes, metrics, node_id)
 
 

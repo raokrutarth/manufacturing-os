@@ -23,6 +23,9 @@ ProcessSpec = namedtuple('ProcessSpec', ['name', 'port'])
 
 
 class NodeState(enum.Enum):
+    def __repr__(self):
+        return "{}".format(self.name)
+
     inactive = 0
     active = 1
 
@@ -55,7 +58,7 @@ class SingleItemNode(BaseNode):
         return self.dependency
 
     def __repr__(self):
-        return "SingleItemNode(id: {}, deps: {})".format(self.node_id, self.dependency)
+        return "SingleItemNode(active: {}, id: {}, deps: {})".format(self.state, self.node_id, self.dependency)
 
 
 class DependencyNode(BaseNode):

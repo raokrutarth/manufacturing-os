@@ -292,7 +292,10 @@ class SuppyChainStage(Thread):
         flow = self.state_helper.get_flow()
         if flow:
             # TODO this can also be true for island nodes
-            return len(flow.getOutgoingFlowsForNode(self.node_id)) == 0
+            num_ins = len(flow.getIncomingFlowsForNode(self.node_id))
+            num_outs = len(flow.getOutgoingFlowsForNode(self.node_id))
+            # return (num_ins > 0) and (num_outs == 0)
+            return (num_ins > 0) and (num_outs == 0)
         return False
 
     def process_batch_request_response(self, response: Message):

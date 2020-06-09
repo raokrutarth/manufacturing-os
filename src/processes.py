@@ -106,6 +106,10 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         new_flow = ctr.bootstrap_flow(self.cluster().nodes, self.metrics, self.node_id)
         self.state_helper.update_flow(new_flow)
 
+    def update_flow(self):
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster().nodes, self.metrics, self.node_id)
+        self.state_helper.update_flow(new_flow)
+
     def get_leader(self):
         return self.state_helper.get_leader()
 
@@ -214,10 +218,6 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         cluster.nodes[dead_node_id].state = NodeState.inactive
         self.set_cluster(cluster)
 
-    def update_flow(self):
-        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster().nodes, self.metrics, self.node_id)
-        self.state_helper.update_flow(new_flow)
-
     def stop(self):
         # flush in-memory state
         self.last_known_heartbeat = {}
@@ -243,7 +243,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
                 try:
                     self.last_known_heartbeat[node_id] = self.last_known_heartbeat_log[node_id]
                 except:
-                    log.warning(
+                    log.debug(
                         "Node %d unable to recover heartbeat details from WAL for node %s", self.node_id, node_id)
 
         log.debug("Node %d completed heartbeat WAL recovery", self.node_id)
