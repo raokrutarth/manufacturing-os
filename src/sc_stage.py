@@ -395,7 +395,7 @@ class SuppyChainStage(Thread):
             prereq_types = set([ir.item.type for ir in prereqs])
             supplier_types = set(suppliers.keys())
 
-            if not prereq_types.issuperset(supplier_types):  # verify there is prerequisite for each supplier
+            if not prereq_types.issuperset(supplier_types) or not supplier_types:
                 # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
                 log.critical("Node {} has more suppliers ({}) from flow than the node's prerequisite types ({})"
                              .format(self.node_id, supplier_types, prereq_types))
