@@ -35,13 +35,11 @@ class SubscribeThread(Thread):
         log.debug('node %s starting subscriber thread', self.node_id)
 
         counts = {"missed": 0}
-
         while True:
             if not self.node_process.is_active:
                 continue
 
             message = self.node_process.comm_queues[self.node_id].get()
-            message = pickle.loads(message)
 
             # Add early skipping of messages based on destination
             should_process = messages.MessageHandler.should_process_msg_for_node_id(message, self.node_id)
@@ -80,16 +78,15 @@ class PublishThread(Thread):
 
         while True:
             if not self.node_process.is_active:
-                sleep(0.1)
+                sleep(0.01)
                 continue
 
             message = self.node_process.message_queue.get()
-            bmsg = pickle.dumps(message, protocol=pickle.HIGHEST_PROTOCOL)
             if message.dest == -1:
                 for nid in self.node_process.node_ids:
-                    self.node_process.comm_queues[nid].put(bmsg)
+                    self.node_process.comm_queues[nid].put(message)
             else:
-                self.node_process.comm_queues[message.dest].put(bmsg)
+                self.node_process.comm_queues[message.dest].put(message)
 
 
 class HeartbeatThread(Thread):
