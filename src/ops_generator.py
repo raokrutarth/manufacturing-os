@@ -11,62 +11,69 @@ import state
 
 log = logging.getLogger()
 manager = multiprocessing.Manager()
-dead_node_list = manager.list()
+dead_node_id_list = manager.list()
 
 
-def get_random_node_to_kill(cluster, leader_can_fail=False):
-    nodes = cluster.nodes
-    active_nodes = [node for node in nodes if node.state == NodeState.active]
+def get_random_node_to_kill_id(state_helper, leader_can_fail):
+    flow = state_helper.get_flow()
+    nodes = state_helper.get_cluster().nodes
+    active_node_ids = [node.node_id for node in nodes if node.state == NodeState.active]
 
     if not leader_can_fail:
-        for node in active_nodes:
-            # TODO (Chen): We CANNOT initialize one state helper per call
-            # We do not need state_helper for this
-            state_helper = state.FileBasedStateHelper(node)
-            if state_helper.am_i_leader():
-                active_nodes.remove(node)
+        for node_id in active_node_ids:
+            if state_helper.get_leader() == node_id:
+                active_node_ids.remove(node_id)
 
-    if len(active_nodes) == 0:
+    start_node_id = nodes[0].node_id
+    end_node_id = nodes[-1].node_id
+    if start_node_id in active_node_ids:
+        active_node_ids.remove(start_node_id)
+    if end_node_id in active_node_ids:
+        active_node_ids.remove(end_node_id)
+
+    active_node_ids = [nid for nid in active_node_ids if flow.is_node_part_of_flow(nid)]
+
+    if len(active_node_ids) == 0:
         return None
     else:
-        kill_node = random.choice(active_nodes)
-        dead_node_list.append(kill_node)
-        return kill_node
+        kill_node_id = random.choice(active_node_ids)
+        return kill_node_id
 
 
-def get_random_node_to_recover(cluster):
-    if len(dead_node_list) == 0:
+def get_random_node_id_to_recover():
+    if len(dead_node_id_list) == 0:
         return None
 
-    recovered_node = dead_node_list.pop(0)
-    return recovered_node
+    recovered_node_id = dead_node_id_list.pop(0)
+    return recovered_node_id
 
 
-def kill_node(metrics, cluster, queues, failure_prob_per_sec, leader_can_fail=False):
+def kill_node(metrics, state_helper, queues, failure_prob_per_sec, leader_can_fail=False):
     if random.random() < failure_prob_per_sec:
-        node_to_kill = get_random_node_to_kill(cluster, leader_can_fail)
-        if node_to_kill is not None:
-            if node_to_kill not in dead_node_list:
-                queues[node_to_kill.node_id].put(Op.Kill)
-                log.critical("Node %d to be killed", node_to_kill.node_id)
+        node_to_kill_id = get_random_node_to_kill_id(state_helper, leader_can_fail)
+        if node_to_kill_id is not None:
+            if node_to_kill_id not in dead_node_id_list:
+                queues[node_to_kill_id].put(Op.Kill)
+                log.critical("Node %d to be killed", node_to_kill_id)
+                dead_node_id_list.append(node_to_kill_id)
                 metrics.increase_metric(-1, "crash_signals_sent")
             else:
                 return None
 
 
-def recover_node(metrics, cluster, queues, recover_prob_per_sec):
+def recover_node(metrics, queues, recover_prob_per_sec):
     if random.random() < recover_prob_per_sec:
-        node_to_recover = get_random_node_to_recover(cluster)
-        if node_to_recover is not None:
-            queues[node_to_recover.node_id].put(Op.Recover)
-            log.critical("Node %d to be recovered", node_to_recover.node_id)
+        node_to_recover_id = get_random_node_id_to_recover()
+        if node_to_recover_id is not None:
+            queues[node_to_recover_id].put(Op.Recover)
+            log.critical("Node %d to be recovered", node_to_recover_id)
 
             metrics.increase_metric(-1, "recover_signals_sent")
 
 
-def send_update_dep(metrics, cluster, queues, update_dep_prob_per_sec):
+def send_update_dep(metrics, state_helper, queues, update_dep_prob_per_sec):
     if random.random() < update_dep_prob_per_sec:
-        nodes = cluster.nodes
+        nodes = state_helper.get_cluster().nodes
         active_nodes = [node for node in nodes if node.state == NodeState.active]
         if len(active_nodes) == 0:
             return None
@@ -76,7 +83,7 @@ def send_update_dep(metrics, cluster, queues, update_dep_prob_per_sec):
             log.warning("Node %d to update dependency", node.node_id)
 
 
-def run_generator(metrics, queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
+def run_generator(metrics, queues, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
     '''
     :param queues:
     :param cluster:
@@ -95,9 +102,6 @@ def run_generator(metrics, queues, cluster, failure_rate=0, recover_rate=0, upda
     # Recovery happens every K seconds instead of 1 second, we want nodes to stay killed for a while
     recover_step = 4
 
-    # TODO (Chen): Use the state reader initialized here to get cluster object
-    reader = state.StateReader()
-
     metrics.set_metric(-1, "crash_signals_sent", 0)
     metrics.set_metric(-1, "recover_signals_sent", 0)
 
@@ -105,9 +109,16 @@ def run_generator(metrics, queues, cluster, failure_rate=0, recover_rate=0, upda
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
     recover_prob_per_step = min(1.0, recover_rate / 60.0) * recover_step
 
-    schedule.every(recover_step).seconds.do(recover_node, metrics, cluster, queues, recover_prob_per_step)
-    schedule.every(1).seconds.do(send_update_dep, metrics, cluster, queues, update_dep_prob_per_sec)
-    schedule.every(1).seconds.do(kill_node, metrics, cluster, queues, failure_prob_per_sec, leader_can_fail)
+    # Delay before starting ops
+    sleep(2.0)
+
+    random.seed(0)
+
+    state_helper = state.StateReader()
+
+    schedule.every(recover_step).seconds.do(recover_node, metrics, queues, recover_prob_per_step)
+    schedule.every(1).seconds.do(send_update_dep, metrics, state_helper, queues, update_dep_prob_per_sec)
+    schedule.every(1).seconds.do(kill_node, metrics, state_helper, queues, failure_prob_per_sec, leader_can_fail)
 
     while True:
         schedule.run_pending()

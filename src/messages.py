@@ -517,9 +517,6 @@ class MessageHandler(object):
     def on_inform_death_req(self, message: InformLeaderOfDeathReq):
         assert message.action == Action.InformLeaderOfDeath
 
-        if message.dead_node_id is None:
-            print(message)
-
         is_leader = self.node_process.state_helper.am_i_leader()
         if is_leader:
             try:

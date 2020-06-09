@@ -146,6 +146,11 @@ class ClusterWideFlow(object):
             return []
         return self.incoming_flows[node_id]
 
+    def is_node_part_of_flow(self, nid):
+        num_ins = len(self.getIncomingFlowsForNode(nid))
+        num_outs = len(self.getOutgoingFlowsForNode(nid))
+        return (num_ins + num_outs) > 0
+
     def clearAll(self):
         self.node_ids = []
         self.outgoing_flows = {}
@@ -201,7 +206,13 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
         return [(start_node_id, start_node_id)]
 
     requirements = []  # Stores only ids of the required item types.
-    end_node = next((x for x in cluster_flow.nodes if x.node_id == end_node_id), None)  # find the end node based off of its id
+    # find the end node based off of its id
+    end_node = None
+    for x in cluster_flow.nodes:
+        if x.node_id == end_node_id:
+            if end_node is not None:
+                assert False, "{}, {}".format(x, end_node, cluster_flow.nodes)
+            end_node = x
 
     if end_node:
         for input in end_node.dependency.input_item_reqs:
@@ -215,7 +226,7 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
         if node and node.dependency.result_item_req.item.type in requirements:
             # Recursive function starts here -> end_node is changed to current node.
             new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)
-            boolean = [item for item in new_path if item[0] == start_node_id] # Check if start_node in path
+            boolean = len([item for item in new_path if item[0] == start_node_id]) # Check if start_node in path
 
             # If start_node in path, the path is viable -> append it to the path + remove the item type from the requirements
             if boolean:
@@ -242,7 +253,7 @@ def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     metrics.set_metric(node_id, "bootstrap_all_paths_time_sec", time.time() - start_time)
 
     start_node = nodes[0].node_id
-    end_node = nodes[len(nodes)-1].node_id
+    end_node = nodes[-1].node_id
 
     log.debug("Cluster flow with all possible paths created: {}, time taken: {}"
               .format(cluster_flow, time.time() - start_time))
@@ -251,7 +262,7 @@ def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     cluster_flow_final = ClusterWideFlow(nodes)
 
     # Output one possible path
-    possible_path = output_possible_path(cluster_flow, start_node, end_node)
+    possible_path = output_possible_path(cluster_flow, start_node, end_node, path=[])
     possible_path_set = list(set(possible_path))
 
     # Add all edges to ClusterWideFlow object

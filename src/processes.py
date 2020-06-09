@@ -72,7 +72,6 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
         # Execution constants for the process
         self.heartbeat_delay = 3.0
-        self.heartbeat_delay = 5
         self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = cluster.get_node_process_spec(self.node_id)
@@ -106,6 +105,10 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
 
     def init_cluster_flow(self):
         new_flow = ctr.bootstrap_flow(self.cluster().nodes, self.metrics, self.node_id)
+        self.state_helper.update_flow(new_flow)
+
+    def update_flow(self):
+        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster().nodes, self.metrics, self.node_id)
         self.state_helper.update_flow(new_flow)
 
     def get_leader(self):
@@ -186,9 +189,11 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
 
-        return [
+        dead_candidate_ids = [
             (nid, lt) for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
+
+        return dead_candidate_ids
 
     def on_kill(self):
         log.warning("Crashing node %s", self.node_id)
@@ -216,10 +221,6 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         cluster.nodes[dead_node_id].state = NodeState.inactive
         self.set_cluster(cluster)
 
-    def update_flow(self):
-        new_flow = ctr.bootstrap_flow_with_active_nodes(self.cluster().nodes, self.metrics, self.node_id)
-        self.state_helper.update_flow(new_flow)
-
     def stop(self):
         # flush in-memory state
         self.last_known_heartbeat = {}
@@ -245,7 +246,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
                 try:
                     self.last_known_heartbeat[node_id] = self.last_known_heartbeat_log[node_id]
                 except:
-                    log.warning(
+                    log.debug(
                         "Node %d unable to recover heartbeat details from WAL for node %s", self.node_id, node_id)
 
         log.debug("Node %d completed heartbeat WAL recovery", self.node_id)

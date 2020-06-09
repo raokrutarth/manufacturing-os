@@ -242,6 +242,10 @@ class SuppyChainStage(Thread):
     def process_batch_request(self, request: Message):
         log.debug("Node %d received request %s", self.node_id, request)
 
+        if not self.node_process.is_active:
+            log.debug("Node %d inactive, so ignoring request %s", self.node_id, request)
+            return
+
         # verify the right item type is being requested
         if request.item_req.item.type != self.get_stage_result_type():  # TODO (Nishant) this check will fail if prereq is not updated
             log.error("Node %d requested to supply %s but it produces %s",
@@ -297,7 +301,10 @@ class SuppyChainStage(Thread):
         flow = self.state_helper.get_flow()
         if flow:
             # TODO this can also be true for island nodes
-            return len(flow.getOutgoingFlowsForNode(self.node_id)) == 0
+            num_ins = len(flow.getIncomingFlowsForNode(self.node_id))
+            num_outs = len(flow.getOutgoingFlowsForNode(self.node_id))
+            # return (num_ins > 0) and (num_outs == 0)
+            return (num_ins > 0) and (num_outs == 0)
         return False
 
     def process_batch_request_response(self, response: Message):
@@ -330,7 +337,7 @@ class SuppyChainStage(Thread):
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
             # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
-            sleep(randint(1, 3))  # HACK simulated transit time
+            sleep(randint(1, 3) * 0.5)  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
@@ -398,7 +405,10 @@ class SuppyChainStage(Thread):
             prereq_types = set([ir.item.type for ir in prereqs])
             supplier_types = set(suppliers.keys())
 
-            if not prereq_types.issuperset(supplier_types) or not supplier_types:  # verify there is prerequisite for each supplier
+            if (self.node_id != 0) and (not supplier_types):
+                return
+
+            if not prereq_types.issuperset(supplier_types):
                 # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
                 log.debug("Node {} has suppliers ({}) from flow and the node's prerequisite types are ({})"
                              .format(self.node_id, supplier_types, prereq_types))
@@ -441,7 +451,7 @@ class SuppyChainStage(Thread):
 
         # Log production of important items differently
         if self.am_i_a_finale_item():
-            log.debug("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
+            log.critical("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
         else:
             log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue",
                       self.node_id, new_batch)

@@ -116,7 +116,7 @@ def main(args):
 
     main_metrics = Metrics("main")
     # Contain multiple misc threads which are useful
-    ops_args = (main_metrics, queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
+    ops_args = (main_metrics, queues, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {}
