@@ -188,9 +188,11 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
 
-        return [
+        dead_candidate_ids = [
             (nid, lt) for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
+
+        return dead_candidate_ids
 
     def on_kill(self):
         log.warning("Crashing node %s", self.node_id)

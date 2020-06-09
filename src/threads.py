@@ -122,14 +122,17 @@ class HeartbeatThread(Thread):
                 self.node_process.reinit_last_timestamp(nid)
 
     def send_message_for_dead_nodes(self):
-        dead_node_ids = self.node_process.detect_and_fetch_dead_nodes()
+        dead_nodes = self.node_process.detect_and_fetch_dead_nodes()
         curr_time = time.time()
 
-        for node_id, lt in dead_node_ids:
-            if node_id not in self.neighbor_ids:
-                # Do nothing if this is not a neighbor
-                continue
+        dead_nodes = [(nid, lt) for (nid, lt) in dead_nodes if nid in self.neighbor_ids]
 
+        if len(dead_nodes) > 0:
+            actual_dead_node_ids = [
+                n.node_id for n in self.node_process.cluster().nodes if n.state == NodeState.inactive]
+            dead_nodes = [(nid, lt) for (nid, lt) in dead_nodes if nid not in actual_dead_node_ids]
+
+        for node_id, lt in dead_nodes:
             log.warning(
                 'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
                     self.node_id, node_id, lt, curr_time))
