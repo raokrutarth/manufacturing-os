@@ -15,6 +15,7 @@ dead_node_id_list = manager.list()
 
 
 def get_random_node_to_kill_id(state_helper, leader_can_fail):
+    flow = state_helper.get_flow()
     nodes = state_helper.get_cluster().nodes
     active_node_ids = [node.node_id for node in nodes if node.state == NodeState.active]
 
@@ -29,6 +30,8 @@ def get_random_node_to_kill_id(state_helper, leader_can_fail):
         active_node_ids.remove(start_node_id)
     if end_node_id in active_node_ids:
         active_node_ids.remove(end_node_id)
+
+    active_node_ids = [nid for nid in active_node_ids if flow.is_node_part_of_flow(nid)]
 
     print(active_node_ids, dead_node_id_list)
 

@@ -146,6 +146,11 @@ class ClusterWideFlow(object):
             return []
         return self.incoming_flows[node_id]
 
+    def is_node_part_of_flow(self, nid):
+        num_ins = len(self.getIncomingFlowsForNode(nid))
+        num_outs = len(self.getOutgoingFlowsForNode(nid))
+        return (num_ins + num_outs) > 0
+
     def clearAll(self):
         self.node_ids = []
         self.outgoing_flows = {}
@@ -254,9 +259,12 @@ def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     possible_path = output_possible_path(cluster_flow, start_node, end_node)
     possible_path_set = list(set(possible_path))
 
+    print(possible_path_set)
+
     # Add all edges to ClusterWideFlow object
     for edge in possible_path_set:
         node = next((x for x in cluster_flow.nodes if x.node_id == edge[0]), None)
+        print(node, edge)
         cluster_flow_final.addFlow(
             edge[0], edge[1], node.dependency.result_item_req
         )
