@@ -88,6 +88,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.op_runner = ops_runner.OpsRunnerThread(self)
 
         # Manage heartbeats and liveness between nodes
+        self.metrics.set_metric(self.node_id, "nodes_determined_crashed", 0)
         self.last_known_heartbeat_log = FileDict(abspath("./tmp/node_" + str(self.node_id) + ".last_known_heartbeat.log"))
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
