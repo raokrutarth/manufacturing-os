@@ -34,6 +34,8 @@ class SubscribeThread(Thread):
     def run(self):
         log.debug('node %s starting subscriber thread', self.node_id)
 
+        counts = {"missed": 0}
+
         while True:
             if not self.node_process.is_active:
                 continue
@@ -44,12 +46,14 @@ class SubscribeThread(Thread):
             # Add early skipping of messages based on destination
             should_process = messages.MessageHandler.should_process_msg_for_node_id(message, self.node_id)
             if should_process:
-                print(self.node_id, message.action, end=",")
+                if message.action not in counts:
+                    counts[message.action] = 0
+                counts[message.action] += 1
                 self.node_process.onMessage(message)
+                # if random.random() < 0.1:
+                #     log.critical("{}, {}".format(self.node_id, counts.items()))
             else:
-                print(self.node_id, message.action, self.node_process.comm_queues[self.node_id], end=",")
-
-            sleep(0.1)
+                counts["missed"] += 1
 
 
 class PublishThread(Thread):
@@ -124,7 +128,7 @@ class HeartbeatThread(Thread):
         for node_id, lt in dead_node_ids:
             if node_id not in self.neighbor_ids:
                 # Do nothing if this is not a neighbor
-                pass
+                continue
 
             log.warning(
                 'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(

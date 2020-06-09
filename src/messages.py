@@ -301,6 +301,8 @@ class MessageHandler(object):
         is_msg_heartbeat = message.action == Action.Heartbeat
         is_msg_from_me = message.source == node_id
 
+        assert (not is_msg_for_all) and is_msg_only_for_me
+
         if not is_msg_for_me:
             return False
         elif is_msg_heartbeat and is_msg_from_me:
@@ -514,7 +516,7 @@ class MessageHandler(object):
             print(message)
 
         is_leader = self.node_process.state_helper.am_i_leader()
-        if False and is_leader:
+        if is_leader:
             self.node_process.update_death_of_node(message.dead_node_id)
             self.node_process.update_flow()
             log.warning("Received Death information request from %s", message.source)
