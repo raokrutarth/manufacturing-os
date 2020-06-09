@@ -61,7 +61,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.is_active = True
 
         # Execution constants for the process
-        self.heartbeat_delay = 5
+        self.heartbeat_delay = 3.0
         self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = cluster.get_node_process_spec(self.node_id)
@@ -163,6 +163,13 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         # Removing as it takes a lot of time
         self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
 
+    def reinit_last_timestamp(self, node_id: int):
+        assert type(node_id) == int
+        curr_time = time.time()
+        self.last_known_heartbeat[node_id] = curr_time
+        # Removing as it takes a lot of time
+        # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
+
     def detect_and_fetch_dead_nodes(self):
         """
         Goes over the last_known_heartbeat dict and finds which nodes are probably dead
@@ -170,16 +177,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
 
-        for nid, lt in self.last_known_heartbeat.items():
-            if (lt < (curr_time - margin)) and (lt >= 0):
-                self.metrics.increase_metric(self.node_id, "nodes_determined_crashed")
-                log.warning(
-                    'Node: {} detected node {} has crashed, last heartbeat was at {} and current time is {}'
-                    .format(self.node_id, nid, lt, curr_time)
-                )
-
         return [
-            nid for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
+            (nid, lt) for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
     def on_kill(self):

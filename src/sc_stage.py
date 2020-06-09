@@ -39,7 +39,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=10):
+    def __init__(self, node_process, time_per_batch=1):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -235,7 +235,8 @@ class SuppyChainStage(Thread):
         batch = message.item_req
         curr_status = self.outbound_log[batch]
         if curr_status != BatchStatus.IN_TRANSIT:
-            log.warning("Node %d's outbound log for item %s was at status %s, expected %s", self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
+            log.info("Node %d's outbound log for item %s was at status %s, expected %s",
+                     self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
             self.outbound_log[batch] = BatchStatus.IN_TRANSIT
 
     def process_batch_request(self, request: Message):
@@ -328,7 +329,6 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
             sleep(random())  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
@@ -348,8 +348,8 @@ class SuppyChainStage(Thread):
                          self.node_id, response.item_req, response.source)
         else:
             self.metrics.increase_metric(self.node_id, "batch_unavailable_messages_received")
-            log.warning("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. Request ID: %s",
-                        self.node_id, response.item_req.item.type, response.source, response.request_id)
+            log.info("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. "
+                     "Request ID: %s",  self.node_id, response.item_req.item.type, response.source, response.request_id)
 
         self._mark_request_complete(response)
 
@@ -397,9 +397,9 @@ class SuppyChainStage(Thread):
             prereq_types = set([ir.item.type for ir in prereqs])
             supplier_types = set(suppliers.keys())
 
-            if not prereq_types.issuperset(supplier_types):  # verify there is prerequisite for each supplier
+            if not prereq_types.issuperset(supplier_types) or not supplier_types:  # verify there is prerequisite for each supplier
                 # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
-                log.critical("Node {} has more suppliers ({}) from flow than the node's prerequisite types ({})"
+                log.critical("Node {} has invalid/no suppliers ({}) from flow compared to the node's prerequisite types ({})"
                              .format(self.node_id, supplier_types, prereq_types))
                 log.error("Node %d skipping manufacturing cycle", self.node_id)
 

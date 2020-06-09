@@ -43,11 +43,12 @@ class StateReader(object):
         else:
             return leader
 
-    def get_flow(self):
+    def get_flow(self, safe=True):
         try:
             flow = self.consensus_file[self.flow_key]
         except Exception:
-            log.error("Node %d unable to fetch cluster flow. Flow not available in consensus file", self.node_id)
+            if safe:
+                log.error("Node %d unable to fetch cluster flow. Flow not available in consensus file", self.node_id)
             return None
         else:
             # HACK convert the flow key types to bypass the implicit int to str conversion

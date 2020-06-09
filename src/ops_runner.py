@@ -26,7 +26,7 @@ class OpHandler:
             return messages.AllocateReq(source_id)
         elif op == Op.SendHeartbeat:
             if type == messages.MsgType.Request:
-                return messages.HeartbeatReq(source_id)
+                return messages.HeartbeatReq(source_id, dest)
             else:
                 return messages.HeartbeatResp(source_id, dest)
         elif op == Op.SendUpdateDep:
