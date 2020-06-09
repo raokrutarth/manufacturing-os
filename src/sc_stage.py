@@ -402,7 +402,7 @@ class SuppyChainStage(Thread):
                 # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
                 log.debug("Node {} has suppliers ({}) from flow and the node's prerequisite types are ({})"
                              .format(self.node_id, supplier_types, prereq_types))
-                log.error("Node %d skipping manufacturing cycle", self.node_id)
+                log.debug("Node %d skipping manufacturing cycle", self.node_id)
 
                 self.metrics.increase_metric(self.node_id, "skipped_manufacture_cycles")
                 return
