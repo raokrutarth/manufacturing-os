@@ -206,7 +206,13 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
         return [(start_node_id, start_node_id)]
 
     requirements = []  # Stores only ids of the required item types.
-    end_node = next((x for x in cluster_flow.nodes if x.node_id == end_node_id), None)  # find the end node based off of its id
+    # find the end node based off of its id
+    end_node = None
+    for x in cluster_flow.nodes:
+        if x.node_id == end_node_id:
+            if end_node is not None:
+                assert False, "{}, {}".format(x, end_node, cluster_flow.nodes)
+            end_node = x
 
     if end_node:
         for input in end_node.dependency.input_item_reqs:
@@ -220,7 +226,7 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
         if node and node.dependency.result_item_req.item.type in requirements:
             # Recursive function starts here -> end_node is changed to current node.
             new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)
-            boolean = [item for item in new_path if item[0] == start_node_id] # Check if start_node in path
+            boolean = len([item for item in new_path if item[0] == start_node_id]) # Check if start_node in path
 
             # If start_node in path, the path is viable -> append it to the path + remove the item type from the requirements
             if boolean:
@@ -256,15 +262,12 @@ def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     cluster_flow_final = ClusterWideFlow(nodes)
 
     # Output one possible path
-    possible_path = output_possible_path(cluster_flow, start_node, end_node)
+    possible_path = output_possible_path(cluster_flow, start_node, end_node, path=[])
     possible_path_set = list(set(possible_path))
-
-    print(possible_path_set)
 
     # Add all edges to ClusterWideFlow object
     for edge in possible_path_set:
         node = next((x for x in cluster_flow.nodes if x.node_id == edge[0]), None)
-        print(node, edge)
         cluster_flow_final.addFlow(
             edge[0], edge[1], node.dependency.result_item_req
         )
@@ -280,9 +283,7 @@ def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode], metrics, node_
     """
     Create a flow with a possible path
     """
-    print(nodes)
     active_nodes = [active_node for active_node in nodes if active_node.state == NodeState.active]
-    print(active_nodes)
     return bootstrap_flow(active_nodes, metrics, node_id)
 
 

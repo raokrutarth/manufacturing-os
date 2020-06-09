@@ -108,6 +108,8 @@ def run_generator(queues, failure_rate=0, recover_rate=0, update_dep_rate=0, lea
     # Delay before starting ops
     sleep(2.0)
 
+    random.seed(0)
+
     state_helper = state.StateReader()
 
     schedule.every(recover_step).seconds.do(recover_node, queues, recover_prob_per_step)
