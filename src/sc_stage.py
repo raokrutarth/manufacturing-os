@@ -400,7 +400,7 @@ class SuppyChainStage(Thread):
 
             if not prereq_types.issuperset(supplier_types) or not supplier_types:  # verify there is prerequisite for each supplier
                 # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
-                log.critical("Node {} has more suppliers ({}) from flow than the node's prerequisite types ({})"
+                log.debug("Node {} has suppliers ({}) from flow and the node's prerequisite types are ({})"
                              .format(self.node_id, supplier_types, prereq_types))
                 log.error("Node %d skipping manufacturing cycle", self.node_id)
 
