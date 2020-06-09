@@ -42,26 +42,29 @@ def get_random_node_to_recover(cluster):
     return recovered_node
 
 
-def kill_node(cluster, queues, failure_prob_per_sec, leader_can_fail=False):
+def kill_node(metrics, cluster, queues, failure_prob_per_sec, leader_can_fail=False):
     if random.random() < failure_prob_per_sec:
         node_to_kill = get_random_node_to_kill(cluster, leader_can_fail)
         if node_to_kill is not None:
             if node_to_kill not in dead_node_list:
                 queues[node_to_kill.node_id].put(Op.Kill)
                 log.critical("Node %d to be killed", node_to_kill.node_id)
+                metrics.increase_metric(-1, "crash_signals_sent")
             else:
                 return None
 
 
-def recover_node(cluster, queues, recover_prob_per_sec):
+def recover_node(metrics, cluster, queues, recover_prob_per_sec):
     if random.random() < recover_prob_per_sec:
         node_to_recover = get_random_node_to_recover(cluster)
         if node_to_recover is not None:
             queues[node_to_recover.node_id].put(Op.Recover)
             log.critical("Node %d to be recovered", node_to_recover.node_id)
 
+            metrics.increase_metric(-1, "recover_signals_sent")
 
-def send_update_dep(cluster, queues, update_dep_prob_per_sec):
+
+def send_update_dep(metrics, cluster, queues, update_dep_prob_per_sec):
     if random.random() < update_dep_prob_per_sec:
         nodes = cluster.nodes
         active_nodes = [node for node in nodes if node.state == NodeState.active]
@@ -73,7 +76,7 @@ def send_update_dep(cluster, queues, update_dep_prob_per_sec):
             log.warning("Node %d to update dependency", node.node_id)
 
 
-def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
+def run_generator(metrics, queues, cluster, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
     '''
     :param queues:
     :param cluster:
@@ -95,14 +98,19 @@ def run_generator(queues, cluster, failure_rate=0, recover_rate=0, update_dep_ra
     # TODO (Chen): Use the state reader initialized here to get cluster object
     reader = state.StateReader()
 
+    metrics.set_metric(-1, "crash_signals_sent", 0)
+    metrics.set_metric(-1, "recover_signals_sent", 0)
+
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
     recover_prob_per_step = min(1.0, recover_rate / 60.0) * recover_step
 
-    schedule.every(recover_step).seconds.do(recover_node, cluster, queues, recover_prob_per_step)
-    schedule.every(1).seconds.do(send_update_dep, cluster, queues, update_dep_prob_per_sec)
-    schedule.every(1).seconds.do(kill_node, cluster, queues, failure_prob_per_sec, leader_can_fail)
+    schedule.every(recover_step).seconds.do(recover_node, metrics, cluster, queues, recover_prob_per_step)
+    schedule.every(1).seconds.do(send_update_dep, metrics, cluster, queues, update_dep_prob_per_sec)
+    schedule.every(1).seconds.do(kill_node, metrics, cluster, queues, failure_prob_per_sec, leader_can_fail)
 
     while True:
         schedule.run_pending()
         time.sleep(1)
+        metrics.increase_metric(-1, "op_generator_cycles")
+

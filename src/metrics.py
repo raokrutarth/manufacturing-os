@@ -29,8 +29,12 @@ class Metrics:
         self._df.metric_name = self._df.metric_name.astype(str)
         self._df.value = self._df.value.astype("float64")
 
+        self.flush_index = 0
+
     def _persist_metrics(self):
-        self._df.to_csv(self._metrics_file)
+        self.flush_index += 1
+        if not self.flush_index % 50:
+            self._df.to_csv(self._metrics_file)
 
     def _modify_or_add_to_df(self, node_id: int, metric_name: str, value: float, mode: DFOperation):
         if ((self._df.node_id == node_id) & (self._df.metric_name == metric_name)).any():
