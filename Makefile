@@ -29,6 +29,7 @@ large-low-fail:
 	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
 	@printf "============\n"
 	python ./src/parse_metrics.py
+	-mv ./tmp ./tmp-large-low-fail
 
 
 med-no-fail:
@@ -38,6 +39,7 @@ med-no-fail:
 	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
 	@printf "============\n"
 	python ./src/parse_metrics.py
+	-mv ./tmp ./tmp-med-no-fail
 
 med-low-fail:
 	# compare with large-no-fail
@@ -46,6 +48,7 @@ med-low-fail:
 	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
 	@printf "============\n"
 	python ./src/parse_metrics.py
+	-mv ./tmp ./tmp-med-low-fail
 
 small-no-fail:
 	# compare with med-no-fail
@@ -54,6 +57,7 @@ small-no-fail:
 	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
 	@printf "============\n"
 	python ./src/parse_metrics.py
+	-mv ./tmp ./tmp-small-no-fail
 
 small-low-failure:
 	# compare with med-no-fail
@@ -62,3 +66,4 @@ small-low-failure:
 	@printf "[+] Starting to parse expriment results at %s\n" "$$(date)"
 	@printf "============\n"
 	python ./src/parse_metrics.py
+	-mv ./tmp ./tmp-small-low-failure
