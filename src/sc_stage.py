@@ -84,7 +84,9 @@ class SuppyChainStage(Thread):
         self.metrics.set_metric(self.node_id, "wal_ghost_outbound_batches", 0)
         self.metrics.set_metric(self.node_id, "wal_ghost_inbound_batches", 0)
         self.metrics.set_metric(self.node_id, "empty_outbound_inventory_occurrences", 0)
+        self.metrics.set_metric(self.node_id, "empty_inbound_inventory_occurrences", 0)
         self.metrics.set_metric(self.node_id, "batches_delivered", 0)
+        self.metrics.set_metric(self.node_id, "outbound_material_buildup", 0)
 
         self._attempt_log_recovery()
 
@@ -324,7 +326,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
+            sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
@@ -406,6 +408,7 @@ class SuppyChainStage(Thread):
 
                 if item_type not in self.inbound_material or self.inbound_material[item_type].empty():
                     log.info("Node %d needs batch of type %s from node %s", self.node_id, item_type, supplier_id)
+                    self.metrics.increase_metric(self.node_id, "empty_inbound_inventory_occurrences")
                     self._send_material_request_upstream(supplier_id, item_type)
                     has_all_materials = False
 
@@ -456,6 +459,7 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "unanswered_batch_requests_current", len(self.pending_requests))
             self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
+            self.metrics.set_metric(self.node_id, "outbound_material_buildup", self.outbound_material.qsize())
 
             if not self.node_process.is_active:
                 log.error("Node %d's stage still running after node process was set to inactive", self.node_id)
