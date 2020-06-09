@@ -32,6 +32,9 @@ class ClusterPlotter(object):
         self.colors = self.rand_color.generate(hue=None, count=len(self.item_type_to_id))
         self.init_states()
 
+        self.num_produces_df = None
+        self.counter = 0
+
     def init_states(self):
         self.cluster = self.reader.get_cluster()
         self.nodes = self.cluster.nodes
@@ -85,10 +88,15 @@ class ClusterPlotter(object):
 
         # Store the metrics for production
         num_produces = defaultdict(lambda: 0)
-        # num_produces_df = None
-        num_produces_df = self.metrics.get_metrics_for_all('batches_produced_total')
-        if num_produces_df is not None:
-            for index, row in num_produces_df.iterrows():
+
+        if self.counter % 3 == 0:
+            num_produces_df = self.metrics.get_metrics_for_all('batches_produced_total')
+            if num_produces_df is not None:
+                self.num_produces_df = num_produces_df
+        self.counter += 1
+
+        if self.num_produces_df is not None:
+            for index, row in self.num_produces_df.iterrows():
                 num_produces[int(row['node_id'])] = int(row['value'])
 
         def get_pydot_node(nid):

@@ -104,7 +104,7 @@ def run_generator(queues, failure_rate=0, recover_rate=0, update_dep_rate=0, lea
     recover_prob_per_step = min(1.0, recover_rate / 60.0) * recover_step
 
     # Delay before starting ops
-    sleep(2.0)
+    sleep(5.0)
 
     state_helper = state.StateReader()
 

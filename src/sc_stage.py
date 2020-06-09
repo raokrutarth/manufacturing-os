@@ -39,7 +39,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=1):
+    def __init__(self, node_process, time_per_batch=2):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -327,7 +327,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
+            sleep(randint(1, 3) * 0.05)  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
