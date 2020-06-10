@@ -97,7 +97,7 @@ def run_generator(queues, failure_rate=0, recover_rate=0, update_dep_rate=0, lea
     logging.getLogger('schedule').propagate = False
 
     # Recovery happens every K seconds instead of 1 second, we want nodes to stay killed for a while
-    recover_step = 4
+    recover_step = 20
 
     failure_prob_per_sec = min(1.0, failure_rate / 60.0)
     update_dep_prob_per_sec = min(1.0, update_dep_rate / 60.0)
