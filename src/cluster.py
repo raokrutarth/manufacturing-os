@@ -4,6 +4,7 @@ import networkx as nx
 import time
 import socket
 
+from copy import deepcopy
 from typing import List
 from collections import defaultdict
 
@@ -196,23 +197,27 @@ def _bootstrap_all_paths(nodes: List[SingleItemNode]):
     return cluster_flow
 
 
+# Global memoization
+flow_mem, node_ids_to_node = {}, defaultdict(lambda: None)
+
+
 def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_id, path=[]):
     """
     Find one possible path for a given ClusterWideFlow. It is a recursive depth-first algorithm
     that tries to find the start_node to validate whether a given path is valid.
     """
+    global flow_mem, node_ids_to_node
+
+    if end_node_id in flow_mem:
+        return flow_mem[end_node_id]
+
     # This is the return function -> when arriving at the starting node.
     if (start_node_id == end_node_id):
         return [(start_node_id, start_node_id)]
 
     requirements = []  # Stores only ids of the required item types.
     # find the end node based off of its id
-    end_node = None
-    for x in cluster_flow.nodes:
-        if x.node_id == end_node_id:
-            if end_node is not None:
-                assert False, "{}, {}".format(x, end_node, cluster_flow.nodes)
-            end_node = x
+    end_node = node_ids_to_node[end_node_id]
 
     if end_node:
         for input in end_node.dependency.input_item_reqs:
@@ -220,14 +225,13 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
 
     # Loop over all incoming edges
     for incoming in cluster_flow.incoming_flows[end_node_id]:
-        node = next((x for x in cluster_flow.nodes if x.node_id == incoming[0]), None)
+        node = node_ids_to_node[incoming[0]]
 
         # Only check node out if its type is in requirements, i.e. some items have already been delivered.
         if node and node.dependency.result_item_req.item.type in requirements:
             # Recursive function starts here -> end_node is changed to current node.
             new_path = output_possible_path(cluster_flow, start_node_id, node.node_id, path)
             boolean = len([item for item in new_path if item[0] == start_node_id]) # Check if start_node in path
-
             # If start_node in path, the path is viable -> append it to the path + remove the item type from the requirements
             if boolean:
                 path.append((node.node_id, end_node_id))
@@ -235,6 +239,10 @@ def output_possible_path(cluster_flow: ClusterWideFlow, start_node_id, end_node_
 
     if requirements:  # If still some item types in the requirements, path is not viable
         path = []
+
+    if end_node_id not in flow_mem:
+        flow_mem[end_node_id] = path
+
     return path
 
 
@@ -245,6 +253,13 @@ def bootstrap_flow(nodes: List[SingleItemNode], metrics, node_id):
     metrics: metrics object from the calling node
     node_id: node ID of the calling node
     """
+    global flow_mem, node_ids_to_node
+
+    # Empty the memoization from the previous run
+    flow_mem = {}
+    node_ids_to_node = {n.node_id: n for n in nodes}
+    assert len(flow_mem.items()) == 0
+
     start_time = time.time()
     # Create a cluster_flow with all possible paths first
     log.debug("Bootstrapping flow has started. Will calculate time taken.")
@@ -289,19 +304,20 @@ def bootstrap_flow_with_active_nodes(nodes: List[SingleItemNode], metrics, node_
 
 # for testing purposes
 def _test():
-    number_types = 10
-    complexity = "medium"
-    nodes_per_type = 10
-    demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
-    
-    # demo_nodes = basecases.bootstrap_demo()
-    
-    print("Nodes have been created.")
-    print(demo_nodes)
-    cluster_flow_obj = bootstrap_flow(demo_nodes, Metrics("flow-test"), 98989898)
-    print("ClusterWideFlow Object has created.")
-    print(cluster_flow_obj)
-    return cluster_flow_obj
+    for ix in [15, 20, 22, 25, 27, 30]:
+        number_types = ix
+        complexity = "high"
+        nodes_per_type = ix
+        demo_nodes = basecases.bootstrap_random_dag(number_types, complexity, nodes_per_type)
+
+        # demo_nodes = basecases.bootstrap_demo()
+
+        print("Nodes have been created. Num:", len(demo_nodes))
+        # print([n.node_id for n in demo_nodes])
+        st = time.time()
+        cluster_flow_obj = bootstrap_flow(demo_nodes, Metrics("flow-test"), 98989898)
+        print("ClusterWideFlow Object has created in {}".format(time.time() - st))
+        # print(cluster_flow_obj)
 
 
 if __name__ == "__main__":
