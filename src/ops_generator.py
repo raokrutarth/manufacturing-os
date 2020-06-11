@@ -48,24 +48,26 @@ def get_random_node_id_to_recover():
     return recovered_node_id
 
 
-def kill_node(state_helper, queues, failure_prob_per_sec, leader_can_fail):
+def kill_node(metrics, state_helper, queues, failure_prob_per_sec, leader_can_fail):
     if random.random() < failure_prob_per_sec:
         node_to_kill_id = get_random_node_to_kill_id(state_helper, leader_can_fail)
         if node_to_kill_id is not None:
             if node_to_kill_id not in dead_node_id_list:
                 queues[node_to_kill_id].put(Op.Kill)
                 log.critical("Node %d to be killed", node_to_kill_id)
+                metrics.increase_metric(-1, "op_kill_signals_sent")
                 dead_node_id_list.append(node_to_kill_id)
             else:
                 return None
 
 
-def recover_node(queues, recover_prob_per_sec):
+def recover_node(metrics, queues, recover_prob_per_sec):
     if random.random() < recover_prob_per_sec:
         node_to_recover_id = get_random_node_id_to_recover()
         if node_to_recover_id is not None:
             queues[node_to_recover_id].put(Op.Recover)
             log.critical("Node %d to be recovered", node_to_recover_id)
+            metrics.increase_metric(-1, "op_recover_signals_sent")
 
 
 def send_update_dep(state_helper, queues, update_dep_prob_per_sec):
@@ -80,7 +82,7 @@ def send_update_dep(state_helper, queues, update_dep_prob_per_sec):
             log.warning("Node %d to update dependency", node.node_id)
 
 
-def run_generator(queues, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
+def run_generator(metrics, queues, failure_rate=0, recover_rate=0, update_dep_rate=0, leader_can_fail=False):
     '''
     :param queues:
     :param cluster:
@@ -108,9 +110,12 @@ def run_generator(queues, failure_rate=0, recover_rate=0, update_dep_rate=0, lea
 
     state_helper = state.StateReader()
 
-    schedule.every(recover_step).seconds.do(recover_node, queues, recover_prob_per_step)
+    metrics.set_metric(-1, "op_kill_signals_sent", 0)
+    metrics.set_metric(-1, "op_recover_signals_sent", 0)
+
+    schedule.every(recover_step).seconds.do(recover_node, metrics, queues, recover_prob_per_step)
     schedule.every(1).seconds.do(send_update_dep, state_helper, queues, update_dep_prob_per_sec)
-    schedule.every(1).seconds.do(kill_node, state_helper, queues, failure_prob_per_sec, leader_can_fail)
+    schedule.every(1).seconds.do(kill_node, metrics, state_helper, queues, failure_prob_per_sec, leader_can_fail)
 
     while True:
         schedule.run_pending()

@@ -118,9 +118,10 @@ def main(args):
         queues[node.node_id] = queue
         cqueue = Queue()
         comm_queues[node.node_id] = cqueue
+    metrics = Metrics("main")
 
     # Contain multiple misc threads which are useful
-    ops_args = (queues, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
+    ops_args = (metrics, queues, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {}
@@ -137,7 +138,6 @@ def main(args):
         thread.start()
 
     try:
-        metrics = Metrics("main")
         for node in cluster.nodes:
             node_args = (node, cluster, queues[node.node_id], comm_queues)
             p = Process(target=run_node_routine, args=node_args)
