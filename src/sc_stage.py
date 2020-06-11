@@ -446,7 +446,7 @@ class SuppyChainStage(Thread):
 
         # Log production of important items differently
         if self.am_i_a_finale_item():
-            log.critical("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
+            log.debug("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
         else:
             log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue",
                       self.node_id, new_batch)
