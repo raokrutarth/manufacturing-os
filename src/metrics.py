@@ -31,7 +31,7 @@ class Metrics:
         self.counter = 0
 
     def _persist_metrics(self):
-        if self.counter % 1 == 0:
+        if not self.counter % 5:
             self._df.to_csv(self._metrics_file)
         self.counter += 1
 
