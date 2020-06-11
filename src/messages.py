@@ -349,6 +349,9 @@ class MessageHandler(object):
         self.callbacks = self.get_action_callbacks()
         self.metrics = self.node_process.metrics
 
+        self.metrics.set_metric(self.node_id, "sent_messages", 0)
+        self.metrics.set_metric(self.node_id, "received_messages", 0)
+
     def get_action_callbacks(self):
         """
             Returns the message type -> function nested map
@@ -396,11 +399,13 @@ class MessageHandler(object):
             log.info("sending message %s from node %s", message, self.node_id)
         self.node_process.message_queue.put(message)
         self.metrics.increase_metric(self.node_id, "sent_messages")
+        self.metrics.increase_metric(self.node_id, "%s_sent" % (message.__class__.__name__))
 
     def onMessage(self, message):
         should_process = self.should_process_msg_for_node_id(message, self.node_id)
         if should_process:
             self.metrics.increase_metric(self.node_id, "received_messages")
+            self.metrics.increase_metric(self.node_id, "%s_received" % (message.__class__.__name__))
             log.debug("Received: %s from %s", message, message.source)
             return self.callbacks[message.type][message.action](message)
         else:

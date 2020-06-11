@@ -50,9 +50,13 @@ class Metricparser:
         log.info("Full Exprimental results:\n\n%s\n\n===\n", self.df.to_string(float_format="%.0f"))
 
     def _print_all_metric_stats(self):
-        res = self.df.groupby('metric_name').agg({'value': ['min', 'max', 'mean', 'median', 'std', 'var']})
-        res.round(2)
-        log.info("Metric-wise breakdown or results:\n\n%s\n\n===\n", res.to_string(float_format="%.2f"))
+        try:
+            res = self.df.groupby('metric_name').agg({'value': ['min', 'max', 'mean', 'median', 'std', 'var']})
+            res.round(2)
+            res.to_csv(self.m_dir + "/aggregated-results.csv")
+            log.info("Metric-wise breakdown or results:\n\n%s\n\n===\n", res.to_string(float_format="%.2f"))
+        except Exception:
+            log.exception("Unable to parse or aggregate any metrics with exception. Verify metrics files are not empty", exc_info=False)
 
 
 if __name__ == "__main__":

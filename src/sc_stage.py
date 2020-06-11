@@ -79,6 +79,7 @@ class SuppyChainStage(Thread):
         self.metrics.set_metric(self.node_id, "skipped_manufacture_cycles", 0)
         self.metrics.set_metric(self.node_id, "batch_unavailable_messages_sent", 0)
         self.metrics.set_metric(self.node_id, "successful_manufacture_cycles", 0)
+        self.metrics.set_metric(self.node_id, "total_manufacture_cycles", 0)
         self.metrics.set_metric(self.node_id, "flow_queries", 0)
         self.metrics.set_metric(self.node_id, "wal_recovered_inbound_batches", 0)
         self.metrics.set_metric(self.node_id, "wal_recovered_outbound_batches", 0)
@@ -294,6 +295,7 @@ class SuppyChainStage(Thread):
         TODO: Optimize; this should be a flag or state in self.cluster
         """
         flow = self.state_helper.get_flow()
+        self.metrics.increase_metric(self.node_id, "flow_queries")
         if flow:
             # TODO this can also be true for island nodes
             num_ins = len(flow.getIncomingFlowsForNode(self.node_id))
