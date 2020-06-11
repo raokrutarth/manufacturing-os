@@ -137,11 +137,13 @@ def main(args):
         thread.start()
 
     try:
+        metrics = Metrics("main")
         for node in cluster.nodes:
             node_args = (node, cluster, queues[node.node_id], comm_queues)
             p = Process(target=run_node_routine, args=node_args)
             p.start()
             process_list.append(p)
+            metrics.increase_metric(-1, "num_nodes")
 
         log.critical("All nodes started")
 
