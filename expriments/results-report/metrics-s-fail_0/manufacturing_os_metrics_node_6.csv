@@ -1,0 +1,20 @@
+,timestamp,node_id,metric_name,value
+0,2020-06-11 01:20:08.798200,6,failed_flow_queries,0.0
+1,2020-06-11 01:20:08.804854,6,skipped_manufacture_cycles,0.0
+2,2020-06-11 01:20:08.809222,6,batch_unavailable_messages_sent,0.0
+3,2020-06-11 01:20:08.813488,6,successful_manufacture_cycles,0.0
+4,2020-06-11 01:30:07.297348,6,total_manufacture_cycles,742.0
+5,2020-06-11 01:30:06.441398,6,flow_queries,741.0
+6,2020-06-11 01:20:08.827201,6,wal_recovered_inbound_batches,0.0
+7,2020-06-11 01:20:08.831477,6,wal_recovered_outbound_batches,0.0
+8,2020-06-11 01:20:08.835735,6,wal_ghost_outbound_batches,0.0
+9,2020-06-11 01:20:08.840022,6,wal_ghost_inbound_batches,0.0
+10,2020-06-11 01:20:08.844270,6,empty_outbound_inventory_occurrences,0.0
+11,2020-06-11 01:20:08.849573,6,batches_delivered,0.0
+12,2020-06-11 01:20:08.854092,6,sent_messages,0.0
+13,2020-06-11 01:20:08.858354,6,received_messages,0.0
+14,2020-06-11 01:30:07.304161,6,batches_produced_total,0.0
+15,2020-06-11 01:30:07.308932,6,batches_consumed_total,0.0
+16,2020-06-11 01:30:07.315254,6,unanswered_batch_requests_current,0.0
+17,2020-06-11 01:30:07.318952,6,outbound_wal_size,0.0
+18,2020-06-11 01:30:06.432847,6,inbound_wal_size,0.0
