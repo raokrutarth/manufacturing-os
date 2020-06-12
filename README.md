@@ -5,7 +5,7 @@
 
 ## Overview
 
-TODO
+Supply-Chain management systems deal with massive amounts of data. In today's scenario, with numerous inventories to track, they're unable to work efficiently because 1. they are not fault-tolerant 2. their data is stored on a single database, and 3. they require manual reconfiguration in case of errors. We introduce **factoryOS**, a distributed and self-organizing planning system that can cope with these challenges. **factoryOS** is robust to network delays and fault-tolerant, partitions inventory data natively, and works without any manual intervention. Our novel design point is that we're able to guarantee uninterrupted production even with multiple failures. With **factoryOS**, partition shards are created natively and nodes handle their own processes individually. Our experimental results show that **factoryOS** can be easily scaled to a large number of nodes and is fault-tolerant to a high degree of failures.
 
 ## Demo
 
