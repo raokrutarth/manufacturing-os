@@ -51,7 +51,7 @@ class Metricparser:
 
     def _print_all_metric_stats(self):
         try:
-            res = self.df.groupby('metric_name').agg({'value': ['min', 'max', 'mean', 'median', 'std', 'var']})
+            res = self.df.groupby('metric_name').agg({'value': ['min', 'max', 'mean', 'sum', 'median', 'std', 'var']})
             res.round(2)
             res.to_csv(self.m_dir + "/aggregated-results.csv")
             log.info("Metric-wise breakdown or results:\n\n%s\n\n===\n", res.to_string(float_format="%.2f"))
