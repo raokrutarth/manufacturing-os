@@ -18,5 +18,5 @@ python3.5 -m pip install -r requirements.txt
 ### Execution
 
 ```bash
-python3.5 src/main.py
+make all
 ```
