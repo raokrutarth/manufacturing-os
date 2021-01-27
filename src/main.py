@@ -116,10 +116,13 @@ def main(args):
         comm_queues[node.node_id] = cqueue
 
     # Contain multiple misc threads which are useful
-    ops_args = (queues, cluster, args.failure_rate, args.recover_rate, args.update_dep_rate, args.leader_can_fail)
+    main_metrics = Metrics("main-thread")
+    ops_args = (main_metrics, queues, cluster, args.failure_rate, args.recovery_rate, args.update_dep_rate, args.leader_can_fail)
     ops_generator_thread = Thread(target=run_generator, args=ops_args)
     plotter_thread = Thread(target=run_cluster_plotter, args=(cluster,))
     threads = {}
+
+    main_metrics.set_metric(-1, "num_nodes", len(cluster.nodes))
 
     if args.run_plotter:
         threads['cluster-plotter'] = plotter_thread
@@ -154,7 +157,7 @@ def main(args):
             except KeyboardInterrupt:
                 # Handle Ctrl-C and send kill to threads
                 for p in process_list:
-                        p.terminate()
+                    p.terminate()
                 sys.exit()
 
         # Stopping the queue worker
@@ -207,7 +210,7 @@ def get_cluster_run_args():
     )
     parser.add_argument(
         '--nodes_per_type',
-        default=3,
+        default=2,
         type=int
     )
 
@@ -225,7 +228,7 @@ def get_cluster_run_args():
         help='# of failed nodes per minute'
     )
     parser.add_argument(
-        '--recover_rate',
+        '--recovery_rate',
         default=0,
         type=float,
         help='# of recovered nodes per minute'

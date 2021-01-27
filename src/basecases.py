@@ -1,7 +1,7 @@
 import operations
 from items import Item, ItemReq, ItemDependency
-from collections import defaultdict 
-import random 
+from collections import defaultdict
+import random
 import networkx as nx
 
 import graph_funcs
@@ -81,10 +81,10 @@ def bootstrap_dependencies_seven_nodes():
     ]
 
     start = ItemReq(Item('start', None), 1)
-    wood = ItemReq(Item('wood', None), 1) 
+    wood = ItemReq(Item('wood', None), 1)
     screws = ItemReq(Item('screws', None), 1)
     awesomeness = ItemReq(Item('awesomeness', None), 1)
-    
+
     demo_nodes[0].dependency = ItemDependency([], start)
     demo_nodes[1].dependency = ItemDependency([start], wood)
     demo_nodes[2].dependency = ItemDependency([start], wood)
@@ -99,7 +99,7 @@ def bootstrap_demo():
     """
     initialize demo_node with the following dependencies
     start -> | metal  --> | -> frame | -> | -> window
-             | screws --> | 
+             | screws --> |
              | metal  --> | -> frame | -> |
              | screws --> |
              | glass  ------------------> |
@@ -121,11 +121,11 @@ def bootstrap_demo():
     door_knob = ItemReq(Item('door_knob', None), 1)
     door_frame = ItemReq(Item('door_frame', None), 1)
     window = ItemReq(Item('window', None), 1)
-    hinge = ItemReq(Item('hinge', None), 1) 
+    hinge = ItemReq(Item('hinge', None), 1)
     casing = ItemReq(Item('casing', None), 1)
     raw_door = ItemReq(Item('raw_door', None), 1)
     finished_door = ItemReq(Item('finished_door', None), 1)
-    
+
     demo_nodes[0].dependency = ItemDependency([], start)
     demo_nodes[1].dependency = ItemDependency([start], metal)
     demo_nodes[2].dependency = ItemDependency([start], metal)
@@ -160,7 +160,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
     input:
     type_num        = number of different item types that the whole cluster has
     complexity      = "low", "medium" or "high" indiciating how complex the DAG, i.e. how many edges it has!
-    nodes_per_type  = maximum number of nodes one type can have  
+    nodes_per_type  = maximum number of nodes one type can have
 
     output: nodes that form a random DAG
     '''
@@ -169,7 +169,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
 
     if type_num < 4:
         type_num = 4
-    
+
     edges_num = 0
 
     if complexity == "low":
@@ -187,12 +187,12 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
     # Create random dag, using helper function
     graph = random_dag(type_num-2, edges_num)
     log.debug("Initial Random DAG without start and end node created: %s", graph)
-    
+
     # There is one start_node (id=0) and one end_node (id = nodes_num-1)
     # Find als start & end nodes in graph and point them to the new start or end_node
     node_list = set(range(1, type_num-1)) # set with all node_ids in graph
-    graph_list_end = set() 
-    graph_list_start = set() 
+    graph_list_end = set()
+    graph_list_start = set()
     for edge in graph.edges:
         graph_list_end.add(edge[0])
         graph_list_start.add(edge[1])
@@ -220,14 +220,14 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
                 node_tmp = SingleItemNode(node_id=node_ids.pop(0), dependency=None)
                 node_tmp.dependency = ItemDependency([], ItemReq(Item(i, None), 1))
                 demo_nodes.append(node_tmp)
-    
+
     log.debug("Nodes created without any input requirements:  %s", demo_nodes)
 
     for nodes in demo_nodes:
         # if node_id == 0, no incoming dependencies
         if nodes.dependency.result_item_req.item.type == 0:
             pass
-        # if node_id in start_nodes, incoming dependency is item type == 0   
+        # if node_id in start_nodes, incoming dependency is item type == 0
         elif nodes.dependency.result_item_req.item.type in start_nodes:
             nodes.dependency.input_item_reqs = [ItemReq(Item(0, None), 1)]
         # if item type == type_num-1, incoming dependency all item types in variable end_nodes
@@ -244,7 +244,7 @@ def bootstrap_random_dag(type_num=4, complexity="low", nodes_per_type=2):
                     node_dependency.append(ItemReq(Item(tup[0], None), 1))
             nodes.dependency.input_item_reqs = node_dependency
 
-    log.info("Final nodes created:  %s", demo_nodes) 
+    log.info("Final nodes created:  %s", demo_nodes)
     return demo_nodes
 
 

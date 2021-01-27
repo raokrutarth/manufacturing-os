@@ -1,7 +1,7 @@
 import enum
 import logging
+import time
 
-import cluster as ctr
 from items import ItemDependency, ItemReq
 
 
@@ -139,8 +139,8 @@ class HeartbeatReq(Message):
     """
     Signal to every node to response with heartbeat
     """
-    def __init__(self, source):
-        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request)
+    def __init__(self, source, dest):
+        super(HeartbeatReq, self).__init__(source, Action.Heartbeat, MsgType.Request, dest)
 
 
 class HeartbeatResp(Message):
@@ -277,7 +277,41 @@ class MessageHandler(object):
     """
 
     @staticmethod
-    def getMsgForAction(source, action: Action, msg_type: MsgType, dest=Message.ALL, ctx=0):
+    def should_process_msg_for_node_id(message: Message, node_id: int):
+        """
+        Multiple checks to decide whether to process message
+            - Check recipient
+                - If message is broadcast, you are a recipient
+                - If not, check if you're recipient
+            - If not recipient, ignore
+            - Else,
+                - If message is heartbeat
+                    - If it is from self, ignore
+                    - else, process
+                - else process
+        Act according to the above
+        """
+
+        assert type(message.dest) == int
+        assert type(node_id) == int
+
+        is_msg_only_for_me = message.dest == node_id
+        is_msg_for_all = message.dest == Message.ALL
+        is_msg_for_me = is_msg_only_for_me or is_msg_for_all
+        is_msg_heartbeat = message.action == Action.Heartbeat
+        is_msg_from_me = message.source == node_id
+
+        assert (not is_msg_for_all) and is_msg_only_for_me
+
+        if not is_msg_for_me:
+            return False
+        elif is_msg_heartbeat and is_msg_from_me:
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def getMsgForAction(source: int, action: Action, msg_type: MsgType, dest: int, ctx=0):
         """
             returns an object of type Message for the specified message
         """
@@ -289,7 +323,7 @@ class MessageHandler(object):
             return AllocateReq(source)
         elif action == Action.Heartbeat:
             if msg_type == MsgType.Request:
-                return HeartbeatReq(source)
+                return HeartbeatReq(source, dest)
             else:
                 return HeartbeatResp(source, dest)
         elif action == Action.Update:
@@ -314,6 +348,9 @@ class MessageHandler(object):
         self.node_id = node_process.node_id
         self.callbacks = self.get_action_callbacks()
         self.metrics = self.node_process.metrics
+
+        self.metrics.set_metric(self.node_id, "sent_messages", 0)
+        self.metrics.set_metric(self.node_id, "received_messages", 0)
 
     def get_action_callbacks(self):
         """
@@ -355,46 +392,34 @@ class MessageHandler(object):
         return callbacks
 
     def sendMessage(self, message):
+        start = time.time()
+
         is_msg_heartbeat = message.action == Action.Heartbeat
         if is_msg_heartbeat:
             log.debug("sending message %s from node %s", message, self.node_id)
         else:
             log.info("sending message %s from node %s", message, self.node_id)
-        self.node_process.message_queue.put(message)
-        self.metrics.increase_metric(self.node_id, "sent_messages")
+
+        try:
+            self.node_process.message_queue.put_nowait(message)
+            self.metrics.increase_metric(self.node_id, "sent_messages")
+            self.metrics.increase_metric(self.node_id, "%s_sent" % (message.__class__.__name__))
+
+            taken = time.time() - start
+            if taken > 0.5:
+                log.warning("Node %d took %.2f seconds to send message", self.node_id, taken)
+        except Exception:
+            log.error("Node %d unable to send message %d. Internal message queue full/closed", self.node_id, message)
 
     def onMessage(self, message):
-        """
-        Multiple checks to decide whether to process message
-            - Check recipient
-                - If message is broadcast, you are a recipient
-                - If not, check if you're recipient
-            - If not recipient, ignore
-            - Else,
-                - If message is heartbeat
-                    - If it is from self, ignore
-                    - else, process
-                - else process
-        Act according to the above
-        """
-
-        is_msg_only_for_me = message.dest == self.node_id
-        is_msg_for_all = message.dest == Message.ALL
-        is_msg_for_me = is_msg_only_for_me or is_msg_for_all
-        is_msg_heartbeat = message.action == Action.Heartbeat
-        is_msg_from_me = message.source == self.node_id
-
-        if not is_msg_for_me:
-            return None
-        elif is_msg_heartbeat and is_msg_from_me:
-            return None
-        else:
+        should_process = self.should_process_msg_for_node_id(message, self.node_id)
+        if should_process:
+            log.debug("Received: %s from %s", message, message.source)
             self.metrics.increase_metric(self.node_id, "received_messages")
-            if is_msg_heartbeat:
-                log.debug("Received: %s from %s", message, message.source)
-            else:
-                log.info("Received: %s from %s", message, message.source)
+            self.metrics.increase_metric(self.node_id, "%s_received" % (message.__class__.__name__))
             return self.callbacks[message.type][message.action](message)
+        else:
+            return None
 
     """
     Callback implementations of all possible messages and their requests/response variants
@@ -471,12 +496,11 @@ class MessageHandler(object):
             dest=message.source
         )
         self.sendMessage(response)
+        # self.node_process.update_heartbeat(message.source)
 
     def on_heartbeat_resp(self, message):
         assert message.action == Action.Heartbeat
-        log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
-        if message.source is None:
-            print(message)
+        # log.debug("Received Heartbeat Response from %s: on %s", message.source, self.node_id)
         self.node_process.update_heartbeat(message.source)
 
     def on_update_req(self, message):
@@ -501,9 +525,6 @@ class MessageHandler(object):
 
     def on_inform_death_req(self, message: InformLeaderOfDeathReq):
         assert message.action == Action.InformLeaderOfDeath
-
-        if message.dead_node_id is None:
-            print(message)
 
         is_leader = self.node_process.state_helper.am_i_leader()
         if is_leader:

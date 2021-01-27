@@ -11,7 +11,6 @@ from multiprocessing import Queue
 from nodes import BaseNode, NodeState
 from cluster import Cluster
 from state import FileBasedStateHelper
-from collections import defaultdict
 from sc_stage import SuppyChainStage
 from metrics import Metrics
 from file_dict import FileDict
@@ -35,7 +34,7 @@ class FileDictBasedNodeProcess(object):
         self.set_cluster(cluster)
 
         # use a thread-safe queue as message queue to
-        # transfer messages from thread __ to the publisher thread
+        # transfer messages from inter-node threads to the node's publisher
         self.message_queue = Queue()
 
     def node(self):
@@ -47,15 +46,6 @@ class FileDictBasedNodeProcess(object):
 
     def cluster(self):
         return self.state_helper.get_cluster()
-
-    def sendMessage(self, message):
-        pass
-
-    def broadcastMessage(self, message):
-        pass
-
-    def onMessage(self, message):
-        pass
 
 
 class SocketBasedNodeProcess(FileDictBasedNodeProcess):
@@ -71,7 +61,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.is_active = True
 
         # Execution constants for the process
-        self.heartbeat_delay = 5
+        self.heartbeat_delay = 3.0
         self.num_unresponded_heartbeats_for_death = 5
 
         self.process_spec = cluster.get_node_process_spec(self.node_id)
@@ -88,6 +78,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         self.op_runner = ops_runner.OpsRunnerThread(self)
 
         # Manage heartbeats and liveness between nodes
+        self.metrics.set_metric(self.node_id, "nodes_determined_crashed", 0)
         self.last_known_heartbeat_log = FileDict(abspath("./tmp/node_" + str(self.node_id) + ".last_known_heartbeat.log"))
         self.heartbeat = threads.HeartbeatThread(self, delay=self.heartbeat_delay)
         self.init_liveness_state()
@@ -166,6 +157,15 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         # precise synced distributed clocks
         assert type(node_id) == int
         curr_time = time.time()
+        log.debug("Node {} received a heartbeat response at {} from {}"
+                  .format(self.node_id, curr_time, node_id))
+        self.last_known_heartbeat[node_id] = curr_time
+        # Removing as it takes a lot of time
+        self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
+
+    def reinit_last_timestamp(self, node_id: int):
+        assert type(node_id) == int
+        curr_time = time.time()
         self.last_known_heartbeat[node_id] = curr_time
         # Removing as it takes a lot of time
         # self.last_known_heartbeat_log[node_id] = self.last_known_heartbeat[node_id]
@@ -177,14 +177,8 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
         curr_time = time.time()
         margin = self.num_unresponded_heartbeats_for_death * self.heartbeat_delay
 
-        for nid, lt in self.last_known_heartbeat.items():
-            if (lt < (curr_time - margin)) and (lt >= 0):
-                log.warning(
-                    'Node: {} detected node: {} to be dead, last heartbeat: {}, current time: {}'.format(
-                        self.node_id, nid, lt, curr_time))
-
         return [
-            nid for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
+            (nid, lt) for nid, lt in self.last_known_heartbeat.items() if (lt < (curr_time - margin)) and (lt >= 0)
         ]
 
     def on_kill(self):
@@ -241,7 +235,7 @@ class SocketBasedNodeProcess(FileDictBasedNodeProcess):
             if node_id != self.node_id:
                 try:
                     self.last_known_heartbeat[node_id] = self.last_known_heartbeat_log[node_id]
-                except:
+                except Exception:
                     log.warning(
                         "Node %d unable to recover heartbeat details from WAL for node %s", self.node_id, node_id)
 

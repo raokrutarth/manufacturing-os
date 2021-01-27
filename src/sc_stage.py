@@ -6,7 +6,7 @@ from string import ascii_uppercase, digits
 from random import choice
 from os.path import abspath
 from uuid import uuid4
-from random import randint
+from random import random
 
 from nodes import NodeState
 from items import Item, ItemReq
@@ -39,7 +39,7 @@ class SuppyChainStage(Thread):
         products like a stage in a factory would.
     '''
 
-    def __init__(self, node_process, time_per_batch=10):
+    def __init__(self, node_process, time_per_batch=1):
         '''
             name: unique name of stage. Used to identify log file.
             requirements: the set of items the stage can use as raw material.
@@ -84,7 +84,9 @@ class SuppyChainStage(Thread):
         self.metrics.set_metric(self.node_id, "wal_ghost_outbound_batches", 0)
         self.metrics.set_metric(self.node_id, "wal_ghost_inbound_batches", 0)
         self.metrics.set_metric(self.node_id, "empty_outbound_inventory_occurrences", 0)
+        self.metrics.set_metric(self.node_id, "empty_inbound_inventory_occurrences", 0)
         self.metrics.set_metric(self.node_id, "batches_delivered", 0)
+        self.metrics.set_metric(self.node_id, "outbound_material_buildup", 0)
 
         self._attempt_log_recovery()
 
@@ -223,14 +225,18 @@ class SuppyChainStage(Thread):
             i.e. The request ID was created when this stage made a request and
             the rid was added to the pending_requests until a response was received.
         '''
-        self.pending_requests.remove(response.request_id)
+        try:
+            self.pending_requests.remove(response.request_id)
+        except Exception:
+            pass
 
     def process_item_waiting_response(self, message):
         log.debug("Node %d got an in-transit ack from node %d for batch %s", self.node_id, message.source, message.item_req)
         batch = message.item_req
         curr_status = self.outbound_log[batch]
         if curr_status != BatchStatus.IN_TRANSIT:
-            log.warning("Node %d's outbound log for item %s was at status %s, expected %s", self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
+            log.info("Node %d's outbound log for item %s was at status %s, expected %s",
+                     self.node_id, batch, curr_status, BatchStatus.IN_TRANSIT)
             self.outbound_log[batch] = BatchStatus.IN_TRANSIT
 
     def process_batch_request(self, request: Message):
@@ -323,8 +329,7 @@ class SuppyChainStage(Thread):
             self.send_message(ack)
             log.info("Node %d marking batch %s in-transit in local WAL", self.node_id, response.item_req)
 
-            # sleep(randint(self.time_per_batch, self.time_per_batch*3))  # HACK simulated transit time
-            sleep(randint(1, 3))  # HACK simulated transit time
+            sleep(random())  # HACK simulated transit time
 
             log.info("Node %d sending batch %s delivery confirmation to node %d", self.node_id, response.item_req, response.source)
             self.inbound_log[batch] = BatchStatus.IN_QUEUE
@@ -343,8 +348,8 @@ class SuppyChainStage(Thread):
                          self.node_id, response.item_req, response.source)
         else:
             self.metrics.increase_metric(self.node_id, "batch_unavailable_messages_received")
-            log.warning("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. Request ID: %s",
-                        self.node_id, response.item_req.item.type, response.source, response.request_id)
+            log.info("Node %d unable to obtain batch of type %s from node %d. Will try again in the next cycle. "
+                     "Request ID: %s",  self.node_id, response.item_req.item.type, response.source, response.request_id)
 
         self._mark_request_complete(response)
 
@@ -392,9 +397,9 @@ class SuppyChainStage(Thread):
             prereq_types = set([ir.item.type for ir in prereqs])
             supplier_types = set(suppliers.keys())
 
-            if not prereq_types.issuperset(supplier_types):  # verify there is prerequisite for each supplier
+            if not prereq_types.issuperset(supplier_types) or not supplier_types:  # verify there is prerequisite for each supplier
                 # TODO (Nishant) you'll see this error if the underlying prereques don't match the flow
-                log.critical("Node {} has more suppliers ({}) from flow than the node's prerequisite types ({})"
+                log.critical("Node {} has invalid/no suppliers ({}) from flow compared to the node's prerequisite types ({})"
                              .format(self.node_id, supplier_types, prereq_types))
                 log.error("Node %d skipping manufacturing cycle", self.node_id)
 
@@ -406,6 +411,7 @@ class SuppyChainStage(Thread):
 
                 if item_type not in self.inbound_material or self.inbound_material[item_type].empty():
                     log.info("Node %d needs batch of type %s from node %s", self.node_id, item_type, supplier_id)
+                    self.metrics.increase_metric(self.node_id, "empty_inbound_inventory_occurrences")
                     self._send_material_request_upstream(supplier_id, item_type)
                     has_all_materials = False
 
@@ -434,7 +440,7 @@ class SuppyChainStage(Thread):
 
         # Log production of important items differently
         if self.am_i_a_finale_item():
-            log.critical("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
+            log.info("Node %d successfully manufactured batch %s which is a finale item", self.node_id, new_batch)
         else:
             log.debug("Node %d successfully manufactured batch %s and enqueued to outbound queue",
                       self.node_id, new_batch)
@@ -456,6 +462,7 @@ class SuppyChainStage(Thread):
             self.metrics.set_metric(self.node_id, "unanswered_batch_requests_current", len(self.pending_requests))
             self.metrics.set_metric(self.node_id, "outbound_wal_size", self.outbound_log.size())
             self.metrics.set_metric(self.node_id, "inbound_wal_size", self.inbound_log.size())
+            self.metrics.set_metric(self.node_id, "outbound_material_buildup", self.outbound_material.qsize())
 
             if not self.node_process.is_active:
                 log.error("Node %d's stage still running after node process was set to inactive", self.node_id)

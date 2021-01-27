@@ -28,28 +28,34 @@ class Metrics:
         self._df.node_id = self._df.node_id.astype(int)
         self._df.metric_name = self._df.metric_name.astype(str)
         self._df.value = self._df.value.astype("float64")
+        self._updates_until_persist = 0
 
     def _persist_metrics(self):
         self._df.to_csv(self._metrics_file)
 
     def _modify_or_add_to_df(self, node_id: int, metric_name: str, value: float, mode: DFOperation):
-        if ((self._df.node_id == node_id) & (self._df.metric_name == metric_name)).any():
-            if mode == DFOperation.Increase:
-                self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] += value
-            elif mode == DFOperation.Decrease:
-                self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] -= value
-            elif mode == DFOperation.Set:
-                self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] = value
+        try:
+            if ((self._df.node_id == node_id) & (self._df.metric_name == metric_name)).any():
+                if mode == DFOperation.Increase:
+                    self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] += value
+                elif mode == DFOperation.Decrease:
+                    self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] -= value
+                elif mode == DFOperation.Set:
+                    self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "value"] = value
 
-            self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "timestamp"] = datetime.now()
-        else:
-            self._df = self._df.append({
-                "timestamp": datetime.now(),
-                "node_id": node_id,
-                "metric_name": metric_name,
-                "value": value if mode != DFOperation.Decrease else (-1 * value),
-            }, ignore_index=True)
-        self._persist_metrics()
+                self._df.loc[(self._df.node_id == node_id) & (self._df.metric_name == metric_name), "timestamp"] = datetime.now()
+            else:
+                self._df = self._df.append({
+                    "timestamp": datetime.now(),
+                    "node_id": node_id,
+                    "metric_name": metric_name,
+                    "value": value if mode != DFOperation.Decrease else (-1 * value),
+                }, ignore_index=True)
+            self._updates_until_persist += 1
+            if not self._updates_until_persist % 1000:
+                self._persist_metrics()
+        except:
+            pass
 
     def increase_metric(self, node_id: int, metric_name: str, value: float = 1.0):
         self._modify_or_add_to_df(node_id, metric_name, value, DFOperation.Increase)

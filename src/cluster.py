@@ -123,7 +123,7 @@ class ClusterWideFlow(object):
                     if node_id in tup:
                         node.remove(tup)
 
-    def addFlow(self, source, dst, item: items.ItemReq):
+    def addFlow(self, source: int, dst: int, item: items.ItemReq):
         assert (source in self.node_ids) and (dst in self.node_ids), "Source: {}, Dst: {}".format(source, dst)
         self.outgoing_flows[source].append((dst, item))
         self.incoming_flows[dst].append((source, item))
@@ -134,7 +134,7 @@ class ClusterWideFlow(object):
         """
         if node_id not in self.outgoing_flows:
             log.error("Node %d's outgoing edges not found in cluster flow", node_id)
-            return {}
+            return []
         return self.outgoing_flows[node_id]
 
     def getIncomingFlowsForNode(self, node_id):
@@ -143,7 +143,7 @@ class ClusterWideFlow(object):
         """
         if node_id not in self.incoming_flows:
             log.error("Node %d's incoming edges not found in cluster flow", node_id)
-            return {}
+            return []
         return self.incoming_flows[node_id]
 
     def clearAll(self):
